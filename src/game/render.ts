@@ -597,14 +597,18 @@ function drawDog(
   // red = Bulldog (flat wide face, stub ears, muscular)
   const isShepherd = color === "green";
 
-  const bodyLight = isShepherd ? "#c99e6a" : "#a67560";
-  const bodyBase  = isShepherd ? "#8c6534" : "#7d4a38";
-  const bodyDark  = isShepherd ? "#3a2a14" : "#4a2818";
-  const teamColor = isShepherd ? "#7dd66a" : "#ff5148";
-  const teamDark  = isShepherd ? "#3f7a2c" : "#a02824";
+  const bodyLight = isShepherd ? "#d2a06d" : "#efe4d6";
+  const bodyBase  = isShepherd ? "#a76a2c" : "#b57548";
+  const bodyDark  = isShepherd ? "#2a1a0c" : "#5a3120";
+  const teamColor = isShepherd ? "#ff8a1a" : "#ff4838";
+  const teamDark  = isShepherd ? "#a04a10" : "#a02420";
+  // Ranger = black tactical helmet w/ gold badge; Brutus = olive helmet
+  const helmetBase = isShepherd ? "#0f0f12" : "#3d4a2a";
+  const helmetTop  = isShepherd ? "#2a2a30" : "#6b7a44";
+  const badgeColor = isShepherd ? "#e0b64a" : "#d8d3c9";
   const teamNum   = isShepherd ? "01" : "02";
-  const eyeIris   = isShepherd ? "#7dd66a" : "#ffb84a";
-  const name      = isShepherd ? "REX"  : "ROCKY";
+  const eyeIris   = isShepherd ? "#ffb84a" : "#e2a24a";
+  const name      = isShepherd ? "RANGER" : "BRUTUS";
 
   // Ground shadow
   ctx.save();
@@ -791,7 +795,27 @@ function drawDog(
   ctx.fillStyle = "#3a2a1a";
   ctx.fillRect(7.5, 2.5, 2, 3.5);
 
-  // ---- Head ----
+  // ---- Spiked collar (metallic spikes around the neck) ----
+  ctx.save();
+  ctx.translate(6, -7);
+  ctx.rotate(-0.3);
+  ctx.fillStyle = "#1a1a1e";
+  roundRect(ctx, -8, -1.5, 14, 3, 1); ctx.fill();
+  // spikes
+  for (let i = 0; i < 6; i++) {
+    const sx = -7 + i * 2.6;
+    const spikeG = ctx.createLinearGradient(sx, -4, sx, -1);
+    spikeG.addColorStop(0, "#f2f4f8"); spikeG.addColorStop(1, "#6a707a");
+    ctx.fillStyle = spikeG;
+    ctx.beginPath();
+    ctx.moveTo(sx, -1.5); ctx.lineTo(sx + 0.9, -4.2); ctx.lineTo(sx + 1.8, -1.5);
+    ctx.closePath(); ctx.fill();
+  }
+  // buckle
+  ctx.fillStyle = "#c9a84c";
+  ctx.fillRect(4, -1.2, 2, 2.4);
+  ctx.restore();
+
   ctx.save();
   ctx.translate(11, -14);
 
@@ -953,32 +977,36 @@ function drawDog(
   ctx.strokeStyle = bodyDark; ctx.lineWidth = 1.4;
   ctx.beginPath(); ctx.moveTo(-4, -3.5); ctx.lineTo(12, -3.5); ctx.stroke();
 
-  // Helmet
-  ctx.fillStyle = teamDark;
+  // Helmet — tactical shell (black for Ranger, olive for Brutus)
+  ctx.fillStyle = helmetBase;
   ctx.beginPath();
   ctx.ellipse(4, -10.5, 12, 7, 0, Math.PI, Math.PI * 2);
   ctx.fill();
   const helmG = ctx.createLinearGradient(0, -17, 0, -8);
-  helmG.addColorStop(0, teamColor); helmG.addColorStop(1, teamDark);
+  helmG.addColorStop(0, helmetTop); helmG.addColorStop(1, helmetBase);
   ctx.fillStyle = helmG;
   ctx.beginPath();
   ctx.ellipse(4, -10.5, 11, 6, 0, Math.PI, Math.PI * 2);
   ctx.fill();
   // Camo splotches on helmet
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
   ctx.beginPath(); ctx.ellipse(-2, -13, 2.2, 1.4, -0.5, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(6, -15, 2, 1.2, 0.4, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(11, -12, 1.4, 0.9, 0, 0, Math.PI * 2); ctx.fill();
   // side band
-  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.fillRect(-7, -10.5, 22, 1.4);
-  // helmet number stencil
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 4.5px Black Ops One, Chakra Petch";
+  // Rectangular badge plate (paw for Ranger / bulldog for Brutus)
+  ctx.fillStyle = badgeColor;
+  roundRect(ctx, 1, -14.5, 6, 4, 0.6); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 0.5;
+  ctx.strokeRect(1, -14.5, 6, 4);
+  ctx.fillStyle = "rgba(0,0,0,0.75)";
+  ctx.font = "bold 3.2px Black Ops One, Chakra Petch";
   ctx.textAlign = "center";
-  ctx.fillText(teamNum, 4, -12);
+  ctx.fillText(isShepherd ? "★" : "■", 4, -11.7);
   ctx.textAlign = "start";
-  // Antenna with blinking LED
+  // Antenna with blinking LED (kept in team color for turn feedback)
   ctx.strokeStyle = "#2a2a2a"; ctx.lineWidth = 0.7;
   ctx.beginPath(); ctx.moveTo(-6, -14); ctx.lineTo(-8, -22); ctx.stroke();
   const ledBlink = (now % 900) < 450;
@@ -987,9 +1015,6 @@ function drawDog(
   ctx.shadowBlur = ledBlink ? 6 : 0;
   ctx.beginPath(); ctx.arc(-8, -22.5, 1, 0, Math.PI * 2); ctx.fill();
   ctx.shadowBlur = 0;
-  // star patch
-  ctx.fillStyle = "#ffe4a3";
-  drawStar(ctx, 11, -12.5, 1.6, 5);
 
   ctx.restore(); // head
 
