@@ -181,16 +181,42 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // Cinematic key-art atmosphere overlay (smoke + embers)
+  // Key art as real scenic background (cover-fit, anchored so dogs sit behind terrain)
   if (bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
+    const iw = bgIngameImg.naturalWidth;
+    const ih = bgIngameImg.naturalHeight;
+    // cover then shrink 12% so key-art characters aren't cropped at the sides
+    const scale = Math.max(w / iw, (h * 0.95) / ih) * 0.88;
+    const dw = iw * scale;
+    const dh = ih * scale;
+    // subtle wind parallax
+    const px = Math.sin(now * 0.00008) * 15 + state.wind * 25;
+    const dx = (w - dw) / 2 + px;
+    // push image up ~18% so the dogs sit low, partly hidden by the terrain
+    const dy = -dh * 0.18;
+
     ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.globalCompositeOperation = "screen";
-    // subtle horizontal parallax based on wind
-    const px = Math.sin(now * 0.00008) * 20 + state.wind * 30;
-    ctx.drawImage(bgIngameImg, px - 20, 0, w + 40, h * 0.85);
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(bgIngameImg, dx, dy, dw, dh);
     ctx.restore();
+
+    // Vertical fade mask — full opacity up top, fading to transparent near horizon
+    const fade = ctx.createLinearGradient(0, 0, 0, h);
+    fade.addColorStop(0, "rgba(11,18,32,0)");
+    fade.addColorStop(0.55, "rgba(11,18,32,0)");
+    fade.addColorStop(0.78, "rgba(20,18,12,0.55)");
+    fade.addColorStop(1, "rgba(10,8,4,0.92)");
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 0, w, h);
+
+    // Edge vignette for focus
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
   }
+
 
   // Aurora shimmer (subtle horizontal band)
   const auroraY = h * 0.28;
