@@ -5,11 +5,12 @@ import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
 import { teamSkin, type TeamSkin } from "@/game/skins";
-import heroAsset from "@/assets/wardogs-bg-menu.jpg.asset.json";
+import heroImg from "@/assets/wardogs-menu-bg.jpg";
+import logoImg from "@/assets/wardogs-logo.png";
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 import emblem from "@/assets/emblem-paw.png";
-const heroImg = heroAsset.url;
+
 const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
   BRUTUS: brutusPortrait.url,
@@ -96,10 +97,12 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <h1 className="stencil mt-5 text-6xl sm:text-8xl leading-[0.9] tracking-tight logo-metal">
-            <span className="inline-block title-in-left" style={{ color: "#ff8a1a" }}>WAR</span>
-            <span className="inline-block title-in-right ml-2 sm:ml-4" style={{ color: "#ff4838" }}>DOGS</span>
-          </h1>
+          <img
+            src={logoImg}
+            alt="WarDogs"
+            className="mt-4 mx-auto w-[min(92vw,720px)] h-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
+          />
+
 
           <p className="mt-5 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
             Ranger &amp; Brutus. Bazuca, RPG, arco, granadas, cluster e air strike.
