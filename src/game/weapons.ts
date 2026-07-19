@@ -1,29 +1,29 @@
 import type { Weapon, WeaponId } from "./types";
 
 export const WEAPONS: Record<WeaponId, Weapon> = {
-  revolver: {
-    id: "revolver", name: "Revólver", damage: 25, radius: 18, ammo: -1,
-    speed: 14, kind: "hitscan", affectedByWind: false, color: "#f6d365", gravityScale: 0,
-  },
-  ak47: {
-    id: "ak47", name: "AK-47", damage: 18, radius: 16, ammo: 4,
-    speed: 16, kind: "hitscan", affectedByWind: false, color: "#ffb347", gravityScale: 0,
-  },
   bazooka: {
-    id: "bazooka", name: "Bazuca", damage: 55, radius: 42, ammo: 3,
+    id: "bazooka", name: "Bazuca", damage: 45, radius: 44, ammo: -1,
     speed: 12, kind: "ballistic", affectedByWind: true, color: "#ff6b35", gravityScale: 1,
   },
   grenade: {
-    id: "grenade", name: "Granada", damage: 45, radius: 38, ammo: 3,
+    id: "grenade", name: "Granada", damage: 55, radius: 55, ammo: 3,
     speed: 10, kind: "cluster", affectedByWind: true, color: "#8fbc8f", gravityScale: 1, fuse: 2.5,
   },
+  rpg: {
+    id: "rpg", name: "RPG", damage: 55, radius: 55, ammo: 3,
+    speed: 11, kind: "ballistic", affectedByWind: false, color: "#ff8c1a", gravityScale: 0.15,
+  },
+  bow: {
+    id: "bow", name: "Arco & Flecha", damage: 30, radius: 22, ammo: -1,
+    speed: 14, kind: "ballistic", affectedByWind: true, color: "#c8f77d", gravityScale: 0.65,
+  },
   artillery: {
-    id: "artillery", name: "Artilharia", damage: 75, radius: 55, ammo: 1,
+    id: "artillery", name: "Artilharia", damage: 70, radius: 70, ammo: 2,
     speed: 14, kind: "ballistic", affectedByWind: true, color: "#e94560", gravityScale: 1.2,
   },
 };
 
-export const WEAPON_ORDER: WeaponId[] = ["revolver", "ak47", "bazooka", "grenade", "artillery"];
+export const WEAPON_ORDER: WeaponId[] = ["bazooka", "grenade", "rpg", "bow", "artillery"];
 
 export function initialAmmo(): Record<WeaponId, number> {
   const out = {} as Record<WeaponId, number>;

@@ -1,4 +1,4 @@
-export type WeaponId = "revolver" | "ak47" | "bazooka" | "grenade" | "artillery";
+export type WeaponId = "bazooka" | "grenade" | "rpg" | "bow" | "artillery";
 
 export interface Weapon {
   id: WeaponId;
@@ -7,7 +7,7 @@ export interface Weapon {
   radius: number; // explosion radius (px)
   ammo: number; // -1 = infinite
   speed: number; // initial power multiplier
-  kind: "hitscan" | "ballistic" | "cluster";
+  kind: "ballistic" | "cluster";
   affectedByWind: boolean;
   color: string;
   gravityScale: number;
