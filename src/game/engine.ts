@@ -1,7 +1,8 @@
 import type { Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
+import { markTerrainDirty } from "./render";
 
-const GRAVITY = 380; // px/s^2
+const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
 
 // Deterministic PRNG (mulberry32)
