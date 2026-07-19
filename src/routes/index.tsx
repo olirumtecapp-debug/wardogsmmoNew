@@ -97,11 +97,25 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <img
-            src={logoImg}
-            alt="WarDogs"
-            className="mt-4 mx-auto w-[min(92vw,720px)] h-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
-          />
+          <div className="mt-4 flex items-center justify-center gap-4 sm:gap-8">
+            <img
+              src={PORTRAITS.RANGER}
+              alt="Ranger"
+              className="hidden md:block h-[280px] lg:h-[340px] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left"
+              style={{ animationDelay: "0ms" }}
+            />
+            <img
+              src={logoImg}
+              alt="WarDogs"
+              className="w-[min(70vw,360px)] lg:w-[420px] h-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
+            />
+            <img
+              src={PORTRAITS.BRUTUS}
+              alt="Brutus"
+              className="hidden md:block h-[280px] lg:h-[340px] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left"
+              style={{ animationDelay: "120ms", transform: "scaleX(-1)" }}
+            />
+          </div>
 
 
           <p className="mt-5 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
