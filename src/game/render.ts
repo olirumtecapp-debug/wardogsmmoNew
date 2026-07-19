@@ -42,6 +42,11 @@ function ensureTerrainCanvas(state: GameState) {
     lastTerrainRef = state.terrain;
     terrainDirty = true;
   }
+  const scId = getActiveScenario().id;
+  if (lastScenarioId !== scId) {
+    lastScenarioId = scId;
+    terrainDirty = true;
+  }
   if (terrainDirty) {
     const sc = getActiveScenario();
     const [tR, tG, tB] = sc.terrainTop;
