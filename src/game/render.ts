@@ -103,7 +103,8 @@ function ensureTerrainCanvas(state: GameState) {
 
     // Draw individual grass tufts on top surface
     tctx.save();
-    tctx.strokeStyle = "#bfe066";
+    const sc2 = getActiveScenario();
+    tctx.strokeStyle = `rgb(${Math.min(255, sc2.terrainTop[0] + 30)}, ${Math.min(255, sc2.terrainTop[1] + 20)}, ${Math.min(255, sc2.terrainTop[2] + 20)})`;
     tctx.lineWidth = 1;
     tctx.globalAlpha = 0.9;
     for (let x = 0; x < w; x += 3) {
