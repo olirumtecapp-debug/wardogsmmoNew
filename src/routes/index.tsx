@@ -124,6 +124,25 @@ function Home() {
             </div>
           )}
 
+          {/* Ranger vs Brutus dossiers */}
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto">
+            <DogDossier
+              name="Ranger"
+              subtitle="Pastor Alemão · Recon"
+              color="var(--team-green)"
+              traits={["Velocidade", "Foco", "Lealdade"]}
+              accent="#ff8a1a"
+            />
+            <DogDossier
+              name="Brutus"
+              subtitle="Bulldog · Assalto"
+              color="var(--team-red)"
+              traits={["Força", "Resistência", "Proteção"]}
+              accent="#6b7a44"
+            />
+          </div>
+
+
           <div className="mt-10 text-xs text-muted-foreground grid gap-1 max-w-md mx-auto">
             <div>
               <kbd className="px-1.5 py-0.5 bg-secondary rounded">← →</kbd> ângulo ·{" "}
