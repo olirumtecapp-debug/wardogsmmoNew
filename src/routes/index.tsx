@@ -5,11 +5,12 @@ import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
 import { teamSkin, type TeamSkin } from "@/game/skins";
-import heroAsset from "@/assets/wardogs-bg-menu.jpg.asset.json";
+import heroImg from "@/assets/wardogs-menu-bg.jpg";
+import logoImg from "@/assets/wardogs-logo.png";
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 import emblem from "@/assets/emblem-paw.png";
-const heroImg = heroAsset.url;
+
 const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
   BRUTUS: brutusPortrait.url,
