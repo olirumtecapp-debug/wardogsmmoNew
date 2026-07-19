@@ -339,6 +339,26 @@ export function step(state: GameState, dt: number) {
     if (e.age > e.maxAge + 1.2) state.explosions.splice(i, 1);
   }
 
+  // Update floating damage texts
+  for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
+    const f = state.floatingTexts[i];
+    f.vy += 90 * dt;
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+    f.life -= dt;
+    // Clamp x within canvas
+    if (f.x < 24) f.x = 24;
+    if (f.x > state.width - 24) f.x = state.width - 24;
+    if (f.life <= 0) state.floatingTexts.splice(i, 1);
+  }
+
+  // Update scorch marks
+  for (let i = state.scorchMarks.length - 1; i >= 0; i--) {
+    const s = state.scorchMarks[i];
+    s.life -= dt;
+    if (s.life <= 0) state.scorchMarks.splice(i, 1);
+  }
+
   // Check win
   if (state.phase !== "gameover") {
     const alive0 = state.dogs[0].hp > 0;
