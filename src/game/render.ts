@@ -198,6 +198,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   // Projectiles
   for (const p of state.projectiles) {
     const w2 = WEAPONS[p.weapon];
+    const ang = Math.atan2(p.vy, p.vx);
+
     // Glow trail
     ctx.save();
     for (let i = 0; i < p.trail.length; i++) {
@@ -208,14 +210,61 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.beginPath(); ctx.arc(tx, ty, 1 + a * 2.5, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
-    // Core
-    ctx.save();
-    ctx.shadowColor = w2.color;
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.arc(p.x, p.y, w2.id === "grenade" ? 5 : 3.5, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
+
+    if (w2.id === "bow") {
+      // Arrow oriented along velocity
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(ang);
+      // shaft
+      ctx.strokeStyle = "#6b3a1e"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(6, 0); ctx.stroke();
+      // head
+      ctx.fillStyle = "#dfe4ea";
+      ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(2, -2.4); ctx.lineTo(2, 2.4); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#889099"; ctx.lineWidth = 0.6; ctx.stroke();
+      // fletching
+      ctx.fillStyle = w2.color;
+      ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-13, -3); ctx.lineTo(-8, 0); ctx.lineTo(-13, 3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else if (w2.id === "rpg") {
+      // Rocket body + flame
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(ang);
+      // flame
+      const flick = 1 + (Math.sin(now * 0.06) + 1) * 0.25;
+      const fg = ctx.createLinearGradient(-14 * flick, 0, -4, 0);
+      fg.addColorStop(0, "rgba(255,80,20,0)");
+      fg.addColorStop(0.5, "rgba(255,160,60,0.8)");
+      fg.addColorStop(1, "rgba(255,240,180,1)");
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.moveTo(-4, -2.8); ctx.lineTo(-14 * flick, 0); ctx.lineTo(-4, 2.8); ctx.closePath(); ctx.fill();
+      // body
+      const bg = ctx.createLinearGradient(0, -3, 0, 3);
+      bg.addColorStop(0, "#e8e4dd"); bg.addColorStop(1, "#6a655c");
+      ctx.fillStyle = bg;
+      roundRect(ctx, -4, -3, 12, 6, 1.5); ctx.fill();
+      // nose cone
+      ctx.fillStyle = "#c94a1e";
+      ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(13, 0); ctx.lineTo(8, 3); ctx.closePath(); ctx.fill();
+      // fins
+      ctx.fillStyle = "#4a4a52";
+      ctx.beginPath(); ctx.moveTo(-4, -3); ctx.lineTo(-7, -5); ctx.lineTo(-2, -3); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4, 3); ctx.lineTo(-7, 5); ctx.lineTo(-2, 3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else {
+      // Default core (bazooka, grenade, artillery)
+      ctx.save();
+      ctx.shadowColor = w2.color;
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(p.x, p.y, w2.id === "grenade" ? 5 : 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
   }
+
 
   // Explosions
   for (const e of state.explosions) {
