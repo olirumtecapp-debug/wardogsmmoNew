@@ -175,27 +175,25 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   const now = performance.now();
   const dt = 1 / 60;
 
-  // Sky gradient — dusk-tinted
+  // Sky gradient from scenario
+  const sc = getActiveScenario();
   const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, "#0b1220");
-  sky.addColorStop(0.45, "#1b2b3a");
-  sky.addColorStop(0.85, "#3a3222");
-  sky.addColorStop(1, "#1a1408");
+  sky.addColorStop(0, sc.sky[0]);
+  sky.addColorStop(0.45, sc.sky[1]);
+  sky.addColorStop(0.85, sc.sky[2]);
+  sky.addColorStop(1, sc.sky[3]);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // Key art as real scenic background (cover-fit, anchored so dogs sit behind terrain)
-  if (bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
+  // Key art only for battlefield scenario
+  if (sc.useKeyArtBg && bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
     const iw = bgIngameImg.naturalWidth;
     const ih = bgIngameImg.naturalHeight;
-    // cover then shrink 12% so key-art characters aren't cropped at the sides
     const scale = Math.max(w / iw, (h * 0.95) / ih) * 0.88;
     const dw = iw * scale;
     const dh = ih * scale;
-    // subtle wind parallax
     const px = Math.sin(now * 0.00008) * 15 + state.wind * 25;
     const dx = (w - dw) / 2 + px;
-    // push image up ~18% so the dogs sit low, partly hidden by the terrain
     const dy = -dh * 0.18;
 
     ctx.save();
@@ -203,7 +201,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.drawImage(bgIngameImg, dx, dy, dw, dh);
     ctx.restore();
 
-    // Vertical fade mask — full opacity up top, fading to transparent near horizon
     const fade = ctx.createLinearGradient(0, 0, 0, h);
     fade.addColorStop(0, "rgba(11,18,32,0)");
     fade.addColorStop(0.55, "rgba(11,18,32,0)");
@@ -212,7 +209,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.fillStyle = fade;
     ctx.fillRect(0, 0, w, h);
 
-    // Edge vignette for focus
     const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
     vg.addColorStop(0, "rgba(0,0,0,0)");
     vg.addColorStop(1, "rgba(0,0,0,0.55)");
