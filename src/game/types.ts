@@ -10,6 +10,7 @@ export interface Weapon {
   kind: "ballistic" | "cluster";
   affectedByWind: boolean;
   color: string;
+  accent?: string; // secondary/highlight color for FX
   gravityScale: number;
   fuse?: number; // seconds until auto-explode (grenade)
 }
