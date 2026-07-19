@@ -40,28 +40,32 @@ function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col">
-      <div className="absolute inset-0 -z-10">
-        <MenuBackdrop />
-      </div>
+      {/* Key art background — primary layer */}
       <div
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-30"
         style={{
           backgroundImage: `url(${heroImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center 35%",
-          opacity: 0.95,
+          backgroundPosition: "center 30%",
+          backgroundColor: "#0b0f16",
         }}
         aria-hidden
       />
+      {/* Animated particles/projectiles above the art but transparent */}
+      <div className="absolute inset-0 -z-20 opacity-60 mix-blend-screen pointer-events-none">
+        <MenuBackdrop />
+      </div>
+      {/* Subtle darkening only at the very bottom for text legibility */}
       <div
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, rgba(8,10,14,0.10) 0%, rgba(8,10,14,0.55) 55%, rgba(8,10,14,0.95) 100%)",
+            "linear-gradient(180deg, rgba(8,10,14,0) 0%, rgba(8,10,14,0) 45%, rgba(8,10,14,0.55) 78%, rgba(8,10,14,0.92) 100%)",
         }}
         aria-hidden
       />
-      <div className="absolute inset-0 -z-10 hero-vignette" aria-hidden />
+      <div className="absolute inset-0 -z-10 hero-vignette pointer-events-none" aria-hidden />
+
 
       <header className="p-5 sm:p-8 flex items-center justify-between relative">
         <div className="flex items-center gap-3">
