@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SkinProvider } from "../game/skinContext";
+
 
 function NotFoundComponent() {
   return (
@@ -96,7 +98,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <SkinProvider>
+        <Outlet />
+      </SkinProvider>
     </QueryClientProvider>
   );
 }
+
