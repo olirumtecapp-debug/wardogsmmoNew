@@ -118,69 +118,13 @@ export function fire(state: GameState) {
   const muzzleX = dog.x + dir * 18;
   const muzzleY = dog.y - 6;
 
-  if (weapon.kind === "hitscan") {
-    // Ray march up to 2000px
-    const step = 4;
-    const range = 2400;
-    let x = muzzleX, y = muzzleY;
-    const dx = Math.cos(rad) * dir, dy = -Math.sin(rad);
-    let hitX = x, hitY = y;
-    let hitDog: Dog | null = null;
-    for (let d = 0; d < range; d += step) {
-      x += dx * step; y += dy * step;
-      if (x < 0 || x >= state.width || y >= state.height) break;
-      // Check dog hit
-      for (const other of state.dogs) {
-        if (other === dog || other.hp <= 0) continue;
-        const ex = x - other.x, ey = y - (other.y - 8);
-        if (ex * ex + ey * ey < 220) { hitDog = other; hitX = x; hitY = y; break; }
-      }
-      if (hitDog) break;
-      if (terrainAt(state, x, y)) { hitX = x; hitY = y; break; }
-    }
-    // Immediate visual: create a small explosion at hit
-    spawnExplosion(state, hitX, hitY, weapon.radius, weapon.color);
-    if (weapon.id === "ak47") {
-      // Burst: 4 additional pellets with spread
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => spawnHitscanBurst(state, dog, weapon.id), 90 * (i + 1));
-      }
-    }
-    applyExplosionDamage(state, hitX, hitY, weapon.radius, weapon.damage);
-    setTimeout(() => endTurn(state), 700);
-  } else {
-    const p: Projectile = {
-      x: muzzleX, y: muzzleY, vx, vy,
-      weapon: state.weapon, age: 0, ownerTeam: state.currentPlayer, trail: [],
-    };
-    state.projectiles.push(p);
-  }
+  const p: Projectile = {
+    x: muzzleX, y: muzzleY, vx, vy,
+    weapon: state.weapon, age: 0, ownerTeam: state.currentPlayer, trail: [],
+  };
+  state.projectiles.push(p);
 }
 
-function spawnHitscanBurst(state: GameState, dog: Dog, weaponId: WeaponId) {
-  const weapon = WEAPONS[weaponId];
-  const rad = (state.angle * Math.PI) / 180 + (Math.random() - 0.5) * 0.06;
-  const dir = dog.facing;
-  const step = 4;
-  const range = 2000;
-  const dx = Math.cos(rad) * dir, dy = -Math.sin(rad);
-  let x = dog.x + dir * 18, y = dog.y - 6;
-  let hitX = x, hitY = y;
-  for (let d = 0; d < range; d += step) {
-    x += dx * step; y += dy * step;
-    if (x < 0 || x >= state.width || y >= state.height) break;
-    let hitDog = false;
-    for (const other of state.dogs) {
-      if (other === dog || other.hp <= 0) continue;
-      const ex = x - other.x, ey = y - (other.y - 8);
-      if (ex * ex + ey * ey < 220) { hitX = x; hitY = y; hitDog = true; break; }
-    }
-    if (hitDog) break;
-    if (terrainAt(state, x, y)) { hitX = x; hitY = y; break; }
-  }
-  spawnExplosion(state, hitX, hitY, weapon.radius, weapon.color);
-  applyExplosionDamage(state, hitX, hitY, weapon.radius, weapon.damage);
-}
 
 function spawnExplosion(state: GameState, x: number, y: number, radius: number, color: string) {
   const particles: Explosion["particles"] = [];
