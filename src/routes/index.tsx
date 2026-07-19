@@ -18,6 +18,8 @@ export const Route = createFileRoute("/")({
 function Home() {
   const [mode, setMode] = useState<GameMode | null>(null);
   const [showOnlineNotice, setShowOnlineNotice] = useState(false);
+  const { pack } = useSkin();
+
 
   if (mode) {
     return (
@@ -128,23 +130,30 @@ function Home() {
             </div>
           )}
 
-          {/* Ranger vs Brutus dossiers */}
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto">
-            <DogDossier
-              name="Ranger"
-              subtitle="Pastor Alemão · Recon"
-              color="var(--team-green)"
-              traits={["Velocidade", "Foco", "Lealdade"]}
-              accent="#ff8a1a"
-            />
-            <DogDossier
-              name="Brutus"
-              subtitle="Bulldog · Assalto"
-              color="var(--team-red)"
-              traits={["Força", "Resistência", "Proteção"]}
-              accent="#6b7a44"
-            />
+          {/* Skin picker */}
+          <div className="mt-10 panel px-4 py-3 max-w-2xl mx-auto card-in">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="text-left">
+                <div className="stencil text-sm uppercase tracking-widest" style={{ color: "var(--accent)" }}>
+                  Paleta do pelotão
+                </div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                  {pack.description}
+                </div>
+              </div>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                {pack.label}
+              </span>
+            </div>
+            <SkinPicker />
           </div>
+
+          {/* Team dossiers — reactive to selected skin */}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto">
+            <DogDossier skin={pack.teams[0]} role={pack.teams[0].silhouette === "pointy" ? "Recon" : "Assalto"} />
+            <DogDossier skin={pack.teams[1]} role={pack.teams[1].silhouette === "pointy" ? "Recon" : "Assalto"} />
+          </div>
+
 
 
           <div className="mt-10 text-xs text-muted-foreground grid gap-1 max-w-md mx-auto">
@@ -195,12 +204,16 @@ function ModeCard({
   );
 }
 
-function DogDossier({
-  name, subtitle, color, traits, accent,
-}: { name: string; subtitle: string; color: string; traits: string[]; accent: string }) {
+function DogDossier({ skin, role }: { skin: TeamSkin; role: string }) {
+  const color = skin.teamColor;
+  const accent = skin.bodyBase;
+  const traits = skin.silhouette === "pointy"
+    ? ["Velocidade", "Foco", "Lealdade"]
+    : ["Força", "Resistência", "Proteção"];
+  const subtitle = `${skin.silhouette === "pointy" ? "Pastor" : "Bulldog"} · ${role}`;
   return (
     <div
-      className="panel p-4 flex items-center gap-3 card-in text-left"
+      className="panel p-4 flex items-center gap-3 card-in text-left transition-all"
       style={{ borderColor: color, boxShadow: `inset 0 0 0 1px ${color}55, 0 10px 30px -10px rgba(0,0,0,0.6)` }}
     >
       <div
@@ -216,8 +229,9 @@ function DogDossier({
         </svg>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="stencil text-xl leading-none" style={{ color }}>{name}</div>
+        <div className="stencil text-xl leading-none" style={{ color }}>{skin.name}</div>
         <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{subtitle}</div>
+
         <div className="flex flex-wrap gap-1 mt-2">
           {traits.map(t => (
             <span
