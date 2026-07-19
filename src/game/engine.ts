@@ -24,6 +24,7 @@ export function createGame(width: number, height: number, mode: GameMode, seed =
   return {
     width, height, terrain, dogs,
     projectiles: [], explosions: [],
+    floatingTexts: [], scorchMarks: [],
     currentPlayer: 0,
     wind: (rng() - 0.5) * 2,
     angle: 45, power: 60,
