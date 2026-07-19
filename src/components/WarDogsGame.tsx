@@ -244,7 +244,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
                     className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
                     style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
                   >
-                    <span className="weapon-icon text-base">{WEAPON_ICON[id]}</span>
+                    <span className="weapon-icon"><WeaponIcon id={id} className="w-6 h-6" /></span>
                     <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
                       {ammo === -1 ? "∞" : `×${ammo}`}
                     </span>
