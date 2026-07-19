@@ -360,9 +360,10 @@ export function WarDogsGame({ mode, onExit }: Props) {
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
           <div className="panel p-6 sm:p-8 text-center max-w-sm">
             <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
-            <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? "var(--team-green)" : s.winner === 1 ? "var(--team-red)" : undefined }}>
-              {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? "Ranger" : "Brutus"}`}
+            <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
+              {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
             </h2>
+
             <div className="flex gap-2 mt-6 justify-center">
               <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
               <button className="btn-hud" onClick={onExit}>Menu</button>
@@ -374,9 +375,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
   );
 }
 
-function MiniPlayer({ team, hp, active }: { team: "green" | "red"; hp: number; active: boolean }) {
-  const color = team === "green" ? "var(--team-green)" : "var(--team-red)";
-  const name = team === "green" ? "Ranger" : "Brutus";
+function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSkin; hp: number; active: boolean }) {
+  const color = skin.teamColor;
+  const name = skin.name;
   return (
     <div
       className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
@@ -391,6 +392,7 @@ function MiniPlayer({ team, hp, active }: { team: "green" | "red"; hp: number; a
     </div>
   );
 }
+
 
 function WindGauge({ wind }: { wind: number }) {
   const abs = Math.abs(wind);
