@@ -89,15 +89,15 @@
   transition: transform 80ms ease, background 120ms ease, border-color 120ms ease;
   user-select: none;
   touch-action: manipulation;
+  &:hover { background: color-mix(in oklch, var(--card) 70%, var(--primary)); }
+  &:active { transform: translateY(1px); }
 }
-@utility btn-hud:hover { background: color-mix(in oklch, var(--card) 70%, var(--primary)); }
-@utility btn-hud:active { transform: translateY(1px); }
 
 @utility btn-primary {
   background: var(--primary); color: var(--primary-foreground);
   border-color: color-mix(in oklch, var(--primary) 70%, black);
+  &:hover { background: color-mix(in oklch, var(--primary) 85%, white); }
 }
-@utility btn-primary:hover { background: color-mix(in oklch, var(--primary) 85%, white); }
 
 @utility btn-danger {
   background: var(--destructive); color: white;
