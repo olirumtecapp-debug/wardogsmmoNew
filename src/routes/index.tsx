@@ -44,15 +44,23 @@ function Home() {
       <div className="absolute inset-0 -z-10">
         <MenuBackdrop />
       </div>
-      {/* Hero photo overlay */}
+      {/* Hero key art */}
       <div
-        className="absolute inset-0 -z-10 opacity-80"
+        className="absolute inset-0 -z-10"
         style={{
           backgroundImage: `url(${heroImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center 40%",
-          maskImage: "radial-gradient(ellipse at 50% 45%, black 30%, transparent 85%)",
-          WebkitMaskImage: "radial-gradient(ellipse at 50% 45%, black 30%, transparent 85%)",
+          backgroundPosition: "center 35%",
+          opacity: 0.95,
+        }}
+        aria-hidden
+      />
+      {/* Bottom fade so content below reads clean */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(8,10,14,0.15) 0%, rgba(8,10,14,0.55) 55%, rgba(8,10,14,0.95) 100%)",
         }}
         aria-hidden
       />
