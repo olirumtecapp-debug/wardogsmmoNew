@@ -217,7 +217,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
                   <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
                 </div>
 
-                <div className="w-px h-8 bg-border/60" />
+                <div className="hud-divider" />
 
                 {/* Power */}
                 <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -307,17 +307,23 @@ function WindGauge({ wind }: { wind: number }) {
 }
 
 function HoldButton({ children, onHold, onRelease, dir }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1 }) {
+  const [held, setHeld] = useState(false);
+  const down = (e: React.PointerEvent) => { e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
+  const up = () => { setHeld(false); onRelease(); };
   return (
     <button
-      className="btn-hud !px-2 !py-1 !text-base leading-none min-w-[26px]"
-      onPointerDown={e => { e.preventDefault(); onHold(dir); }}
-      onPointerUp={onRelease}
-      onPointerLeave={onRelease}
-      onPointerCancel={onRelease}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[30px] ${held ? "hold-active" : ""}`}
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerLeave={up}
+      onPointerCancel={up}
     >
-      {children}
+      <span style={{ display: "inline-block", transform: held ? `translateX(${dir > 0 ? 2 : -2}px)` : "none", transition: "transform 120ms" }}>
+        {children}
+      </span>
     </button>
   );
 }
+
 
 export type { WeaponId };
