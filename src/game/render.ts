@@ -650,6 +650,29 @@ function drawDog(
   ctx.beginPath(); ctx.ellipse(0, 16, 24, 6, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
+  // Photo-based skin (Classic pack) — use key-art portrait for RANGER/BRUTUS
+  const photoImg = name === "RANGER" ? rangerImg : name === "BRUTUS" ? brutusImg : null;
+  if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
+    const injured = hp < 40;
+    const critical = hp < 20;
+    const bob = Math.sin(now * 0.004) * 0.9 + (injured ? Math.sin(now * 0.02) * 0.6 : 0);
+    ctx.save();
+    ctx.translate(0, bob);
+    ctx.scale(facing, 1);
+    // Size to match roughly the vector art footprint (~48px wide, ~50px tall)
+    const targetH = 54;
+    const ratio = photoImg.naturalWidth / photoImg.naturalHeight;
+    const targetW = targetH * ratio;
+    if (critical) {
+      ctx.filter = "brightness(0.85) saturate(0.7)";
+    }
+    ctx.drawImage(photoImg, -targetW / 2, -targetH + 16, targetW, targetH);
+    ctx.restore();
+    // aim line uses skin fallback for facing/etc — same as vector
+    return;
+  }
+
+
   if (hp <= 0) {
     ctx.save();
     ctx.globalAlpha = 0.85;
