@@ -3,13 +3,17 @@ import { useState } from "react";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
+import { SkinPicker } from "@/components/SkinPicker";
+import { useSkin } from "@/game/skinContext";
 import heroImg from "@/assets/hero-wardogs.jpg";
 import emblem from "@/assets/emblem-paw.png";
 import type { GameMode } from "@/game/types";
+import type { TeamSkin } from "@/game/skins";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
+
 
 function Home() {
   const [mode, setMode] = useState<GameMode | null>(null);
