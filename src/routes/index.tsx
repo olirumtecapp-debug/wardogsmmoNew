@@ -3,19 +3,18 @@ import { useState } from "react";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
-import { SkinPicker } from "@/components/SkinPicker";
-import { useSkin } from "@/game/skinContext";
+import { useScenario } from "@/game/scenarioContext";
+import { teamSkin, type TeamSkin } from "@/game/skins";
 import heroAsset from "@/assets/wardogs-bg-menu.jpg.asset.json";
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 import emblem from "@/assets/emblem-paw.png";
 const heroImg = heroAsset.url;
-const CLASSIC_PORTRAITS: Record<string, string> = {
+const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
   BRUTUS: brutusPortrait.url,
 };
 import type { GameMode } from "@/game/types";
-import type { TeamSkin } from "@/game/skins";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -25,8 +24,9 @@ export const Route = createFileRoute("/")({
 function Home() {
   const [mode, setMode] = useState<GameMode | null>(null);
   const [showOnlineNotice, setShowOnlineNotice] = useState(false);
-  const { pack } = useSkin();
-
+  const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
+  const teamA = teamSkin(0);
+  const teamB = teamSkin(1);
 
   if (mode) {
     return (
@@ -40,11 +40,9 @@ function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col">
-      {/* Animated canvas backdrop */}
       <div className="absolute inset-0 -z-10">
         <MenuBackdrop />
       </div>
-      {/* Hero key art */}
       <div
         className="absolute inset-0 -z-10"
         style={{
@@ -55,16 +53,14 @@ function Home() {
         }}
         aria-hidden
       />
-      {/* Bottom fade so content below reads clean */}
       <div
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, rgba(8,10,14,0.15) 0%, rgba(8,10,14,0.55) 55%, rgba(8,10,14,0.95) 100%)",
+            "linear-gradient(180deg, rgba(8,10,14,0.10) 0%, rgba(8,10,14,0.55) 55%, rgba(8,10,14,0.95) 100%)",
         }}
         aria-hidden
       />
-      {/* Vignette so text stays readable */}
       <div className="absolute inset-0 -z-10 hero-vignette" aria-hidden />
 
       <header className="p-5 sm:p-8 flex items-center justify-between relative">
@@ -74,12 +70,12 @@ function Home() {
             alt=""
             width={48}
             height={48}
-            className="w-11 h-11 sm:w-14 sm:h-14 float-slow drop-shadow-[0_0_18px_rgba(125,214,106,0.35)]"
+            className="w-11 h-11 sm:w-14 sm:h-14 float-slow drop-shadow-[0_0_18px_rgba(255,138,26,0.45)]"
           />
           <div>
             <div className="stencil text-xl sm:text-2xl leading-none tracking-wider">WarDogs</div>
             <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em]">
-              Artilharia canina
+              Artilharia canina · 2v1v1
             </div>
           </div>
         </div>
@@ -93,90 +89,109 @@ function Home() {
         <div className="max-w-3xl w-full text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full panel text-[10px] uppercase tracking-[0.3em] badge-live">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)]" />
-            Novo arsenal: RPG · Arco &amp; Flecha
+            Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <h1 className="stencil mt-5 text-6xl sm:text-8xl leading-[0.9] tracking-tight">
-            <span className="inline-block title-in-left glow-green" style={{ color: "var(--team-green)" }}>WAR</span>
-            <span className="inline-block title-in-right glow-red ml-2 sm:ml-4" style={{ color: "var(--team-red)" }}>DOGS</span>
+          <h1 className="stencil mt-5 text-6xl sm:text-8xl leading-[0.9] tracking-tight logo-metal">
+            <span className="inline-block title-in-left" style={{ color: "#ff8a1a" }}>WAR</span>
+            <span className="inline-block title-in-right ml-2 sm:ml-4" style={{ color: "#ff4838" }}>DOGS</span>
           </h1>
 
           <p className="mt-5 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
-            Cães marrentos de capacete militar. Bazuca, granada, RPG e arco &amp; flecha. Terreno destrutível.
+            Ranger &amp; Brutus. Bazuca, RPG, arco, granadas, cluster e air strike.
             <br className="hidden sm:block" />
-            Escolha o ângulo. Calcule o vento. Detone o adversário.
+            Escolha o cenário, calcule o vento, detone o adversário.
           </p>
 
           <div className="mt-10 grid gap-3 sm:grid-cols-3">
-            <ModeCard
-              title="vs IA"
-              subtitle="Contra o computador"
-              color="var(--team-green)"
-              delay={0}
-              icon={<TargetIcon />}
-              onClick={() => setMode("ai")}
-            />
-            <ModeCard
-              title="Hotseat"
-              subtitle="2 jogadores, mesmo aparelho"
-              color="var(--accent)"
-              delay={90}
-              icon={<VersusIcon />}
-              onClick={() => setMode("hotseat")}
-            />
-            <ModeCard
-              title="Online"
-              subtitle="Em breve"
-              color="var(--team-red)"
-              delay={180}
-              icon={<GlobeIcon />}
-              disabled
-              onClick={() => setShowOnlineNotice(true)}
-            />
+            <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={0} icon={<TargetIcon />} onClick={() => setMode("ai")} />
+            <ModeCard title="Hotseat" subtitle="2 jogadores, mesmo aparelho" color="var(--accent)" delay={90} icon={<VersusIcon />} onClick={() => setMode("hotseat")} />
+            <ModeCard title="Online" subtitle="Em breve" color="var(--team-red)" delay={180} icon={<GlobeIcon />} disabled onClick={() => setShowOnlineNotice(true)} />
           </div>
 
           {showOnlineNotice && (
             <div className="mt-6 panel p-4 text-sm text-left card-in">
               <div className="stencil text-xs uppercase text-warn mb-1">Multiplayer online</div>
               O modo online por código de sala exige infraestrutura WebSocket persistente (Durable Objects na Cloudflare).
-              O jogo base — física, terreno, IA e hotseat — já está funcionando. Peça pra ativar o online quando quiser que eu
-              provisione o backend WebSocket.
+              O jogo base — física, terreno, IA e hotseat — já está funcionando.
               <button className="btn-hud mt-3 text-xs" onClick={() => setShowOnlineNotice(false)}>Fechar</button>
             </div>
           )}
 
-          {/* Skin picker */}
-          <div className="mt-10 panel px-4 py-3 max-w-2xl mx-auto card-in">
+          {/* Cenário */}
+          <div className="mt-10 panel px-4 py-3 max-w-2xl mx-auto card-in text-left">
             <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="text-left">
-                <div className="stencil text-sm uppercase tracking-widest" style={{ color: "var(--accent)" }}>
-                  Paleta do pelotão
-                </div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                  {pack.description}
-                </div>
+              <div>
+                <div className="stencil text-sm uppercase tracking-widest" style={{ color: "var(--accent)" }}>Cenário</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{scenario.description}</div>
+              </div>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{scenario.label}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {scenarios.map(sc => {
+                const active = sc.id === scenario.id;
+                const grad = `linear-gradient(160deg, ${sc.sky[1]} 0%, ${sc.sky[2]} 100%)`;
+                return (
+                  <button
+                    key={sc.id}
+                    onClick={() => setScenario(sc.id)}
+                    className={`btn-hud p-2 flex flex-col items-center gap-1 ${active ? "is-selected" : ""}`}
+                    style={active ? { borderColor: sc.sky[2], boxShadow: `inset 0 0 0 1px ${sc.sky[2]}55, 0 0 18px ${sc.sky[2]}55` } : undefined}
+                    title={sc.description}
+                  >
+                    <span className="w-full h-8 rounded" style={{ background: grad, boxShadow: "inset 0 -6px 10px rgba(0,0,0,0.35)" }} />
+                    <span className="stencil text-[10px] uppercase tracking-widest">{sc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dificuldade IA */}
+          <div className="mt-4 panel px-4 py-3 max-w-2xl mx-auto card-in text-left">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div>
+                <div className="stencil text-sm uppercase tracking-widest" style={{ color: "var(--team-red)" }}>Dificuldade da IA</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Aplica ao modo vs IA</div>
               </div>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                {pack.label}
+                {difficulty === "recruit" ? "Recruta" : difficulty === "sergeant" ? "Sargento" : "General"}
               </span>
             </div>
-            <SkinPicker />
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { id: "recruit" as const, label: "Recruta", desc: "Aleatório e distraído" },
+                { id: "sergeant" as const, label: "Sargento", desc: "Simulação decente" },
+                { id: "general" as const, label: "General", desc: "Busca profunda, usa vento e todo arsenal" },
+              ]).map(d => {
+                const active = difficulty === d.id;
+                const color = d.id === "recruit" ? "var(--team-green)" : d.id === "sergeant" ? "var(--accent)" : "var(--team-red)";
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => setDifficulty(d.id)}
+                    className={`btn-hud p-2 flex flex-col items-start gap-1 ${active ? "is-selected" : ""}`}
+                    style={active ? { borderColor: color as string, boxShadow: `inset 0 0 0 1px ${color}, 0 0 14px ${color}` } : undefined}
+                  >
+                    <span className="stencil text-xs uppercase tracking-widest" style={{ color }}>{d.label}</span>
+                    <span className="text-[9px] text-muted-foreground leading-tight">{d.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Team dossiers — reactive to selected skin */}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto">
-            <DogDossier skin={pack.teams[0]} role={pack.teams[0].silhouette === "pointy" ? "Recon" : "Assalto"} />
-            <DogDossier skin={pack.teams[1]} role={pack.teams[1].silhouette === "pointy" ? "Recon" : "Assalto"} />
+            <DogDossier skin={teamA} role="Recon" />
+            <DogDossier skin={teamB} role="Assalto" />
           </div>
-
-
 
           <div className="mt-10 text-xs text-muted-foreground grid gap-1 max-w-md mx-auto">
             <div>
               <kbd className="px-1.5 py-0.5 bg-secondary rounded">← →</kbd> ângulo ·{" "}
               <kbd className="px-1.5 py-0.5 bg-secondary rounded">↑ ↓</kbd> força ·{" "}
               <kbd className="px-1.5 py-0.5 bg-secondary rounded">Espaço</kbd> atirar ·{" "}
-              <kbd className="px-1.5 py-0.5 bg-secondary rounded">1–5</kbd> arma
+              <kbd className="px-1.5 py-0.5 bg-secondary rounded">1–8</kbd> arma
             </div>
             <div>No celular: arraste a partir do cachorro pra mirar e solte pra atirar.</div>
           </div>
@@ -225,7 +240,7 @@ function DogDossier({ skin, role }: { skin: TeamSkin; role: string }) {
   const traits = skin.silhouette === "pointy"
     ? ["Velocidade", "Foco", "Lealdade"]
     : ["Força", "Resistência", "Proteção"];
-  const subtitle = `${skin.silhouette === "pointy" ? "Pastor" : "Bulldog"} · ${role}`;
+  const subtitle = `${skin.silhouette === "pointy" ? "Pastor Alemão" : "Bulldog"} · ${role}`;
   return (
     <div
       className="panel p-4 flex items-center gap-3 card-in text-left transition-all"
@@ -235,34 +250,16 @@ function DogDossier({ skin, role }: { skin: TeamSkin; role: string }) {
         className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
         style={{ background: `radial-gradient(circle at 30% 30%, ${accent}, #0e0e12)`, boxShadow: `0 0 18px ${color}55` }}
       >
-        {CLASSIC_PORTRAITS[skin.name] ? (
-          <img
-            src={CLASSIC_PORTRAITS[skin.name]}
-            alt={skin.name}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: "center 25%" }}
-          />
-        ) : (
-          <svg viewBox="0 0 32 32" width="34" height="34" fill="none">
-            <path d="M6 8 L10 3 L12 9 Z M26 8 L22 3 L20 9 Z" fill={color} opacity="0.9" />
-            <path d="M8 22 c 0 -8 6 -12 8 -12 s 8 4 8 12 c 0 4 -3 6 -8 6 s -8 -2 -8 -6z" fill={color} />
-            <circle cx="12" cy="18" r="1.6" fill="#0a0a0e" />
-            <circle cx="20" cy="18" r="1.6" fill="#0a0a0e" />
-            <path d="M14 24 q 2 2 4 0" stroke="#0a0a0e" strokeWidth="1.4" fill="none" strokeLinecap="round" />
-          </svg>
+        {PORTRAITS[skin.name] && (
+          <img src={PORTRAITS[skin.name]} alt={skin.name} className="w-full h-full object-cover" style={{ objectPosition: "center 25%" }} />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="stencil text-xl leading-none" style={{ color }}>{skin.name}</div>
         <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{subtitle}</div>
-
         <div className="flex flex-wrap gap-1 mt-2">
           {traits.map(t => (
-            <span
-              key={t}
-              className="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-widest border"
-              style={{ borderColor: `${color}66`, color, background: "rgba(0,0,0,0.35)" }}
-            >
+            <span key={t} className="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-widest border" style={{ borderColor: `${color}66`, color, background: "rgba(0,0,0,0.35)" }}>
               {t}
             </span>
           ))}
@@ -287,7 +284,6 @@ function TargetIcon() {
 function VersusIcon() {
   return (
     <svg width="40" height="36" viewBox="0 0 40 36" fill="none">
-      {/* Two dog head silhouettes facing each other */}
       <g fill="currentColor">
         <path d="M2 22c0-5 4-9 9-9 2 0 3 .5 4 1l2-3 1 3c1 1 2 2 2 4v4c0 3-2 5-5 5H7c-3 0-5-2-5-5z" opacity="0.85" />
         <path d="M4 12l3-4 2 3z" />
@@ -307,8 +303,6 @@ function GlobeIcon() {
       <circle cx="18" cy="18" r="14" stroke="currentColor" strokeWidth="1.5" />
       <ellipse cx="18" cy="18" rx="6" ry="14" stroke="currentColor" strokeWidth="1.2" />
       <path d="M4 18h28M6 11h24M6 25h24" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="24" cy="11" r="3" fill="currentColor" opacity="0.9" />
-      <path d="M24 9v-2M22.5 10l-1.5-1M25.5 10l1.5-1" stroke="currentColor" strokeWidth="1" />
     </svg>
   );
 }
