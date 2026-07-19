@@ -110,9 +110,10 @@ export function fire(state: GameState) {
   const dog = state.dogs[state.currentPlayer];
   const rad = (state.angle * Math.PI) / 180;
   const dir = dog.facing;
-  const speedScale = 6;
-  const vx = Math.cos(rad) * state.power * 0.12 * weapon.speed * dir * 0.06 * speedScale;
-  const vy = -Math.sin(rad) * state.power * 0.12 * weapon.speed * 0.06 * speedScale;
+  // Worms-style muzzle velocity: power (10..100) * weapon.speed * 0.6
+  const v = state.power * weapon.speed * 0.6;
+  const vx = Math.cos(rad) * v * dir;
+  const vy = -Math.sin(rad) * v;
   const muzzleX = dog.x + dir * 18;
   const muzzleY = dog.y - 6;
 
