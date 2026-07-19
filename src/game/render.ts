@@ -1,15 +1,12 @@
 import type { GameState } from "./types";
 import { WEAPONS } from "./weapons";
 
-const SKY_TOP = "#3a4a2a";
-const SKY_BOTTOM = "#1a2410";
-const GRASS_TOP = "#6b8e3d";
-const GRASS_DARK = "#3e5622";
-const DIRT = "#3a2818";
-
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
 let lastTerrainRef: Uint8Array | null = null;
+
+// Twinkling stars, persistent between renders
+let stars: { x: number; y: number; r: number; p: number }[] | null = null;
 
 export function markTerrainDirty() { terrainDirty = true; }
 
@@ -28,25 +25,50 @@ function ensureTerrainCanvas(state: GameState) {
     const tctx = terrainCanvas.getContext("2d")!;
     const img = tctx.createImageData(state.width, state.height);
     const t = state.terrain;
-    for (let y = 0; y < state.height; y++) {
-      for (let x = 0; x < state.width; x++) {
-        const i = y * state.width + x;
+    const w = state.width, h = state.height;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
         const j = i * 4;
         if (t[i]) {
-          // grass surface if air above
-          const above = y > 0 && !t[i - state.width];
-          const nearSurface = above || (y > 1 && !t[i - state.width * 2]);
+          const above = y > 0 && !t[i - w];
+          const near1 = !above && y > 1 && !t[i - w * 2];
+          const near2 = !above && !near1 && y > 3 && !t[i - w * 4];
+          // Depth for stratification (0..1 top->bottom of terrain column-wise not needed, use y)
+          const depthT = Math.min(1, (y - Math.max(0, y - 40)) / 40); // local darkening
+          const n = ((x * 92837 + y * 12971) % 30) - 15; // noise -15..14
+
+          let r: number, g: number, b: number;
           if (above) {
-            img.data[j] = 0x8f; img.data[j + 1] = 0xc5; img.data[j + 2] = 0x4a;
-          } else if (nearSurface) {
-            img.data[j] = 0x6b; img.data[j + 1] = 0x8e; img.data[j + 2] = 0x3d;
-          } else if (y > 3 && !t[i - state.width * 4]) {
-            img.data[j] = 0x54; img.data[j + 1] = 0x6a; img.data[j + 2] = 0x2d;
+            // Grass rim highlight
+            r = 0x9c; g = 0xd1; b = 0x54;
+          } else if (near1) {
+            r = 0x74; g = 0x9c; b = 0x3d;
+          } else if (near2) {
+            r = 0x56; g = 0x72; b = 0x2d;
+          } else if (y > h * 0.72) {
+            // Deep rock stratum
+            const nn = n >> 1;
+            r = 0x2a + nn; g = 0x24 + nn; b = 0x22 + nn;
           } else {
-            // dirt with noise
-            const n = ((x * 928371 + y * 12971) % 25);
-            img.data[j] = 0x3a + n; img.data[j + 1] = 0x28 + (n >> 1); img.data[j + 2] = 0x18;
+            // Dirt with noise + slight depth darkening
+            r = 0x46 + (n >> 1); g = 0x2f + (n >> 2); b = 0x1e + (n >> 2);
+            r = Math.max(0, r - Math.floor(depthT * 6));
+            g = Math.max(0, g - Math.floor(depthT * 6));
           }
+
+          // Crater edge shadow: darken pixels near a destroyed neighbor at any diagonal
+          if (!above && (
+            (x > 0 && !t[i - 1]) ||
+            (x < w - 1 && !t[i + 1]) ||
+            (y > 0 && !t[i - w])
+          )) {
+            r = Math.max(0, r - 22);
+            g = Math.max(0, g - 22);
+            b = Math.max(0, b - 22);
+          }
+
+          img.data[j] = r; img.data[j + 1] = g; img.data[j + 2] = b;
           img.data[j + 3] = 0xff;
         } else {
           img.data[j + 3] = 0;
@@ -59,68 +81,148 @@ function ensureTerrainCanvas(state: GameState) {
   return terrainCanvas;
 }
 
+function ensureStars(w: number, h: number, seed: number) {
+  if (stars && stars.length && stars[0].x < w && stars[0].y < h) return stars;
+  stars = [];
+  let s = seed || 1;
+  const rand = () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+  const count = Math.floor((w * h) / 12000);
+  for (let i = 0; i < count; i++) {
+    stars.push({ x: rand() * w, y: rand() * h * 0.55, r: 0.4 + rand() * 1.2, p: rand() * Math.PI * 2 });
+  }
+  return stars;
+}
+
 export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   const { width: w, height: h } = state;
+  const now = performance.now();
 
-  // Sky gradient
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, SKY_TOP);
-  grad.addColorStop(1, SKY_BOTTOM);
-  ctx.fillStyle = grad;
+  // Sky gradient — dusk-tinted
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, "#0b1220");
+  sky.addColorStop(0.45, "#1b2b3a");
+  sky.addColorStop(0.85, "#3a3222");
+  sky.addColorStop(1, "#1a1408");
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // Distant mountains
-  ctx.fillStyle = "#2a3820";
+  // Sun glow
+  const sunX = w * 0.72, sunY = h * 0.55;
+  const sunG = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.55);
+  sunG.addColorStop(0, "rgba(255,180,90,0.35)");
+  sunG.addColorStop(0.4, "rgba(255,140,60,0.12)");
+  sunG.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = sunG;
+  ctx.fillRect(0, 0, w, h);
+
+  // Stars
+  const st = ensureStars(w, h, state.seed);
+  ctx.save();
+  for (const s of st) {
+    const tw = 0.5 + 0.5 * Math.sin(now * 0.002 + s.p);
+    ctx.globalAlpha = 0.4 * tw + 0.15;
+    ctx.fillStyle = "#e6f0ff";
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  // Distant mountains (parallax back)
+  ctx.fillStyle = "#20293a";
   ctx.beginPath();
-  ctx.moveTo(0, h * 0.7);
-  for (let x = 0; x <= w; x += 40) {
-    ctx.lineTo(x, h * 0.7 - Math.sin(x * 0.008 + state.seed * 0.001) * 40 - 20);
+  ctx.moveTo(0, h * 0.66);
+  for (let x = 0; x <= w; x += 30) {
+    ctx.lineTo(x, h * 0.66 - Math.sin(x * 0.006 + state.seed * 0.001) * 55 - 20);
   }
   ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+
+  // Mid mountains
+  ctx.fillStyle = "#182234";
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.74);
+  for (let x = 0; x <= w; x += 20) {
+    ctx.lineTo(x, h * 0.74 - Math.sin(x * 0.011 + state.seed * 0.002 + 1.3) * 40 - 12);
+  }
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+
+  // Ground haze
+  const haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
+  haze.addColorStop(0, "rgba(60,50,30,0)");
+  haze.addColorStop(1, "rgba(60,50,30,0.4)");
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, h * 0.6, w, h * 0.4);
 
   // Terrain
   const tc = ensureTerrainCanvas(state);
   ctx.drawImage(tc, 0, 0);
 
   // Dogs
-  for (const dog of state.dogs) {
-    drawDog(ctx, dog.x, dog.y, dog.team === 0 ? "green" : "red", dog.facing, dog.hp);
-    // HP bar above
-    drawHpBar(ctx, dog.x, dog.y - 32, dog.hp, dog.team === 0 ? "green" : "red");
+  for (let i = 0; i < state.dogs.length; i++) {
+    const dog = state.dogs[i];
+    const active = state.phase === "aiming" && state.currentPlayer === i && state.winner === null;
+    drawDog(ctx, dog.x, dog.y, dog.team === 0 ? "green" : "red", dog.facing, dog.hp, now, active, state.angle);
+    drawHpBar(ctx, dog.x, dog.y - 44, dog.hp, dog.team === 0 ? "green" : "red");
+    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 58, now, dog.team === 0 ? "green" : "red");
   }
 
-  // Aim indicator for current player
+  // Aim indicator
   if (state.phase === "aiming" && state.winner === null) {
     const dog = state.dogs[state.currentPlayer];
-    if (dog.hp > 0) drawAim(ctx, dog, state.angle, state.power, state.wind, state.weapon);
+    if (dog.hp > 0) drawAim(ctx, dog, state.angle, state.power, state.wind, state.weapon, now);
   }
 
   // Projectiles
   for (const p of state.projectiles) {
     const w2 = WEAPONS[p.weapon];
-    ctx.strokeStyle = w2.color + "88";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
+    // Glow trail
+    ctx.save();
     for (let i = 0; i < p.trail.length; i++) {
       const [tx, ty] = p.trail[i];
-      if (i === 0) ctx.moveTo(tx, ty); else ctx.lineTo(tx, ty);
+      const a = i / p.trail.length;
+      ctx.globalAlpha = a * 0.7;
+      ctx.fillStyle = w2.color;
+      ctx.beginPath(); ctx.arc(tx, ty, 1 + a * 2.5, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.stroke();
-    ctx.fillStyle = w2.color;
-    ctx.beginPath(); ctx.arc(p.x, p.y, w2.id === "grenade" ? 5 : 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // Core
+    ctx.save();
+    ctx.shadowColor = w2.color;
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(p.x, p.y, w2.id === "grenade" ? 5 : 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
 
   // Explosions
   for (const e of state.explosions) {
     const t = e.age / e.maxAge;
     if (t < 1) {
-      const r = e.radius * (0.4 + t * 0.9);
+      const r = e.radius * (0.4 + t * 1.1);
+      // Shockwave ring
+      if (t < 0.4) {
+        ctx.save();
+        ctx.globalAlpha = 1 - t / 0.4;
+        ctx.strokeStyle = "#fff8d8";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(e.x, e.y, r * 1.2, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+      // Fire core
       const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, r);
-      g.addColorStop(0, "rgba(255,240,180,0.95)");
-      g.addColorStop(0.4, "rgba(255,140,40,0.7)");
-      g.addColorStop(1, "rgba(80,20,10,0)");
+      g.addColorStop(0, "rgba(255,250,220,0.98)");
+      g.addColorStop(0.35, "rgba(255,150,50,0.85)");
+      g.addColorStop(0.7, "rgba(200,60,20,0.55)");
+      g.addColorStop(1, "rgba(30,10,5,0)");
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(e.x, e.y, r, 0, Math.PI * 2); ctx.fill();
+      // Smoke halo
+      const s = ctx.createRadialGradient(e.x, e.y - r * 0.3, r * 0.3, e.x, e.y - r * 0.3, r * 1.6);
+      s.addColorStop(0, `rgba(60,50,45,${0.4 * (1 - t)})`);
+      s.addColorStop(1, "rgba(60,50,45,0)");
+      ctx.fillStyle = s;
+      ctx.beginPath(); ctx.arc(e.x, e.y - r * 0.3, r * 1.6, 0, Math.PI * 2); ctx.fill();
     }
     for (const pt of e.particles) {
       ctx.globalAlpha = Math.max(0, Math.min(1, pt.life));
@@ -131,79 +233,179 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   }
 }
 
-function drawDog(ctx: CanvasRenderingContext2D, x: number, y: number, color: "green" | "red", facing: 1 | -1, hp: number) {
+function drawDog(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number,
+  color: "green" | "red",
+  facing: 1 | -1,
+  hp: number,
+  now: number,
+  active: boolean,
+  angle: number,
+) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(facing, 1);
 
-  const bodyColor = color === "green" ? "#8b6f3a" : "#7a5a3a";
-  const bodyDark = color === "green" ? "#5f4a20" : "#513a20";
-  const teamColor = color === "green" ? "#7fbf3f" : "#e0403a";
+  const bodyLight = color === "green" ? "#a4855a" : "#9a6f52";
+  const bodyBase = color === "green" ? "#7d6238" : "#78503a";
+  const bodyDark = color === "green" ? "#4a3820" : "#4a2e20";
+  const teamColor = color === "green" ? "#7dd66a" : "#ff5148";
+  const teamDark = color === "green" ? "#3f7a2c" : "#a02824";
 
   if (hp <= 0) {
-    // Fallen
+    ctx.rotate(Math.PI / 2 * facing * 0.9);
+    ctx.globalAlpha = 0.7;
     ctx.fillStyle = bodyDark;
-    ctx.fillRect(-14, -4, 28, 8);
+    roundRect(ctx, -14, -6, 28, 12, 6); ctx.fill();
     ctx.fillStyle = "#000";
-    ctx.font = "12px system-ui";
-    ctx.fillText("X_X", -8, -8);
+    ctx.font = "bold 11px Chakra Petch, sans-serif";
+    ctx.fillText("X_X", -8, -10);
     ctx.restore();
     return;
   }
 
-  // Body (rounded rect)
-  ctx.fillStyle = bodyColor;
-  roundRect(ctx, -14, -14, 28, 20, 8); ctx.fill();
-  // Belly shadow
-  ctx.fillStyle = bodyDark;
-  roundRect(ctx, -14, -4, 28, 10, 5); ctx.fill();
+  // Idle breathing bob
+  const bob = Math.sin(now * 0.004) * 0.9;
+  ctx.translate(0, bob);
 
-  // Legs
-  ctx.fillStyle = bodyDark;
-  ctx.fillRect(-11, 4, 5, 6);
-  ctx.fillRect(6, 4, 5, 6);
+  ctx.scale(facing, 1);
 
-  // Tail
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath(); ctx.moveTo(-14, -8); ctx.quadraticCurveTo(-22, -14, -18, -20); ctx.lineTo(-14, -14); ctx.closePath(); ctx.fill();
+  // Ground shadow
+  ctx.save();
+  ctx.scale(1 / facing, 1);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath(); ctx.ellipse(0, 12, 20, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Tail (wagging when active)
+  const wag = active ? Math.sin(now * 0.012) * 0.25 : 0;
+  ctx.save();
+  ctx.translate(-13, -10);
+  ctx.rotate(-0.5 + wag);
+  ctx.fillStyle = bodyBase;
+  roundRect(ctx, -10, -3, 12, 5, 2.5); ctx.fill();
+  ctx.fillStyle = bodyDark;
+  ctx.beginPath(); ctx.arc(-10, -0.5, 2.8, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Back legs
+  ctx.fillStyle = bodyDark;
+  roundRect(ctx, -10, 4, 6, 8, 2); ctx.fill();
+  roundRect(ctx, 4, 4, 6, 8, 2); ctx.fill();
+
+  // Body with gradient
+  const bodyG = ctx.createLinearGradient(0, -14, 0, 8);
+  bodyG.addColorStop(0, bodyLight);
+  bodyG.addColorStop(1, bodyDark);
+  ctx.fillStyle = bodyG;
+  roundRect(ctx, -14, -14, 28, 22, 10); ctx.fill();
+
+  // Tactical vest
+  ctx.fillStyle = teamDark;
+  roundRect(ctx, -12, -6, 24, 10, 4); ctx.fill();
+  // Vest pockets
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(-8, -2, 5, 5);
+  ctx.fillRect(-1, -2, 5, 5);
+  ctx.fillRect(6, -2, 4, 5);
+  // Vest team stripe
+  ctx.fillStyle = teamColor;
+  ctx.fillRect(-12, -6, 24, 1.5);
 
   // Head
-  ctx.fillStyle = bodyColor;
-  roundRect(ctx, 6, -22, 18, 16, 6); ctx.fill();
+  ctx.save();
+  ctx.translate(10, -14);
   // Snout
+  ctx.fillStyle = bodyBase;
+  roundRect(ctx, 4, -2, 12, 9, 4); ctx.fill();
   ctx.fillStyle = bodyDark;
-  roundRect(ctx, 18, -12, 8, 6, 3); ctx.fill();
-  // Nose
-  ctx.fillStyle = "#111";
-  ctx.beginPath(); ctx.arc(25, -10, 1.8, 0, Math.PI * 2); ctx.fill();
-  // Eye (grumpy)
-  ctx.strokeStyle = "#111"; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(13, -16); ctx.lineTo(18, -14); ctx.stroke();
-  ctx.fillStyle = "#111";
-  ctx.beginPath(); ctx.arc(16, -14.5, 1.4, 0, Math.PI * 2); ctx.fill();
-  // Eyebrow (angry)
-  ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(11, -19); ctx.lineTo(19, -17); ctx.stroke();
+  ctx.beginPath(); ctx.arc(15, 0, 2, 0, Math.PI * 2); ctx.fill();
+  // Head main
+  const headG = ctx.createLinearGradient(0, -10, 0, 8);
+  headG.addColorStop(0, bodyLight);
+  headG.addColorStop(1, bodyBase);
+  ctx.fillStyle = headG;
+  roundRect(ctx, -4, -10, 16, 16, 7); ctx.fill();
+
+  // Ear (folded)
+  ctx.fillStyle = bodyDark;
+  ctx.beginPath();
+  ctx.moveTo(-2, -10); ctx.quadraticCurveTo(-6, -6, -2, -2); ctx.quadraticCurveTo(2, -6, 2, -10); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath(); ctx.moveTo(-1, -8); ctx.quadraticCurveTo(-3, -5, -1, -3); ctx.closePath(); ctx.fill();
+
+  // Tactical goggles
+  const goggleG = ctx.createLinearGradient(0, -4, 0, 2);
+  goggleG.addColorStop(0, "#0a0a0a");
+  goggleG.addColorStop(1, "#1a1a1a");
+  ctx.fillStyle = goggleG;
+  roundRect(ctx, 0, -4, 12, 4, 2); ctx.fill();
+  // Lens shine
+  ctx.fillStyle = "rgba(140,220,180,0.7)";
+  ctx.fillRect(2, -3.5, 3, 1);
+  ctx.fillRect(8, -3.5, 2, 1);
+  // Goggle strap
+  ctx.strokeStyle = bodyDark; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(-4, -2); ctx.lineTo(12, -2); ctx.stroke();
 
   // Helmet
-  ctx.fillStyle = teamColor;
+  ctx.fillStyle = teamDark;
   ctx.beginPath();
-  ctx.ellipse(15, -24, 13, 7, 0, Math.PI, Math.PI * 2);
+  ctx.ellipse(4, -10, 12, 7, 0, Math.PI, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = color === "green" ? "#5a8a2a" : "#a02020";
-  ctx.fillRect(2, -24, 26, 2);
-  // Helmet strap
-  ctx.strokeStyle = "#2a1e10"; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.moveTo(6, -22); ctx.lineTo(9, -14); ctx.stroke();
-  // Star on helmet
-  ctx.fillStyle = "#fff";
-  drawStar(ctx, 15, -26, 3, 5);
-
-  // Ear
-  ctx.fillStyle = bodyDark;
+  // Helmet highlight
+  const helmG = ctx.createLinearGradient(0, -17, 0, -8);
+  helmG.addColorStop(0, teamColor);
+  helmG.addColorStop(1, teamDark);
+  ctx.fillStyle = helmG;
   ctx.beginPath();
-  ctx.moveTo(8, -20); ctx.lineTo(4, -12); ctx.lineTo(10, -14); ctx.closePath(); ctx.fill();
+  ctx.ellipse(4, -10, 11, 6, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  // Helmet rim
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.fillRect(-8, -10, 24, 1.5);
+  // Star
+  ctx.fillStyle = "#fff";
+  drawStar(ctx, 4, -13, 2.4, 5);
 
+  ctx.restore();
+
+  // Weapon (rotates by angle when active)
+  const gunAngle = active ? -angle * Math.PI / 180 : -0.3;
+  ctx.save();
+  ctx.translate(14, -6);
+  ctx.rotate(gunAngle);
+  // Stock
+  ctx.fillStyle = "#2a1e14";
+  roundRect(ctx, -2, -2, 6, 4, 1); ctx.fill();
+  // Barrel
+  const barrelG = ctx.createLinearGradient(0, -1.5, 0, 1.5);
+  barrelG.addColorStop(0, "#4a4a52");
+  barrelG.addColorStop(1, "#1a1a20");
+  ctx.fillStyle = barrelG;
+  roundRect(ctx, 4, -1.5, 14, 3, 1); ctx.fill();
+  // Muzzle
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(17, -1, 2, 2);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawActiveMarker(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, team: "green" | "red") {
+  const bob = Math.sin(now * 0.006) * 3;
+  const color = team === "green" ? "#7dd66a" : "#ff5148";
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(0, 6);
+  ctx.lineTo(-6, -4);
+  ctx.lineTo(6, -4);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
 }
 
@@ -230,37 +432,50 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, team: "green" | "red") {
-  const w = 40, h = 5;
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(x - w / 2 - 1, y - 1, w + 2, h + 2);
-  ctx.fillStyle = team === "green" ? "#7fbf3f" : "#e0403a";
-  ctx.fillRect(x - w / 2, y, (w * hp) / 100, h);
+  const w = 42, h = 5;
+  ctx.save();
+  // Backdrop
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  roundRect(ctx, x - w / 2 - 2, y - 2, w + 4, h + 4, 3); ctx.fill();
+  // Fill
+  const color = team === "green" ? "#7dd66a" : "#ff5148";
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, color);
+  g.addColorStop(1, team === "green" ? "#3f7a2c" : "#a02824");
+  ctx.fillStyle = g;
+  roundRect(ctx, x - w / 2, y, (w * hp) / 100, h, 2); ctx.fill();
+  // Value
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 10px Rajdhani, sans-serif";
+  ctx.font = "bold 10px Chakra Petch, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(`${hp}`, x, y - 3);
+  ctx.shadowColor = "rgba(0,0,0,0.8)";
+  ctx.shadowBlur = 3;
+  ctx.fillText(`${hp}`, x, y - 5);
   ctx.textAlign = "start";
+  ctx.restore();
 }
 
-function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; facing: 1 | -1 }, angle: number, power: number, _wind: number, weapon: string) {
+function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; facing: 1 | -1 }, angle: number, power: number, _wind: number, weapon: string, now: number) {
   const rad = (angle * Math.PI) / 180;
   const dir = dog.facing;
-  const len = 28 + (power / 100) * 40;
+  const len = 34 + (power / 100) * 60;
   const x0 = dog.x + dir * 18;
-  const y0 = dog.y - 6;
+  const y0 = dog.y - 10;
   const x1 = x0 + Math.cos(rad) * dir * len;
   const y1 = y0 - Math.sin(rad) * len;
-  // Dashed line
+  const color = WEAPONS[weapon as keyof typeof WEAPONS]?.color ?? "#fff";
   ctx.save();
-  ctx.strokeStyle = WEAPONS[weapon as keyof typeof WEAPONS]?.color ?? "#fff";
+  ctx.strokeStyle = color;
   ctx.lineWidth = 2;
-  ctx.setLineDash([4, 4]);
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
+  ctx.setLineDash([5, 5]);
+  ctx.lineDashOffset = -now * 0.03;
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
   ctx.setLineDash([]);
-  // Arrow head
-  ctx.fillStyle = ctx.strokeStyle;
-  ctx.beginPath();
-  ctx.arc(x1, y1, 4, 0, Math.PI * 2);
-  ctx.fill();
+  // Crosshair
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(x1, y1, 5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1 - 8, y1); ctx.lineTo(x1 + 8, y1); ctx.moveTo(x1, y1 - 8); ctx.lineTo(x1, y1 + 8); ctx.stroke();
   ctx.restore();
 }
