@@ -668,9 +668,10 @@ function drawDog(
     }
     ctx.drawImage(photoImg, -targetW / 2, -targetH + 16, targetW, targetH);
     ctx.restore();
-    // aim line uses skin fallback for facing/etc — same as vector
+    ctx.restore(); // matches the outer ctx.save() at top of drawDog
     return;
   }
+
 
 
   if (hp <= 0) {
