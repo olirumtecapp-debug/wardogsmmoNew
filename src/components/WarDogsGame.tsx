@@ -4,6 +4,9 @@ import { createGame, fire, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
+import { useSkin } from "@/game/skinContext";
+import { SkinPicker } from "@/components/SkinPicker";
+
 
 interface Props {
   mode: GameMode;
@@ -216,8 +219,12 @@ export function WarDogsGame({ mode, onExit }: Props) {
     };
   }, [mode]);
 
+  const { pack } = useSkin();
+  const [skinOpen, setSkinOpen] = useState(false);
   const s = stateRef.current;
-  const currentTeam = s?.currentPlayer === 0 ? "green" : "red";
+  const teamA = pack.teams[0];
+  const teamB = pack.teams[1];
+  const currentSkin = s?.currentPlayer === 0 ? teamA : teamB;
   const isAiTurn = mode === "ai" && s?.currentPlayer === 1;
   const hudVisible = s?.phase === "aiming" && s?.winner === null;
 
@@ -229,13 +236,13 @@ export function WarDogsGame({ mode, onExit }: Props) {
       {s && (
         <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-2 sm:p-3 gap-2 pointer-events-none">
           <div className="flex flex-col gap-1.5 pointer-events-auto">
-            <MiniPlayer team="green" hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
-            <MiniPlayer team="red" hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
+            <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
+            <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
           </div>
 
           <div className="panel px-3 py-1.5 pointer-events-auto text-center max-w-[45%]">
             <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-              {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentTeam === "green" ? "Ranger" : "Brutus"}`}
+              {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
             </div>
             <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
             {s.phase === "aiming" && s.winner === null && (
@@ -246,11 +253,27 @@ export function WarDogsGame({ mode, onExit }: Props) {
           </div>
 
           <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
-            <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setSkinOpen((v) => !v)}
+                className={`btn-hud text-[10px] px-2 py-1 ${skinOpen ? "is-selected" : ""}`}
+                title="Trocar paleta"
+              >
+                🎨 {pack.label}
+              </button>
+              <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+            </div>
             <WindGauge wind={s.wind} />
+            {skinOpen && (
+              <div className="panel p-2 mt-1 animate-fade-in">
+                <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1.5 text-right">Paleta</div>
+                <SkinPicker compact />
+              </div>
+            )}
           </div>
         </div>
       )}
+
 
       {/* Bottom HUD — floating, auto-hides during firing */}
       {s && s.phase !== "gameover" && (
