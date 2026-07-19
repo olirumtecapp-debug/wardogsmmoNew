@@ -181,6 +181,17 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
+  // Cinematic key-art atmosphere overlay (smoke + embers)
+  if (bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.globalCompositeOperation = "screen";
+    // subtle horizontal parallax based on wind
+    const px = Math.sin(now * 0.00008) * 20 + state.wind * 30;
+    ctx.drawImage(bgIngameImg, px - 20, 0, w + 40, h * 0.85);
+    ctx.restore();
+  }
+
   // Aurora shimmer (subtle horizontal band)
   const auroraY = h * 0.28;
   const auroraShift = Math.sin(now * 0.0004) * 40;
