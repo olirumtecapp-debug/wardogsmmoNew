@@ -179,7 +179,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
         <div className={`absolute bottom-0 left-0 right-0 p-2 sm:p-3 pointer-events-none ${hudVisible ? "hud-show" : "hud-hide"}`}>
           <div className="max-w-3xl mx-auto flex flex-col gap-2">
             {/* Weapons carousel */}
-            <div className="panel px-2 py-1.5 pointer-events-auto flex gap-1 overflow-x-auto justify-center scrollbar-none">
+            <div className="panel px-2 py-1.5 pointer-events-auto flex gap-1.5 overflow-x-auto justify-center scrollbar-none">
               {WEAPON_ORDER.map(id => {
                 const w = WEAPONS[id];
                 const ammo = s.ammo[id];
@@ -191,17 +191,18 @@ export function WarDogsGame({ mode, onExit }: Props) {
                     disabled={disabled || isAiTurn || s.phase !== "aiming"}
                     onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
                     title={w.name}
-                    className={`btn-hud !px-2 !py-1.5 flex-col leading-none min-w-[46px] ${active ? "btn-primary" : ""} ${disabled ? "opacity-30" : ""}`}
-                    style={active ? { borderColor: w.color } : undefined}
+                    className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
+                    style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
                   >
-                    <span className="text-base" style={{ filter: active ? "none" : "grayscale(0.3)" }}>{WEAPON_ICON[id]}</span>
-                    <span className="text-[8px] mt-0.5 opacity-80">
+                    <span className="weapon-icon text-base">{WEAPON_ICON[id]}</span>
+                    <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
                       {ammo === -1 ? "∞" : `×${ammo}`}
                     </span>
                   </button>
                 );
               })}
             </div>
+
 
             {/* Controls: single row with angle, power, fire */}
             <div className="flex items-stretch gap-2">
@@ -216,7 +217,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
                   <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
                 </div>
 
-                <div className="w-px h-8 bg-border/60" />
+                <div className="hud-divider" />
 
                 {/* Power */}
                 <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -306,17 +307,23 @@ function WindGauge({ wind }: { wind: number }) {
 }
 
 function HoldButton({ children, onHold, onRelease, dir }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1 }) {
+  const [held, setHeld] = useState(false);
+  const down = (e: React.PointerEvent) => { e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
+  const up = () => { setHeld(false); onRelease(); };
   return (
     <button
-      className="btn-hud !px-2 !py-1 !text-base leading-none min-w-[26px]"
-      onPointerDown={e => { e.preventDefault(); onHold(dir); }}
-      onPointerUp={onRelease}
-      onPointerLeave={onRelease}
-      onPointerCancel={onRelease}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[30px] ${held ? "hold-active" : ""}`}
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerLeave={up}
+      onPointerCancel={up}
     >
-      {children}
+      <span style={{ display: "inline-block", transform: held ? `translateX(${dir > 0 ? 2 : -2}px)` : "none", transition: "transform 120ms" }}>
+        {children}
+      </span>
     </button>
   );
 }
+
 
 export type { WeaponId };
