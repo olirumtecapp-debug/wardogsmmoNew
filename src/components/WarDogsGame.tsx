@@ -6,6 +6,13 @@ import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { useSkin } from "@/game/skinContext";
 import { SkinPicker } from "@/components/SkinPicker";
+import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
+import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
+
+const CLASSIC_PORTRAITS: Record<string, string> = {
+  RANGER: rangerPortrait.url,
+  BRUTUS: brutusPortrait.url,
+};
 
 
 interface Props {
