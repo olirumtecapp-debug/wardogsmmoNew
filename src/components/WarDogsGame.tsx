@@ -14,10 +14,11 @@ interface Props {
 const WEAPON_ICON: Record<WeaponId, string> = {
   bazooka: "🚀",
   grenade: "💣",
+  rpg: "🔥",
+  bow: "🏹",
   artillery: "💥",
-  revolver: "🔫",
-  ak47: "🎯",
 };
+
 
 export function WarDogsGame({ mode, onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
