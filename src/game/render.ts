@@ -1,6 +1,7 @@
 import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
 import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
+import { getActiveScenario } from "./scenarios";
 import bgIngameAsset from "@/assets/wardogs-bg-ingame.jpg.asset.json";
 import rangerPortraitAsset from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortraitAsset from "@/assets/wardogs-brutus.png.asset.json";
@@ -18,6 +19,7 @@ const brutusImg = typeof window !== "undefined" ? loadImg(brutusPortraitAsset.ur
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
 let lastTerrainRef: Uint8Array | null = null;
+let lastScenarioId: string | null = null;
 
 // Twinkling stars, persistent between renders
 let stars: { x: number; y: number; r: number; p: number }[] | null = null;
@@ -40,7 +42,16 @@ function ensureTerrainCanvas(state: GameState) {
     lastTerrainRef = state.terrain;
     terrainDirty = true;
   }
+  const scId = getActiveScenario().id;
+  if (lastScenarioId !== scId) {
+    lastScenarioId = scId;
+    terrainDirty = true;
+  }
   if (terrainDirty) {
+    const sc = getActiveScenario();
+    const [tR, tG, tB] = sc.terrainTop;
+    const [mR, mG, mB] = sc.terrainMid;
+    const [dR, dG, dB] = sc.terrainDeep;
     const tctx = terrainCanvas.getContext("2d")!;
     const img = tctx.createImageData(state.width, state.height);
     const t = state.terrain;
@@ -58,39 +69,36 @@ function ensureTerrainCanvas(state: GameState) {
 
           let r: number, g: number, b: number;
           if (above) {
-            // Grass rim highlight with slight variation
             const gn = ((x * 17 + y * 31) % 20) - 10;
-            r = 0x9c + (gn >> 2); g = 0xd1 + (gn >> 1); b = 0x54 + (gn >> 3);
+            r = tR + (gn >> 2); g = tG + (gn >> 1); b = tB + (gn >> 3);
           } else if (near1) {
-            r = 0x74; g = 0x9c; b = 0x3d;
+            r = mR; g = mG; b = mB;
           } else if (near2) {
-            r = 0x56; g = 0x72; b = 0x2d;
+            r = Math.round((mR + dR) / 2); g = Math.round((mG + dG) / 2); b = Math.round((mB + dB) / 2);
           } else if (y > h * 0.72) {
             const nn = n >> 1;
-            r = 0x2a + nn; g = 0x24 + nn; b = 0x22 + nn;
+            r = Math.max(0, dR - 20 + nn); g = Math.max(0, dG - 12 + nn); b = Math.max(0, dB - 4 + nn);
           } else {
-            r = 0x46 + (n >> 1); g = 0x2f + (n >> 2); b = 0x1e + (n >> 2);
+            r = dR + (n >> 1); g = dG + (n >> 2); b = dB + (n >> 2);
             r = Math.max(0, r - Math.floor(depthT * 6));
             g = Math.max(0, g - Math.floor(depthT * 6));
           }
 
-          // Crater edge shadow
           if (!above && (
             (x > 0 && !t[i - 1]) ||
             (x < w - 1 && !t[i + 1]) ||
             (y > 0 && !t[i - w])
           )) {
-            r = Math.max(0, r - 26);
-            g = Math.max(0, g - 26);
-            b = Math.max(0, b - 26);
+            r = Math.max(0, r - 26); g = Math.max(0, g - 26); b = Math.max(0, b - 26);
           }
 
-          // Scattered charred pebbles inside terrain
           if (!above && !near1 && ((x * 7 + y * 13) % 173 === 0)) {
             r = Math.max(0, r - 20); g = Math.max(0, g - 20); b = Math.max(0, b - 20);
           }
 
-          img.data[j] = r; img.data[j + 1] = g; img.data[j + 2] = b;
+          img.data[j] = Math.min(255, Math.max(0, r));
+          img.data[j + 1] = Math.min(255, Math.max(0, g));
+          img.data[j + 2] = Math.min(255, Math.max(0, b));
           img.data[j + 3] = 0xff;
         } else {
           img.data[j + 3] = 0;
@@ -101,7 +109,8 @@ function ensureTerrainCanvas(state: GameState) {
 
     // Draw individual grass tufts on top surface
     tctx.save();
-    tctx.strokeStyle = "#bfe066";
+    const sc2 = getActiveScenario();
+    tctx.strokeStyle = `rgb(${Math.min(255, sc2.terrainTop[0] + 30)}, ${Math.min(255, sc2.terrainTop[1] + 20)}, ${Math.min(255, sc2.terrainTop[2] + 20)})`;
     tctx.lineWidth = 1;
     tctx.globalAlpha = 0.9;
     for (let x = 0; x < w; x += 3) {
@@ -172,27 +181,25 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   const now = performance.now();
   const dt = 1 / 60;
 
-  // Sky gradient — dusk-tinted
+  // Sky gradient from scenario
+  const sc = getActiveScenario();
   const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, "#0b1220");
-  sky.addColorStop(0.45, "#1b2b3a");
-  sky.addColorStop(0.85, "#3a3222");
-  sky.addColorStop(1, "#1a1408");
+  sky.addColorStop(0, sc.sky[0]);
+  sky.addColorStop(0.45, sc.sky[1]);
+  sky.addColorStop(0.85, sc.sky[2]);
+  sky.addColorStop(1, sc.sky[3]);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // Key art as real scenic background (cover-fit, anchored so dogs sit behind terrain)
-  if (bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
+  // Key art only for battlefield scenario
+  if (sc.useKeyArtBg && bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
     const iw = bgIngameImg.naturalWidth;
     const ih = bgIngameImg.naturalHeight;
-    // cover then shrink 12% so key-art characters aren't cropped at the sides
     const scale = Math.max(w / iw, (h * 0.95) / ih) * 0.88;
     const dw = iw * scale;
     const dh = ih * scale;
-    // subtle wind parallax
     const px = Math.sin(now * 0.00008) * 15 + state.wind * 25;
     const dx = (w - dw) / 2 + px;
-    // push image up ~18% so the dogs sit low, partly hidden by the terrain
     const dy = -dh * 0.18;
 
     ctx.save();
@@ -200,7 +207,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.drawImage(bgIngameImg, dx, dy, dw, dh);
     ctx.restore();
 
-    // Vertical fade mask — full opacity up top, fading to transparent near horizon
     const fade = ctx.createLinearGradient(0, 0, 0, h);
     fade.addColorStop(0, "rgba(11,18,32,0)");
     fade.addColorStop(0.55, "rgba(11,18,32,0)");
@@ -209,7 +215,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.fillStyle = fade;
     ctx.fillRect(0, 0, w, h);
 
-    // Edge vignette for focus
     const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
     vg.addColorStop(0, "rgba(0,0,0,0)");
     vg.addColorStop(1, "rgba(0,0,0,0.55)");
@@ -297,7 +302,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.save();
   for (const p of dustParticles) {
     ctx.globalAlpha = p.alpha * Math.min(1, p.life);
-    ctx.fillStyle = "#c9b78a";
+    ctx.fillStyle = sc.particleColor;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
@@ -462,6 +467,45 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   }
   ctx.textAlign = "start";
   ctx.textBaseline = "alphabetic";
+
+  // Airstrike targeting marker (large red X on the ground)
+  if (state.airstrikeMarker) {
+    const m = state.airstrikeMarker;
+    const gy = surfaceYQuick(state, m.x);
+    const alpha = Math.min(1, m.life);
+    const pulse = 1 + Math.sin(now * 0.02) * 0.15;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(m.x, gy - 6);
+    ctx.strokeStyle = "#ff2a2a";
+    ctx.lineWidth = 3;
+    ctx.shadowColor = "#ff2a2a"; ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-14, -14); ctx.lineTo(14, 14);
+    ctx.moveTo(-14, 14); ctx.lineTo(14, -14);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Scenario global tint (arctic/desert/jungle)
+  if (sc.tint) {
+    ctx.save();
+    ctx.globalCompositeOperation = sc.tintBlend;
+    ctx.fillStyle = sc.tint;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+}
+
+function surfaceYQuick(state: GameState, x: number): number {
+  const xi = Math.max(0, Math.min(state.width - 1, Math.floor(x)));
+  for (let y = 0; y < state.height; y++) {
+    if (state.terrain[y * state.width + xi]) return y;
+  }
+  return state.height;
 }
 
 // ============ PROJECTILE DRAWERS ============

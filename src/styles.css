@@ -340,3 +340,8 @@
 @utility card-in { animation: card-in 500ms cubic-bezier(.2,.9,.3,1) both; }
 
 
+
+@utility logo-metal {
+  text-shadow: 0 2px 0 rgba(0,0,0,0.5), 0 6px 24px rgba(255,90,20,0.35);
+  filter: drop-shadow(0 4px 18px rgba(255,120,20,0.25));
+}

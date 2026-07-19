@@ -1,18 +1,26 @@
-export type WeaponId = "bazooka" | "grenade" | "rpg" | "bow" | "artillery";
+export type WeaponId =
+  | "bazooka"
+  | "grenade"
+  | "rpg"
+  | "bow"
+  | "artillery"
+  | "frag"
+  | "cluster"
+  | "airstrike";
 
 export interface Weapon {
   id: WeaponId;
   name: string;
   damage: number;
-  radius: number; // explosion radius (px)
-  ammo: number; // -1 = infinite
-  speed: number; // initial power multiplier
-  kind: "ballistic" | "cluster";
+  radius: number;
+  ammo: number;
+  speed: number;
+  kind: "ballistic" | "cluster" | "airstrike";
   affectedByWind: boolean;
   color: string;
-  accent?: string; // secondary/highlight color for FX
+  accent?: string;
   gravityScale: number;
-  fuse?: number; // seconds until auto-explode (grenade)
+  fuse?: number;
 }
 
 export interface Dog {
@@ -23,6 +31,8 @@ export interface Dog {
   team: 0 | 1;
   facing: 1 | -1;
   aliveTicks: number;
+  airborne?: boolean;
+  fallStartY?: number;
 }
 
 export interface Projectile {
@@ -34,6 +44,7 @@ export interface Projectile {
   age: number;
   ownerTeam: 0 | 1;
   trail: Array<[number, number]>;
+  isSub?: boolean;
 }
 
 export interface Explosion {
@@ -46,48 +57,36 @@ export interface Explosion {
 }
 
 export interface FloatingText {
-  id: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-  value: string;
-  color: string;
-  size: number;
+  id: number; x: number; y: number; vx: number; vy: number;
+  life: number; maxLife: number; value: string; color: string; size: number;
 }
 
 export interface ScorchMark {
-  x: number;
-  y: number;
-  radius: number;
-  life: number;
-  maxLife: number;
+  x: number; y: number; radius: number; life: number; maxLife: number;
 }
 
 export type GamePhase = "aiming" | "firing" | "resolving" | "gameover";
 export type GameMode = "ai" | "hotseat" | "online";
 
 export interface GameState {
-  width: number;
-  height: number;
-  terrain: Uint8Array; // 1 = solid, 0 = air
+  width: number; height: number;
+  terrain: Uint8Array;
   dogs: [Dog, Dog];
   projectiles: Projectile[];
   explosions: Explosion[];
   floatingTexts: FloatingText[];
   scorchMarks: ScorchMark[];
   currentPlayer: 0 | 1;
-  wind: number; // -1..1
-  angle: number; // degrees, 0 = right, 90 = up
-  power: number; // 10..100
+  wind: number;
+  angle: number;
+  power: number;
   weapon: WeaponId;
   ammo: Record<WeaponId, number>;
   phase: GamePhase;
   winner: 0 | 1 | null;
   message: string;
-  turnTimer: number; // seconds remaining
+  turnTimer: number;
   mode: GameMode;
   seed: number;
+  airstrikeMarker?: { x: number; life: number };
 }

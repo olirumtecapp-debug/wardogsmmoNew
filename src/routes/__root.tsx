@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SkinProvider } from "../game/skinContext";
+import { ScenarioProvider } from "../game/scenarioContext";
 
 
 function NotFoundComponent() {
@@ -60,7 +60,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" },
       { name: "theme-color", content: "#2a331f" },
       { title: "WarDogs — Artilharia Canina" },
-      { name: "description", content: "Jogo de artilharia por turnos estilo Worms. Cachorros marrentos com capacete militar duelam com bazuca, granada e AK. Jogue contra a IA, hotseat ou online." },
+      { name: "description", content: "Jogo de artilharia por turnos estilo Worms. Ranger e Brutus duelam com bazuca, RPG, arco, cluster e air strike em cenários destrutíveis." },
       { property: "og:title", content: "WarDogs — Artilharia Canina" },
       { property: "og:description", content: "Duelo de cachorros militares em terreno destrutível. Angle. Power. Fire." },
       { property: "og:type", content: "website" },
@@ -98,10 +98,9 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <SkinProvider>
+      <ScenarioProvider>
         <Outlet />
-      </SkinProvider>
+      </ScenarioProvider>
     </QueryClientProvider>
   );
 }
-

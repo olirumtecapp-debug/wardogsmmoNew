@@ -4,12 +4,12 @@ import { createGame, fire, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
-import { useSkin } from "@/game/skinContext";
-import { SkinPicker } from "@/components/SkinPicker";
+import { teamSkin } from "@/game/skins";
+import { useScenario } from "@/game/scenarioContext";
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 
-const CLASSIC_PORTRAITS: Record<string, string> = {
+const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
   BRUTUS: brutusPortrait.url,
 };
@@ -20,19 +20,13 @@ interface Props {
   onExit: () => void;
 }
 
-// Inline SVG icons per weapon — sticker-style with color gradients
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
   const cls = className ?? "w-7 h-7";
   switch (id) {
     case "bazooka":
       return (
         <svg viewBox="0 0 32 32" className={cls} fill="none">
-          <defs>
-            <linearGradient id="wi-bz" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#ffcf6b" />
-              <stop offset="1" stopColor="#ff5a0e" />
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="wi-bz" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffcf6b" /><stop offset="1" stopColor="#ff5a0e" /></linearGradient></defs>
           <path d="M3 17 L21 12 L28 13 L29 17 L28 21 L21 22 L3 18 Z" fill="url(#wi-bz)" stroke="#1a1108" strokeWidth="1.2" strokeLinejoin="round" />
           <path d="M8 13 L11 8 L15 10" stroke="#1a1108" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="26" cy="17" r="1.4" fill="#1a1108" />
@@ -42,45 +36,27 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
     case "grenade":
       return (
         <svg viewBox="0 0 32 32" className={cls} fill="none">
-          <defs>
-            <radialGradient id="wi-gr" cx="0.35" cy="0.3" r="0.8">
-              <stop offset="0" stopColor="#c3e07a" />
-              <stop offset="1" stopColor="#3d5220" />
-            </radialGradient>
-          </defs>
+          <defs><radialGradient id="wi-gr" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stopColor="#c3e07a" /><stop offset="1" stopColor="#3d5220" /></radialGradient></defs>
           <path d="M14 4 h4 v3 h-4z" fill="#8a8a8a" />
-          <path d="M20 4 a2.5 2.5 0 1 1 -0.01 0" stroke="#f4d02c" strokeWidth="1.4" fill="none" />
           <circle cx="16" cy="19" r="9" fill="url(#wi-gr)" stroke="#1a1108" strokeWidth="1.2" />
-          <path d="M7 19 h18 M16 10 v18 M9 12 l14 14 M23 12 l-14 14" stroke="#1a1108" strokeWidth="0.9" strokeOpacity="0.55" />
+          <path d="M7 19 h18 M16 10 v18" stroke="#1a1108" strokeWidth="0.9" strokeOpacity="0.55" />
           <circle cx="16" cy="10" r="1.2" fill="#f4d02c" />
         </svg>
       );
     case "rpg":
       return (
         <svg viewBox="0 0 32 32" className={cls} fill="none">
-          <defs>
-            <linearGradient id="wi-rp" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="#7ff0ff" />
-              <stop offset="0.5" stopColor="#2b7fff" />
-              <stop offset="1" stopColor="#0e2a80" />
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="wi-rp" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#7ff0ff" /><stop offset="0.5" stopColor="#2b7fff" /><stop offset="1" stopColor="#0e2a80" /></linearGradient></defs>
           <path d="M5 17 L21 13 L27 14 L29 16 L27 18 L21 19 L5 18 Z" fill="url(#wi-rp)" stroke="#0a1128" strokeWidth="1.2" strokeLinejoin="round" />
-          <path d="M5 17 L1 14 M5 18 L1 20 M22 11 L20 13 M22 23 L20 20" stroke="#0a1128" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M22 11 L20 13 M22 23 L20 20" stroke="#0a1128" strokeWidth="1.2" strokeLinecap="round" />
           <circle cx="24" cy="16" r="1.1" fill="#7ff0ff" />
         </svg>
       );
     case "bow":
       return (
         <svg viewBox="0 0 32 32" className={cls} fill="none">
-          <defs>
-            <linearGradient id="wi-bw" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#dfffb0" />
-              <stop offset="1" stopColor="#5a8a2e" />
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="wi-bw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#dfffb0" /><stop offset="1" stopColor="#5a8a2e" /></linearGradient></defs>
           <path d="M9 4 C 22 8, 22 24, 9 28" stroke="url(#wi-bw)" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-          <path d="M9 4 L9 28" stroke="#1a1108" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.6" />
           <path d="M4 16 L26 16" stroke="#c9b48a" strokeWidth="1.4" />
           <path d="M26 16 L21 13 L21 19 Z" fill="#e8e8ee" stroke="#1a1108" strokeWidth="0.8" />
           <path d="M4 16 L7 13 M4 16 L7 19" stroke="#ff4d9e" strokeWidth="1.4" strokeLinecap="round" />
@@ -89,22 +65,49 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
     case "artillery":
       return (
         <svg viewBox="0 0 32 32" className={cls} fill="none">
-          <defs>
-            <linearGradient id="wi-ar" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#ff8a95" />
-              <stop offset="1" stopColor="#8a1428" />
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="wi-ar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ff8a95" /><stop offset="1" stopColor="#8a1428" /></linearGradient></defs>
           <path d="M6 22 L14 22 L23 11 L27 11 L27 15 L18 26 L6 26 Z" fill="url(#wi-ar)" stroke="#1a0308" strokeWidth="1.2" strokeLinejoin="round" />
-          <circle cx="9" cy="26" r="2.4" fill="#1a1108" stroke="#3a3a42" strokeWidth="0.6" />
-          <circle cx="15" cy="26" r="2.4" fill="#1a1108" stroke="#3a3a42" strokeWidth="0.6" />
+          <circle cx="9" cy="26" r="2.4" fill="#1a1108" />
+          <circle cx="15" cy="26" r="2.4" fill="#1a1108" />
           <path d="M22 12 L28 6" stroke="#ffcc33" strokeWidth="1.6" strokeLinecap="round" />
           <circle cx="28" cy="6" r="1.3" fill="#ffcc33" />
         </svg>
       );
+    case "frag":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs><radialGradient id="wi-fg" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stopColor="#d3f27a" /><stop offset="1" stopColor="#2e4210" /></radialGradient></defs>
+          <path d="M13 3 h6 v3 h-6z" fill="#8a8a8a" />
+          <circle cx="16" cy="18" r="10" fill="url(#wi-fg)" stroke="#1a1108" strokeWidth="1.2" />
+          <path d="M8 18 h16 M16 10 v16" stroke="#1a1108" strokeWidth="0.8" opacity="0.6" />
+          <path d="M6 8 l3 -3 M23 5 l3 3" stroke="#ffdc4a" strokeWidth="1.4" strokeLinecap="round" />
+          <text x="16" y="21" textAnchor="middle" fontFamily="Black Ops One" fontSize="7" fill="#1a1108">F</text>
+        </svg>
+      );
+    case "cluster":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs><radialGradient id="wi-cl" cx="0.5" cy="0.35" r="0.7"><stop offset="0" stopColor="#ff9ec8" /><stop offset="1" stopColor="#8a184e" /></radialGradient></defs>
+          <circle cx="16" cy="16" r="7" fill="url(#wi-cl)" stroke="#1a0108" strokeWidth="1" />
+          <circle cx="5" cy="7" r="3" fill="url(#wi-cl)" stroke="#1a0108" strokeWidth="0.8" />
+          <circle cx="27" cy="6" r="3" fill="url(#wi-cl)" stroke="#1a0108" strokeWidth="0.8" />
+          <circle cx="6" cy="26" r="3" fill="url(#wi-cl)" stroke="#1a0108" strokeWidth="0.8" />
+          <circle cx="26" cy="26" r="3" fill="url(#wi-cl)" stroke="#1a0108" strokeWidth="0.8" />
+          <path d="M11 12 L7 9 M21 12 L25 9 M11 21 L8 24 M21 21 L24 24" stroke="#ffdc4a" strokeWidth="0.9" />
+        </svg>
+      );
+    case "airstrike":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs><linearGradient id="wi-as" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#ffe6a0" /><stop offset="1" stopColor="#ff2a2a" /></linearGradient></defs>
+          <path d="M2 12 L18 8 L28 10 L30 12 L28 14 L18 16 L2 14 Z" fill="url(#wi-as)" stroke="#1a0208" strokeWidth="1.1" strokeLinejoin="round" />
+          <path d="M12 10 L8 4 L16 8 M12 15 L8 21 L16 17" fill="#e94560" stroke="#1a0208" strokeWidth="0.7" strokeLinejoin="round" />
+          <circle cx="26" cy="12" r="1.1" fill="#fff" />
+          <path d="M4 22 L28 22 M6 26 L26 26" stroke="#ff2a2a" strokeWidth="1.2" strokeDasharray="2 2" strokeLinecap="round" />
+        </svg>
+      );
   }
 }
-
 
 
 export function WarDogsGame({ mode, onExit }: Props) {
@@ -116,8 +119,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const angleHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
+  const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Initialize
   useEffect(() => {
     const canvas = canvasRef.current!;
     const parent = canvas.parentElement!;
@@ -176,7 +180,6 @@ export function WarDogsGame({ mode, onExit }: Props) {
     };
   }, [mode]);
 
-  // Pointer aiming: drag anywhere to fine-tune angle/power
   useEffect(() => {
     const canvas = canvasRef.current!;
     const onDown = (e: PointerEvent) => {
@@ -226,11 +229,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
     };
   }, [mode]);
 
-  const { pack } = useSkin();
-  const [skinOpen, setSkinOpen] = useState(false);
   const s = stateRef.current;
-  const teamA = pack.teams[0];
-  const teamB = pack.teams[1];
+  const teamA = teamSkin(0);
+  const teamB = teamSkin(1);
   const currentSkin = s?.currentPlayer === 0 ? teamA : teamB;
   const isAiTurn = mode === "ai" && s?.currentPlayer === 1;
   const hudVisible = s?.phase === "aiming" && s?.winner === null;
@@ -239,7 +240,6 @@ export function WarDogsGame({ mode, onExit }: Props) {
     <div className="relative w-full h-full overflow-hidden bg-background touch-none select-none">
       <canvas ref={canvasRef} className="block w-full h-full" />
 
-      {/* Top HUD — mini player cards + wind + exit */}
       {s && (
         <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-2 sm:p-3 gap-2 pointer-events-none">
           <div className="flex flex-col gap-1.5 pointer-events-auto">
@@ -262,19 +262,46 @@ export function WarDogsGame({ mode, onExit }: Props) {
           <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
             <div className="flex gap-1.5">
               <button
-                onClick={() => setSkinOpen((v) => !v)}
-                className={`btn-hud text-[10px] px-2 py-1 ${skinOpen ? "is-selected" : ""}`}
-                title="Trocar paleta"
+                onClick={() => setSettingsOpen(v => !v)}
+                className={`btn-hud text-[10px] px-2 py-1 ${settingsOpen ? "is-selected" : ""}`}
+                title="Cenário / IA"
               >
-                🎨 {pack.label}
+                ⚙ {scenario.label}
               </button>
               <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
             </div>
             <WindGauge wind={s.wind} />
-            {skinOpen && (
-              <div className="panel p-2 mt-1 animate-fade-in">
-                <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1.5 text-right">Paleta</div>
-                <SkinPicker compact />
+            {settingsOpen && (
+              <div className="panel p-2.5 mt-1 animate-fade-in w-56 space-y-2">
+                <div>
+                  <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Cenário</div>
+                  <div className="flex flex-wrap gap-1">
+                    {scenarios.map(sc => (
+                      <button
+                        key={sc.id}
+                        onClick={() => setScenario(sc.id)}
+                        className={`btn-hud text-[10px] px-2 py-0.5 ${scenario.id === sc.id ? "is-selected" : ""}`}
+                      >{sc.label}</button>
+                    ))}
+                  </div>
+                </div>
+                {mode === "ai" && (
+                  <div>
+                    <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Dificuldade</div>
+                    <div className="flex gap-1">
+                      {(["recruit","sergeant","general"] as const).map(d => (
+                        <button
+                          key={d}
+                          onClick={() => setDifficulty(d)}
+                          className={`btn-hud text-[10px] px-2 py-0.5 ${difficulty === d ? "is-selected" : ""}`}
+                        >{d === "recruit" ? "Recruta" : d === "sergeant" ? "Sargento" : "General"}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="text-[9px] text-muted-foreground pt-1 border-t border-white/10">
+                  Nova partida aplica cenário.
+                </div>
               </div>
             )}
           </div>
@@ -282,11 +309,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
       )}
 
 
-      {/* Bottom HUD — floating, auto-hides during firing */}
       {s && s.phase !== "gameover" && (
         <div className={`absolute bottom-0 left-0 right-0 p-2 sm:p-3 pointer-events-none ${hudVisible ? "hud-show" : "hud-hide"}`}>
           <div className="max-w-3xl mx-auto flex flex-col gap-2">
-            {/* Weapons carousel */}
             <div className="panel px-2 py-1.5 pointer-events-auto flex gap-1.5 overflow-x-auto justify-center scrollbar-none">
               {WEAPON_ORDER.map(id => {
                 const w = WEAPONS[id];
@@ -312,10 +337,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
             </div>
 
 
-            {/* Controls: single row with angle, power, fire */}
             <div className="flex items-stretch gap-2">
               <div className="panel px-2 py-1.5 flex-1 pointer-events-auto flex items-center gap-2">
-                {/* Angle */}
                 <div className="flex items-center gap-1">
                   <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
                   <div className="flex flex-col items-center min-w-[42px]">
@@ -327,7 +350,6 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
                 <div className="hud-divider" />
 
-                {/* Power */}
                 <div className="flex items-center gap-1 flex-1 min-w-0">
                   <HoldButton onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
                   <div className="flex flex-col flex-1 min-w-0 gap-0.5">
@@ -362,7 +384,6 @@ export function WarDogsGame({ mode, onExit }: Props) {
         </div>
       )}
 
-      {/* Game over overlay */}
       {s?.phase === "gameover" && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
           <div className="panel p-6 sm:p-8 text-center max-w-sm">
@@ -385,19 +406,14 @@ export function WarDogsGame({ mode, onExit }: Props) {
 function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSkin; hp: number; active: boolean }) {
   const color = skin.teamColor;
   const name = skin.name;
-  const portrait = CLASSIC_PORTRAITS[name];
+  const portrait = PORTRAITS[name];
   return (
     <div
       className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
       style={active ? { boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`, borderColor: color } : undefined}
     >
       {portrait ? (
-        <img
-          src={portrait}
-          alt=""
-          className="w-6 h-6 rounded-md object-cover shrink-0"
-          style={{ objectPosition: "center 20%", boxShadow: `0 0 6px ${color}` }}
-        />
+        <img src={portrait} alt="" className="w-6 h-6 rounded-md object-cover shrink-0" style={{ objectPosition: "center 20%", boxShadow: `0 0 6px ${color}` }} />
       ) : (
         <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
       )}
@@ -445,6 +461,5 @@ function HoldButton({ children, onHold, onRelease, dir }: { children: React.Reac
     </button>
   );
 }
-
 
 export type { WeaponId };

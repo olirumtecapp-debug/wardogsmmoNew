@@ -26,9 +26,26 @@ export const WEAPONS: Record<WeaponId, Weapon> = {
     speed: 14, kind: "ballistic", affectedByWind: true,
     color: "#e94560", accent: "#ffcc33", gravityScale: 1.2,
   },
+  frag: {
+    id: "frag", name: "Frag Rápida", damage: 50, radius: 38, ammo: 4,
+    speed: 12, kind: "cluster", affectedByWind: true,
+    color: "#a0e070", accent: "#ffe040", gravityScale: 1, fuse: 1.0,
+  },
+  cluster: {
+    id: "cluster", name: "Cluster", damage: 32, radius: 32, ammo: 2,
+    speed: 12, kind: "cluster", affectedByWind: true,
+    color: "#ff5aa8", accent: "#ffe040", gravityScale: 1,
+  },
+  airstrike: {
+    id: "airstrike", name: "Air Strike", damage: 55, radius: 50, ammo: 1,
+    speed: 0, kind: "airstrike", affectedByWind: false,
+    color: "#ff2a2a", accent: "#ffdc4a", gravityScale: 0,
+  },
 };
 
-export const WEAPON_ORDER: WeaponId[] = ["bazooka", "grenade", "rpg", "bow", "artillery"];
+export const WEAPON_ORDER: WeaponId[] = [
+  "bazooka", "grenade", "rpg", "bow", "artillery", "frag", "cluster", "airstrike",
+];
 
 export function initialAmmo(): Record<WeaponId, number> {
   const out = {} as Record<WeaponId, number>;
