@@ -5,8 +5,15 @@ import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { SkinPicker } from "@/components/SkinPicker";
 import { useSkin } from "@/game/skinContext";
-import heroImg from "@/assets/hero-wardogs.jpg";
+import heroAsset from "@/assets/wardogs-bg-menu.jpg.asset.json";
+import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
+import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 import emblem from "@/assets/emblem-paw.png";
+const heroImg = heroAsset.url;
+const CLASSIC_PORTRAITS: Record<string, string> = {
+  RANGER: rangerPortrait.url,
+  BRUTUS: brutusPortrait.url,
+};
 import type { GameMode } from "@/game/types";
 import type { TeamSkin } from "@/game/skins";
 
@@ -37,15 +44,23 @@ function Home() {
       <div className="absolute inset-0 -z-10">
         <MenuBackdrop />
       </div>
-      {/* Hero photo overlay */}
+      {/* Hero key art */}
       <div
-        className="absolute inset-0 -z-10 opacity-80"
+        className="absolute inset-0 -z-10"
         style={{
           backgroundImage: `url(${heroImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center 40%",
-          maskImage: "radial-gradient(ellipse at 50% 45%, black 30%, transparent 85%)",
-          WebkitMaskImage: "radial-gradient(ellipse at 50% 45%, black 30%, transparent 85%)",
+          backgroundPosition: "center 35%",
+          opacity: 0.95,
+        }}
+        aria-hidden
+      />
+      {/* Bottom fade so content below reads clean */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(8,10,14,0.15) 0%, rgba(8,10,14,0.55) 55%, rgba(8,10,14,0.95) 100%)",
         }}
         aria-hidden
       />
@@ -217,16 +232,25 @@ function DogDossier({ skin, role }: { skin: TeamSkin; role: string }) {
       style={{ borderColor: color, boxShadow: `inset 0 0 0 1px ${color}55, 0 10px 30px -10px rgba(0,0,0,0.6)` }}
     >
       <div
-        className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
+        className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
         style={{ background: `radial-gradient(circle at 30% 30%, ${accent}, #0e0e12)`, boxShadow: `0 0 18px ${color}55` }}
       >
-        <svg viewBox="0 0 32 32" width="34" height="34" fill="none">
-          <path d="M6 8 L10 3 L12 9 Z M26 8 L22 3 L20 9 Z" fill={color} opacity="0.9" />
-          <path d="M8 22 c 0 -8 6 -12 8 -12 s 8 4 8 12 c 0 4 -3 6 -8 6 s -8 -2 -8 -6z" fill={color} />
-          <circle cx="12" cy="18" r="1.6" fill="#0a0a0e" />
-          <circle cx="20" cy="18" r="1.6" fill="#0a0a0e" />
-          <path d="M14 24 q 2 2 4 0" stroke="#0a0a0e" strokeWidth="1.4" fill="none" strokeLinecap="round" />
-        </svg>
+        {CLASSIC_PORTRAITS[skin.name] ? (
+          <img
+            src={CLASSIC_PORTRAITS[skin.name]}
+            alt={skin.name}
+            className="w-full h-full object-cover"
+            style={{ objectPosition: "center 25%" }}
+          />
+        ) : (
+          <svg viewBox="0 0 32 32" width="34" height="34" fill="none">
+            <path d="M6 8 L10 3 L12 9 Z M26 8 L22 3 L20 9 Z" fill={color} opacity="0.9" />
+            <path d="M8 22 c 0 -8 6 -12 8 -12 s 8 4 8 12 c 0 4 -3 6 -8 6 s -8 -2 -8 -6z" fill={color} />
+            <circle cx="12" cy="18" r="1.6" fill="#0a0a0e" />
+            <circle cx="20" cy="18" r="1.6" fill="#0a0a0e" />
+            <path d="M14 24 q 2 2 4 0" stroke="#0a0a0e" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          </svg>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="stencil text-xl leading-none" style={{ color }}>{skin.name}</div>

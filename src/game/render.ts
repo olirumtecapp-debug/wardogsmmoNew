@@ -1,7 +1,19 @@
 import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
 import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
+import bgIngameAsset from "@/assets/wardogs-bg-ingame.jpg.asset.json";
+import rangerPortraitAsset from "@/assets/wardogs-ranger.png.asset.json";
+import brutusPortraitAsset from "@/assets/wardogs-brutus.png.asset.json";
 
+// Image asset cache — loaded once
+function loadImg(src: string): HTMLImageElement {
+  const img = new Image();
+  img.src = src;
+  return img;
+}
+const bgIngameImg = typeof window !== "undefined" ? loadImg(bgIngameAsset.url) : null;
+const rangerImg = typeof window !== "undefined" ? loadImg(rangerPortraitAsset.url) : null;
+const brutusImg = typeof window !== "undefined" ? loadImg(brutusPortraitAsset.url) : null;
 
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
@@ -168,6 +180,17 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   sky.addColorStop(1, "#1a1408");
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
+
+  // Cinematic key-art atmosphere overlay (smoke + embers)
+  if (bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.globalCompositeOperation = "screen";
+    // subtle horizontal parallax based on wind
+    const px = Math.sin(now * 0.00008) * 20 + state.wind * 30;
+    ctx.drawImage(bgIngameImg, px - 20, 0, w + 40, h * 0.85);
+    ctx.restore();
+  }
 
   // Aurora shimmer (subtle horizontal band)
   const auroraY = h * 0.28;
@@ -626,6 +649,30 @@ function drawDog(
   ctx.fillStyle = shadowG;
   ctx.beginPath(); ctx.ellipse(0, 16, 24, 6, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
+
+  // Photo-based skin (Classic pack) — use key-art portrait for RANGER/BRUTUS
+  const photoImg = name === "RANGER" ? rangerImg : name === "BRUTUS" ? brutusImg : null;
+  if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
+    const injured = hp < 40;
+    const critical = hp < 20;
+    const bob = Math.sin(now * 0.004) * 0.9 + (injured ? Math.sin(now * 0.02) * 0.6 : 0);
+    ctx.save();
+    ctx.translate(0, bob);
+    ctx.scale(facing, 1);
+    // Size to match roughly the vector art footprint (~48px wide, ~50px tall)
+    const targetH = 54;
+    const ratio = photoImg.naturalWidth / photoImg.naturalHeight;
+    const targetW = targetH * ratio;
+    if (critical) {
+      ctx.filter = "brightness(0.85) saturate(0.7)";
+    }
+    ctx.drawImage(photoImg, -targetW / 2, -targetH + 16, targetW, targetH);
+    ctx.restore();
+    ctx.restore(); // matches the outer ctx.save() at top of drawDog
+    return;
+  }
+
+
 
   if (hp <= 0) {
     ctx.save();

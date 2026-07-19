@@ -6,6 +6,13 @@ import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { useSkin } from "@/game/skinContext";
 import { SkinPicker } from "@/components/SkinPicker";
+import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
+import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
+
+const CLASSIC_PORTRAITS: Record<string, string> = {
+  RANGER: rangerPortrait.url,
+  BRUTUS: brutusPortrait.url,
+};
 
 
 interface Props {
@@ -378,12 +385,22 @@ export function WarDogsGame({ mode, onExit }: Props) {
 function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSkin; hp: number; active: boolean }) {
   const color = skin.teamColor;
   const name = skin.name;
+  const portrait = CLASSIC_PORTRAITS[name];
   return (
     <div
       className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
       style={active ? { boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`, borderColor: color } : undefined}
     >
-      <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
+      {portrait ? (
+        <img
+          src={portrait}
+          alt=""
+          className="w-6 h-6 rounded-md object-cover shrink-0"
+          style={{ objectPosition: "center 20%", boxShadow: `0 0 6px ${color}` }}
+        />
+      ) : (
+        <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
+      )}
       <div className="stencil text-[9px] uppercase tracking-widest">{name}</div>
       <div className="w-16 h-1.5 bg-black/50 rounded-full overflow-hidden">
         <div className="h-full transition-all rounded-full" style={{ width: `${hp}%`, background: color }} />
