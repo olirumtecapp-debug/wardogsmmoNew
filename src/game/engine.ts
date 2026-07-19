@@ -96,6 +96,7 @@ export function destroyTerrain(state: GameState, cx: number, cy: number, r: numb
       if (dx * dx + dy * dy <= r2) terrain[y * w + x] = 0;
     }
   }
+  markTerrainDirty();
 }
 
 export function fire(state: GameState) {
