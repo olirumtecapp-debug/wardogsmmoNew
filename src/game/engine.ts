@@ -200,6 +200,14 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number) {
   destroyTerrain(state, x, y, radius);
+  // Persistent scorch mark on the terrain
+  state.scorchMarks.push({
+    x, y, radius: radius * 1.05,
+    life: 6, maxLife: 6,
+  });
+  let totalDamage = 0;
+  let hits = 0;
+  const stackOffsets = new Map<number, number>();
   for (const dog of state.dogs) {
     if (dog.hp <= 0) continue;
     const dx = dog.x - x, dy = dog.y - 8 - y;
@@ -212,7 +220,36 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       const push = falloff * 180;
       dog.vy = -Math.abs(push * 0.6) - 40;
       dog.x += (dx / (dist || 1)) * push * 0.06;
+      // Floating damage number over the dog
+      const key = Math.round(dog.x / 24);
+      const stackIdx = stackOffsets.get(key) ?? 0;
+      stackOffsets.set(key, stackIdx + 1);
+      const color = dmg >= 40 ? "#ff3838" : dmg >= 20 ? "#ff9138" : dmg > 0 ? "#ffd93a" : "#b8b8b8";
+      const size = dmg >= 40 ? 30 : dmg >= 20 ? 26 : 22;
+      state.floatingTexts.push({
+        id: Math.random(),
+        x: dog.x,
+        y: dog.y - 32 - stackIdx * 18,
+        vx: (Math.random() - 0.5) * 30,
+        vy: -70,
+        life: 1.2, maxLife: 1.2,
+        value: dmg > 0 ? `-${dmg}` : "0",
+        color, size,
+      });
+      if (dmg > 0) { totalDamage += dmg; hits++; }
     }
+  }
+  // Combined damage banner when multiple targets are hit
+  if (hits > 1) {
+    state.floatingTexts.push({
+      id: Math.random(),
+      x, y: y - radius - 10,
+      vx: 0, vy: -50,
+      life: 1.4, maxLife: 1.4,
+      value: `-${totalDamage} TOTAL`,
+      color: "#ffe6a3",
+      size: 22,
+    });
   }
 }
 
