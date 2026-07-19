@@ -219,12 +219,35 @@ export function step(state: GameState, dt: number) {
     const p = state.projectiles[i];
     const w = WEAPONS[p.weapon];
     p.age += dt;
+    // RPG propulsion: constant thrust along velocity direction for the first ~1.4s
+    if (w.id === "rpg" && p.age < 1.4) {
+      const sp = Math.hypot(p.vx, p.vy) || 1;
+      const ux = p.vx / sp, uy = p.vy / sp;
+      p.vx += ux * 260 * dt;
+      p.vy += uy * 260 * dt;
+    }
     p.vy += GRAVITY * w.gravityScale * dt;
     if (w.affectedByWind) p.vx += state.wind * 40 * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
     if (p.trail.length > 24) p.trail.shift();
+    // Extra smoke puffs for RPG (as small tail explosion particles)
+    if (w.id === "rpg" && Math.random() < 0.9) {
+      const jitter = 0.4;
+      state.explosions.push({
+        x: p.x, y: p.y, radius: 4, age: 0.35, maxAge: 0.4,
+        particles: [{
+          x: p.x + (Math.random() - 0.5) * 3,
+          y: p.y + (Math.random() - 0.5) * 3,
+          vx: -p.vx * 0.15 + (Math.random() - 0.5) * 40,
+          vy: -p.vy * 0.15 + (Math.random() - 0.5) * 40 - 10,
+          life: 0.4 + Math.random() * jitter,
+          color: Math.random() < 0.5 ? "#4a4238" : "#ff9138",
+        }],
+      });
+    }
+
 
     let exploded = false;
 
