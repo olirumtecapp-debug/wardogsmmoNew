@@ -296,7 +296,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.save();
   for (const p of dustParticles) {
     ctx.globalAlpha = p.alpha * Math.min(1, p.life);
-    ctx.fillStyle = "#c9b78a";
+    ctx.fillStyle = sc.particleColor;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
