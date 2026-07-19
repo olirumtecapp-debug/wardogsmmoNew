@@ -14,9 +14,7 @@ interface Props {
 const WEAPON_ICON: Record<WeaponId, string> = {
   bazooka: "🚀",
   grenade: "💣",
-  dynamite: "🧨",
-  cluster: "✳",
-  airstrike: "✈",
+  artillery: "💥",
   revolver: "🔫",
   ak47: "🎯",
 };
