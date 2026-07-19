@@ -10,14 +10,63 @@ interface Props {
   onExit: () => void;
 }
 
-// Compact icon per weapon (SVG paths as simple text glyphs)
-const WEAPON_ICON: Record<WeaponId, string> = {
-  bazooka: "🚀",
-  grenade: "💣",
-  rpg: "🔥",
-  bow: "🏹",
-  artillery: "💥",
-};
+// Inline SVG icons per weapon — stencil style, monochrome + colored accents
+function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
+  const common = {
+    className: className ?? "w-6 h-6",
+    viewBox: "0 0 32 32",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (id) {
+    case "bazooka":
+      return (
+        <svg {...common}>
+          <path d="M4 18 L22 14 L28 15 L28 19 L22 20 L4 16 Z" fill="currentColor" fillOpacity="0.18" />
+          <path d="M8 14 L11 10 L15 12" />
+          <circle cx="26" cy="17" r="1" fill="currentColor" />
+        </svg>
+      );
+    case "grenade":
+      return (
+        <svg {...common}>
+          <path d="M14 8 h4 v3 h-4z" fill="currentColor" fillOpacity="0.4" />
+          <circle cx="21" cy="8" r="2" />
+          <circle cx="16" cy="20" r="7" fill="currentColor" fillOpacity="0.18" />
+          <path d="M9 20 h14 M16 13 v14" strokeOpacity="0.5" />
+        </svg>
+      );
+    case "rpg":
+      return (
+        <svg {...common}>
+          <path d="M4 18 L20 14 L26 15 L28 17 L26 19 L20 20 L4 16 Z" fill="currentColor" fillOpacity="0.18" />
+          <path d="M4 16 L2 14 M4 18 L2 20" />
+          <path d="M22 12 L20 14 M22 22 L20 20" />
+        </svg>
+      );
+    case "bow":
+      return (
+        <svg {...common}>
+          <path d="M8 4 C 20 8, 20 24, 8 28" />
+          <path d="M8 4 L8 28" strokeDasharray="2 2" strokeOpacity="0.5" />
+          <path d="M6 16 L26 16" />
+          <path d="M26 16 L22 13 M26 16 L22 19 M4 16 L7 13 M4 16 L7 19" />
+        </svg>
+      );
+    case "artillery":
+      return (
+        <svg {...common}>
+          <path d="M6 22 L14 22 L22 12 L26 12 L26 16 L18 26 L6 26 Z" fill="currentColor" fillOpacity="0.18" />
+          <circle cx="9" cy="26" r="2" />
+          <circle cx="15" cy="26" r="2" />
+          <path d="M22 12 L26 8" />
+        </svg>
+      );
+  }
+}
 
 
 export function WarDogsGame({ mode, onExit }: Props) {
