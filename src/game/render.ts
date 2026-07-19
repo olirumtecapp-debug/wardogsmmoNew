@@ -253,6 +253,31 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     }
     ctx.globalAlpha = 1;
   }
+
+  // Floating damage numbers (drawn on top of everything)
+  for (const f of state.floatingTexts) {
+    const t = f.life / f.maxLife;
+    const age = f.maxLife - f.life;
+    const pop = age < 0.12 ? (age / 0.12) : 1; // scale-in
+    const alpha = Math.min(1, f.life / 0.3);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(f.x, f.y);
+    ctx.scale(pop, pop);
+    ctx.font = `900 ${f.size}px "Chakra Petch", "Black Ops One", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(0,0,0,0.9)";
+    ctx.strokeText(f.value, 0, 0);
+    ctx.fillStyle = f.color;
+    ctx.shadowColor = f.color;
+    ctx.shadowBlur = 8 * t;
+    ctx.fillText(f.value, 0, 0);
+    ctx.restore();
+  }
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
 }
 
 function drawDog(
