@@ -1,5 +1,7 @@
-import type { GameState, Explosion } from "./types";
+import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
+import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
+
 
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
@@ -279,11 +281,14 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   // Dogs
   for (let i = 0; i < state.dogs.length; i++) {
     const dog = state.dogs[i];
+    const idx = i as 0 | 1;
+    const skin = teamSkin(idx);
     const active = state.phase === "aiming" && state.currentPlayer === i && state.winner === null;
-    drawDog(ctx, dog.x, dog.y, dog.team === 0 ? "green" : "red", dog.facing, dog.hp, now, active, state.angle);
-    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, dog.team === 0 ? "green" : "red");
-    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, dog.team === 0 ? "green" : "red");
+    drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
+    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, skin.teamColor, skin.teamDark);
+    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
   }
+
 
   // Aim indicator
   if (state.phase === "aiming" && state.winner === null) {
@@ -295,6 +300,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const p of state.projectiles) {
     const w2 = WEAPONS[p.weapon];
     const ang = Math.atan2(p.vy, p.vx);
+    const wcol = weaponColor(p.weapon);
+    const wacc = weaponAccent(p.weapon);
 
     // Trail
     ctx.save();
@@ -302,13 +309,13 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       const [tx, ty] = p.trail[i];
       const a = i / p.trail.length;
       ctx.globalAlpha = a * 0.7;
-      ctx.fillStyle = w2.color;
+      ctx.fillStyle = wcol;
       ctx.beginPath(); ctx.arc(tx, ty, 1 + a * 2.5, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
 
     if (w2.id === "bow") {
-      drawArrow(ctx, p.x, p.y, ang, w2.color, now);
+      drawArrow(ctx, p.x, p.y, ang, wcol, now);
     } else if (w2.id === "rpg") {
       drawRocket(ctx, p.x, p.y, ang, now);
     } else if (w2.id === "grenade") {
@@ -317,9 +324,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       drawShell(ctx, p.x, p.y, ang);
     } else {
       // Bazooka projectile — small missile
-      drawMissile(ctx, p.x, p.y, ang, w2.color);
+      drawMissile(ctx, p.x, p.y, ang, wacc);
     }
   }
+
 
   // Explosions
   for (const e of state.explosions) {
