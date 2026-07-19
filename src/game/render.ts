@@ -191,111 +191,111 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // Key art only for battlefield scenario
-  if (sc.useKeyArtBg && bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0) {
-    const iw = bgIngameImg.naturalWidth;
-    const ih = bgIngameImg.naturalHeight;
-    const scale = Math.max(w / iw, (h * 0.95) / ih) * 0.88;
+  const keyArtActive = sc.useKeyArtBg && bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0;
+
+  // Key art only for battlefield scenario — full cover, dominant
+  if (keyArtActive) {
+    const iw = bgIngameImg!.naturalWidth;
+    const ih = bgIngameImg!.naturalHeight;
+    // cover fit: fill entire canvas, cropping as needed
+    const scale = Math.max(w / iw, h / ih);
     const dw = iw * scale;
     const dh = ih * scale;
-    const px = Math.sin(now * 0.00008) * 15 + state.wind * 25;
+    const px = Math.sin(now * 0.00008) * 10 + state.wind * 15;
     const dx = (w - dw) / 2 + px;
-    const dy = -dh * 0.18;
+    const dy = (h - dh) * 0.35; // anchor slightly above center so characters in art sit low
+    ctx.drawImage(bgIngameImg!, dx, dy, dw, dh);
 
-    ctx.save();
-    ctx.globalAlpha = 0.92;
-    ctx.drawImage(bgIngameImg, dx, dy, dw, dh);
-    ctx.restore();
-
-    const fade = ctx.createLinearGradient(0, 0, 0, h);
-    fade.addColorStop(0, "rgba(11,18,32,0)");
-    fade.addColorStop(0.55, "rgba(11,18,32,0)");
-    fade.addColorStop(0.78, "rgba(20,18,12,0.55)");
-    fade.addColorStop(1, "rgba(10,8,4,0.92)");
+    // Only a very light bottom fade for terrain blend
+    const fade = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    fade.addColorStop(0, "rgba(10,8,4,0)");
+    fade.addColorStop(1, "rgba(10,8,4,0.7)");
     ctx.fillStyle = fade;
     ctx.fillRect(0, 0, w, h);
 
-    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
+    // Gentle edge vignette
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.8);
     vg.addColorStop(0, "rgba(0,0,0,0)");
-    vg.addColorStop(1, "rgba(0,0,0,0.55)");
+    vg.addColorStop(1, "rgba(0,0,0,0.5)");
     ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    // Aurora shimmer (subtle horizontal band) — only when no key art
+    const auroraY = h * 0.28;
+    const auroraShift = Math.sin(now * 0.0004) * 40;
+    const aur = ctx.createLinearGradient(0, auroraY - 20, 0, auroraY + 40);
+    aur.addColorStop(0, "rgba(80,180,140,0)");
+    aur.addColorStop(0.5, `rgba(90,200,150,${0.08 + Math.sin(now * 0.0006) * 0.03})`);
+    aur.addColorStop(1, "rgba(80,180,140,0)");
+    ctx.fillStyle = aur;
+    ctx.save();
+    ctx.translate(auroraShift, 0);
+    ctx.fillRect(-40, auroraY - 20, w + 80, 60);
+    ctx.restore();
+
+    // Sun glow
+    const sunX = w * 0.72, sunY = h * 0.55;
+    const sunG = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.55);
+    sunG.addColorStop(0, "rgba(255,180,90,0.35)");
+    sunG.addColorStop(0.4, "rgba(255,140,60,0.12)");
+    sunG.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = sunG;
     ctx.fillRect(0, 0, w, h);
   }
 
 
-  // Aurora shimmer (subtle horizontal band)
-  const auroraY = h * 0.28;
-  const auroraShift = Math.sin(now * 0.0004) * 40;
-  const aur = ctx.createLinearGradient(0, auroraY - 20, 0, auroraY + 40);
-  aur.addColorStop(0, "rgba(80,180,140,0)");
-  aur.addColorStop(0.5, `rgba(90,200,150,${0.08 + Math.sin(now * 0.0006) * 0.03})`);
-  aur.addColorStop(1, "rgba(80,180,140,0)");
-  ctx.fillStyle = aur;
-  ctx.save();
-  ctx.translate(auroraShift, 0);
-  ctx.fillRect(-40, auroraY - 20, w + 80, 60);
-  ctx.restore();
+  if (!keyArtActive) {
+    // Stars
+    const st = ensureStars(w, h, state.seed);
+    ctx.save();
+    for (const s of st) {
+      const tw = 0.5 + 0.5 * Math.sin(now * 0.002 + s.p);
+      ctx.globalAlpha = 0.4 * tw + 0.15;
+      ctx.fillStyle = "#e6f0ff";
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
 
-  // Sun glow
-  const sunX = w * 0.72, sunY = h * 0.55;
-  const sunG = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.55);
-  sunG.addColorStop(0, "rgba(255,180,90,0.35)");
-  sunG.addColorStop(0.4, "rgba(255,140,60,0.12)");
-  sunG.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = sunG;
-  ctx.fillRect(0, 0, w, h);
+    // Distant mountains
+    ctx.fillStyle = "#20293a";
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.66);
+    for (let x = 0; x <= w; x += 30) {
+      ctx.lineTo(x, h * 0.66 - Math.sin(x * 0.006 + state.seed * 0.001) * 55 - 20);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
 
-  // Stars
-  const st = ensureStars(w, h, state.seed);
-  ctx.save();
-  for (const s of st) {
-    const tw = 0.5 + 0.5 * Math.sin(now * 0.002 + s.p);
-    ctx.globalAlpha = 0.4 * tw + 0.15;
-    ctx.fillStyle = "#e6f0ff";
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.restore();
+    // Mid mountains
+    ctx.fillStyle = "#182234";
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.74);
+    for (let x = 0; x <= w; x += 20) {
+      ctx.lineTo(x, h * 0.74 - Math.sin(x * 0.011 + state.seed * 0.002 + 1.3) * 40 - 12);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
 
-  // Distant mountains
-  ctx.fillStyle = "#20293a";
-  ctx.beginPath();
-  ctx.moveTo(0, h * 0.66);
-  for (let x = 0; x <= w; x += 30) {
-    ctx.lineTo(x, h * 0.66 - Math.sin(x * 0.006 + state.seed * 0.001) * 55 - 20);
-  }
-  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
-
-  // Mid mountains
-  ctx.fillStyle = "#182234";
-  ctx.beginPath();
-  ctx.moveTo(0, h * 0.74);
-  for (let x = 0; x <= w; x += 20) {
-    ctx.lineTo(x, h * 0.74 - Math.sin(x * 0.011 + state.seed * 0.002 + 1.3) * 40 - 12);
-  }
-  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
-
-  // Ruins silhouettes (close parallax) — broken buildings
-  ctx.fillStyle = "#0e1521";
-  const ruinSeed = state.seed * 0.001;
-  for (let rx = 40; rx < w; rx += 130) {
-    const off = Math.sin(rx * 0.02 + ruinSeed) * 10;
-    const bh = 40 + Math.abs(Math.sin(rx * 0.05)) * 30;
-    const by = h * 0.78 + off;
-    ctx.fillRect(rx, by - bh, 24, bh);
-    // broken top
-    ctx.fillRect(rx + 6, by - bh - 6, 8, 6);
-    // window slit
-    ctx.fillStyle = "rgba(255,180,80,0.15)";
-    ctx.fillRect(rx + 8, by - bh + 12, 3, 5);
+    // Ruins silhouettes (close parallax) — broken buildings
     ctx.fillStyle = "#0e1521";
+    const ruinSeed = state.seed * 0.001;
+    for (let rx = 40; rx < w; rx += 130) {
+      const off = Math.sin(rx * 0.02 + ruinSeed) * 10;
+      const bh = 40 + Math.abs(Math.sin(rx * 0.05)) * 30;
+      const by = h * 0.78 + off;
+      ctx.fillRect(rx, by - bh, 24, bh);
+      ctx.fillRect(rx + 6, by - bh - 6, 8, 6);
+      ctx.fillStyle = "rgba(255,180,80,0.15)";
+      ctx.fillRect(rx + 8, by - bh + 12, 3, 5);
+      ctx.fillStyle = "#0e1521";
+    }
+
+    // Ground haze
+    const haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    haze.addColorStop(0, "rgba(60,50,30,0)");
+    haze.addColorStop(1, "rgba(60,50,30,0.4)");
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, h * 0.6, w, h * 0.4);
   }
 
-  // Ground haze
-  const haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
-  haze.addColorStop(0, "rgba(60,50,30,0)");
-  haze.addColorStop(1, "rgba(60,50,30,0.4)");
-  ctx.fillStyle = haze;
-  ctx.fillRect(0, h * 0.6, w, h * 0.4);
 
   // Wind dust particles behind terrain
   updateDust(w, h, state.wind, dt, now);
