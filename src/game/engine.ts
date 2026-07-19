@@ -257,10 +257,10 @@ export function step(state: GameState, dt: number) {
         // Bounce
         // Estimate normal via terrain sampling
         const nx = terrainAt(state, p.x - 3, p.y) ? 1 : terrainAt(state, p.x + 3, p.y) ? -1 : 0;
-        const ny = terrainAt(state, p.x, p.y - 3) ? 1 : -1;
+        const ny: number = terrainAt(state, p.x, p.y - 3) ? 1 : 0;
         p.x -= p.vx * dt * 1.2; p.y -= p.vy * dt * 1.2;
         if (nx !== 0) p.vx = -p.vx * 0.55;
-        if (ny !== 0) p.vy = -p.vy * 0.55;
+        if (ny !== 0 || p.vy > 0) p.vy = -p.vy * 0.55;
         if (Math.abs(p.vx) + Math.abs(p.vy) < 40) p.vy += 20;
       } else {
         exploded = true;
