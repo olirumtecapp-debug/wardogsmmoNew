@@ -66,7 +66,17 @@
   --shadow-elevated: 0 10px 40px -12px oklch(0 0 0 / 0.7), 0 2px 8px -2px oklch(0 0 0 / 0.4);
   --shadow-glow-primary: 0 0 24px oklch(0.72 0.16 145 / 0.35);
   --shadow-glow-danger: 0 0 24px oklch(0.62 0.22 25 / 0.5);
+  --shadow-glow-amber: 0 0 22px oklch(0.82 0.18 85 / 0.45);
+
+  /* Interaction tokens */
+  --hud-radius: 0.7rem;
+  --hud-radius-sm: 0.5rem;
+  --hud-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --hud-dur: 180ms;
+  --hud-ring: inset 0 0 0 1px oklch(1 0 0 / 0.08);
+  --hud-bevel: 0 1px 0 oklch(1 0 0 / 0.12) inset, 0 -1px 0 oklch(0 0 0 / 0.35) inset;
 }
+
 
 .dark { color-scheme: dark; }
 
@@ -84,9 +94,12 @@
 }
 
 @utility btn-hud {
+  position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-  padding: 0.55rem 0.9rem; border-radius: 0.6rem;
-  background: linear-gradient(180deg, oklch(1 0 0 / 0.06), oklch(0 0 0 / 0.25)), var(--glass-bg);
+  padding: 0.55rem 0.9rem;
+  min-height: 44px;
+  border-radius: var(--hud-radius);
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.06), oklch(0 0 0 / 0.28)), var(--glass-bg);
   backdrop-filter: blur(14px) saturate(140%);
   border: 1px solid var(--glass-border);
   color: var(--foreground);
@@ -94,65 +107,175 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.8rem;
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 14px -6px oklch(0 0 0 / 0.5);
-  transition: transform 120ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  box-shadow: var(--hud-ring), var(--hud-bevel), 0 4px 14px -6px oklch(0 0 0 / 0.55);
+  transition:
+    transform var(--hud-dur) var(--hud-ease),
+    background var(--hud-dur) var(--hud-ease),
+    border-color var(--hud-dur) var(--hud-ease),
+    box-shadow var(--hud-dur) var(--hud-ease),
+    filter var(--hud-dur) var(--hud-ease),
+    opacity var(--hud-dur) var(--hud-ease);
   user-select: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
-  &:hover {
-    border-color: color-mix(in oklch, var(--primary) 60%, transparent);
-    box-shadow: inset 0 1px 0 var(--glass-highlight), 0 6px 20px -6px oklch(0 0 0 / 0.6), var(--shadow-glow-primary);
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: color-mix(in oklch, var(--primary) 55%, transparent);
+    filter: brightness(1.08);
+    box-shadow: var(--hud-ring), var(--hud-bevel), 0 8px 22px -6px oklch(0 0 0 / 0.65), var(--shadow-glow-primary);
   }
-  &:active { transform: translateY(1px) scale(0.98); }
-  &:disabled { cursor: not-allowed; }
+  &:active:not(:disabled) {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: var(--hud-ring), 0 2px 6px -2px oklch(0 0 0 / 0.55);
+    filter: brightness(0.95);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--hud-ring), var(--hud-bevel), 0 0 0 2px var(--accent), 0 0 0 4px oklch(0 0 0 / 0.5);
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+  }
+}
+
+@utility btn-hud-ghost {
+  padding: 0.35rem 0.55rem;
+  min-height: 36px;
+  font-size: 0.75rem;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.03), oklch(0 0 0 / 0.2));
+}
+
+@utility btn-hud-weapon {
+  padding: 0.35rem 0.5rem;
+  min-height: 46px;
+  min-width: 50px;
+  border-radius: var(--hud-radius-sm);
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1;
+  &.is-selected {
+    border-color: color-mix(in oklch, var(--accent) 75%, transparent);
+    background: linear-gradient(180deg, oklch(1 0 0 / 0.1), oklch(0 0 0 / 0.15)), var(--glass-bg);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: var(--hud-ring), var(--hud-bevel), var(--shadow-glow-amber), 0 8px 22px -6px oklch(0 0 0 / 0.6);
+  }
+  &.is-selected .weapon-icon { filter: drop-shadow(0 0 6px var(--accent)); }
+  &.is-empty { opacity: 0.35; filter: grayscale(1); }
+  &.is-empty .weapon-ammo { text-decoration: line-through; }
 }
 
 @utility btn-primary {
   background: linear-gradient(180deg, color-mix(in oklch, var(--primary) 90%, white), var(--primary));
   color: var(--primary-foreground);
   border-color: color-mix(in oklch, var(--primary) 60%, black);
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.25), 0 6px 18px -6px oklch(0 0 0 / 0.6), var(--shadow-glow-primary);
-  &:hover { background: linear-gradient(180deg, color-mix(in oklch, var(--primary) 80%, white), color-mix(in oklch, var(--primary) 95%, white)); }
+  box-shadow: var(--hud-ring), inset 0 1px 0 oklch(1 0 0 / 0.25), 0 6px 18px -6px oklch(0 0 0 / 0.6), var(--shadow-glow-primary);
+  &:hover:not(:disabled) {
+    background: linear-gradient(180deg, color-mix(in oklch, var(--primary) 80%, white), color-mix(in oklch, var(--primary) 95%, white));
+  }
 }
 
 @utility btn-danger {
   background: linear-gradient(180deg, color-mix(in oklch, var(--destructive) 90%, white), var(--destructive));
   color: white;
   border-color: color-mix(in oklch, var(--destructive) 60%, black);
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.25), 0 6px 18px -6px oklch(0 0 0 / 0.6), var(--shadow-glow-danger);
-  &:hover { filter: brightness(1.08); }
+  box-shadow: var(--hud-ring), inset 0 1px 0 oklch(1 0 0 / 0.25), 0 6px 18px -6px oklch(0 0 0 / 0.6), var(--shadow-glow-danger);
+  &:hover:not(:disabled) { filter: brightness(1.08); }
 }
 
 @utility panel {
   background: linear-gradient(180deg, oklch(1 0 0 / 0.04), oklch(0 0 0 / 0.15)), var(--glass-bg);
   backdrop-filter: blur(16px) saturate(140%);
   border: 1px solid var(--glass-border);
-  border-radius: 0.85rem;
-  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow-elevated);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-ring), inset 0 1px 0 var(--glass-highlight), var(--shadow-elevated);
+}
+
+@utility hud-divider {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(180deg, transparent, oklch(1 0 0 / 0.12), transparent);
+  margin: 0 0.25rem;
 }
 
 @utility fire-btn {
   position: relative;
-  width: 4.5rem; height: 4.5rem;
+  width: 4.75rem; height: 4.75rem;
+  min-height: 4.75rem;
   border-radius: 999px;
-  background: radial-gradient(circle at 35% 30%, oklch(0.85 0.20 55), oklch(0.62 0.24 30) 60%, oklch(0.40 0.20 25));
+  background: radial-gradient(circle at 35% 30%, oklch(0.88 0.20 55), oklch(0.62 0.24 30) 60%, oklch(0.38 0.20 25));
   border: 2px solid oklch(0.30 0.10 25);
   color: white;
   font-family: var(--font-stencil);
-  letter-spacing: 0.1em;
-  font-size: 0.85rem;
-  box-shadow: inset 0 2px 0 oklch(1 0 0 / 0.3), inset 0 -3px 8px oklch(0 0 0 / 0.4), 0 8px 24px -6px oklch(0 0 0 / 0.7), var(--shadow-glow-danger);
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  box-shadow:
+    inset 0 2px 0 oklch(1 0 0 / 0.35),
+    inset 0 -4px 10px oklch(0 0 0 / 0.5),
+    0 10px 26px -6px oklch(0 0 0 / 0.75),
+    var(--shadow-glow-danger);
   cursor: pointer;
-  transition: transform 120ms ease, filter 160ms ease;
-  animation: fire-pulse 2.2s ease-in-out infinite;
-  &:hover:not(:disabled) { filter: brightness(1.1); }
-  &:active:not(:disabled) { transform: scale(0.94); }
-  &:disabled { opacity: 0.35; animation: none; cursor: not-allowed; }
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--hud-dur) var(--hud-ease),
+    filter var(--hud-dur) var(--hud-ease),
+    box-shadow var(--hud-dur) var(--hud-ease);
+  &::before, &::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 999px;
+    border: 2px solid oklch(0.62 0.22 25 / 0.55);
+    pointer-events: none;
+    animation: fire-ring 2.4s var(--hud-ease) infinite;
+  }
+  &::after { animation-delay: 1.2s; }
+  &:hover:not(:disabled) {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 2px 0 oklch(1 0 0 / 0.35),
+      inset 0 -4px 10px oklch(0 0 0 / 0.5),
+      0 14px 30px -6px oklch(0 0 0 / 0.8),
+      0 0 32px oklch(0.62 0.22 25 / 0.7);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.92);
+    filter: brightness(0.95);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 2px 0 oklch(1 0 0 / 0.35),
+      0 0 0 3px var(--accent),
+      0 10px 26px -6px oklch(0 0 0 / 0.75);
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+    background: radial-gradient(circle at 35% 30%, oklch(0.55 0.05 55), oklch(0.35 0.04 30));
+  }
+  &:disabled::before, &:disabled::after { animation: none; opacity: 0; }
 }
 
-@keyframes fire-pulse {
-  0%, 100% { box-shadow: inset 0 2px 0 oklch(1 0 0 / 0.3), inset 0 -3px 8px oklch(0 0 0 / 0.4), 0 8px 24px -6px oklch(0 0 0 / 0.7), 0 0 0 0 oklch(0.62 0.22 25 / 0.5); }
-  50%      { box-shadow: inset 0 2px 0 oklch(1 0 0 / 0.3), inset 0 -3px 8px oklch(0 0 0 / 0.4), 0 8px 24px -6px oklch(0 0 0 / 0.7), 0 0 0 8px oklch(0.62 0.22 25 / 0); }
+@keyframes fire-ring {
+  0%   { transform: scale(1);   opacity: 0.9; border-width: 2px; }
+  70%  { transform: scale(1.35); opacity: 0;   border-width: 1px; }
+  100% { transform: scale(1.35); opacity: 0;   border-width: 1px; }
+}
+
+@keyframes hold-pulse {
+  0%, 100% { box-shadow: var(--hud-ring), var(--hud-bevel), 0 0 0 0 oklch(0.80 0.16 75 / 0.6); }
+  50%      { box-shadow: var(--hud-ring), var(--hud-bevel), 0 0 0 6px oklch(0.80 0.16 75 / 0); }
+}
+
+@utility hold-active {
+  animation: hold-pulse 500ms var(--hud-ease) infinite;
+  border-color: color-mix(in oklch, var(--accent) 60%, transparent) !important;
 }
 
 @keyframes pulse-warn { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -162,16 +285,22 @@
   from { transform: translateY(120%); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 }
-@utility hud-enter { animation: hud-slide-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@utility hud-enter { animation: hud-slide-in 260ms var(--hud-ease); }
 
 .hud-hide {
   transform: translateY(140%);
   opacity: 0;
   pointer-events: none !important;
-  transition: transform 260ms cubic-bezier(0.4, 0, 1, 1), opacity 200ms ease;
+  transition: transform 220ms var(--hud-ease), opacity 180ms ease;
 }
 .hud-show {
   transform: translateY(0);
   opacity: 1;
-  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 240ms ease;
+  transition: transform 260ms var(--hud-ease), opacity 220ms ease;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-hud, .fire-btn, .hud-show, .hud-hide { transition: none !important; animation: none !important; }
+  .fire-btn::before, .fire-btn::after { animation: none !important; opacity: 0 !important; }
+}
+
