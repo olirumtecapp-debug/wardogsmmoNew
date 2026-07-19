@@ -19,6 +19,7 @@ const brutusImg = typeof window !== "undefined" ? loadImg(brutusPortraitAsset.ur
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
 let lastTerrainRef: Uint8Array | null = null;
+let lastScenarioId: string | null = null;
 
 // Twinkling stars, persistent between renders
 let stars: { x: number; y: number; r: number; p: number }[] | null = null;
