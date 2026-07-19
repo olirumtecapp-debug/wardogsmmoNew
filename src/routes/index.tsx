@@ -191,6 +191,45 @@ function ModeCard({
   );
 }
 
+function DogDossier({
+  name, subtitle, color, traits, accent,
+}: { name: string; subtitle: string; color: string; traits: string[]; accent: string }) {
+  return (
+    <div
+      className="panel p-4 flex items-center gap-3 card-in text-left"
+      style={{ borderColor: color, boxShadow: `inset 0 0 0 1px ${color}55, 0 10px 30px -10px rgba(0,0,0,0.6)` }}
+    >
+      <div
+        className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
+        style={{ background: `radial-gradient(circle at 30% 30%, ${accent}, #0e0e12)`, boxShadow: `0 0 18px ${color}55` }}
+      >
+        <svg viewBox="0 0 32 32" width="34" height="34" fill="none">
+          <path d="M6 8 L10 3 L12 9 Z M26 8 L22 3 L20 9 Z" fill={color} opacity="0.9" />
+          <path d="M8 22 c 0 -8 6 -12 8 -12 s 8 4 8 12 c 0 4 -3 6 -8 6 s -8 -2 -8 -6z" fill={color} />
+          <circle cx="12" cy="18" r="1.6" fill="#0a0a0e" />
+          <circle cx="20" cy="18" r="1.6" fill="#0a0a0e" />
+          <path d="M14 24 q 2 2 4 0" stroke="#0a0a0e" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+        </svg>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="stencil text-xl leading-none" style={{ color }}>{name}</div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{subtitle}</div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {traits.map(t => (
+            <span
+              key={t}
+              className="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-widest border"
+              style={{ borderColor: `${color}66`, color, background: "rgba(0,0,0,0.35)" }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TargetIcon() {
   return (
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
