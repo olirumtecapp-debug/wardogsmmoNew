@@ -461,6 +461,45 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   }
   ctx.textAlign = "start";
   ctx.textBaseline = "alphabetic";
+
+  // Airstrike targeting marker (large red X on the ground)
+  if (state.airstrikeMarker) {
+    const m = state.airstrikeMarker;
+    const gy = surfaceYQuick(state, m.x);
+    const alpha = Math.min(1, m.life);
+    const pulse = 1 + Math.sin(now * 0.02) * 0.15;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(m.x, gy - 6);
+    ctx.strokeStyle = "#ff2a2a";
+    ctx.lineWidth = 3;
+    ctx.shadowColor = "#ff2a2a"; ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-14, -14); ctx.lineTo(14, 14);
+    ctx.moveTo(-14, 14); ctx.lineTo(14, -14);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Scenario global tint (arctic/desert/jungle)
+  if (sc.tint) {
+    ctx.save();
+    ctx.globalCompositeOperation = sc.tintBlend;
+    ctx.fillStyle = sc.tint;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+}
+
+function surfaceYQuick(state: GameState, x: number): number {
+  const xi = Math.max(0, Math.min(state.width - 1, Math.floor(x)));
+  for (let y = 0; y < state.height; y++) {
+    if (state.terrain[y * state.width + xi]) return y;
+  }
+  return state.height;
 }
 
 // ============ PROJECTILE DRAWERS ============
