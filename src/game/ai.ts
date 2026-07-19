@@ -11,10 +11,11 @@ export function aiTakeTurn(state: GameState) {
 
   me.facing = enemy.x > me.x ? 1 : -1;
 
-  // Choose weapon: prefer bazooka/artillery if available, else grenade, else ak, else revolver
-  const preference: (typeof WEAPON_ORDER)[number][] = ["bazooka", "artillery", "grenade", "ak47", "revolver"];
-  let chosen = preference.find(w => state.ammo[w] !== 0) ?? "revolver";
+  // Prefer heavy hitters when ammo available, fall back to unlimited weapons
+  const preference: (typeof WEAPON_ORDER)[number][] = ["rpg", "bazooka", "artillery", "grenade", "bow"];
+  const chosen = preference.find(w => state.ammo[w] !== 0) ?? "bazooka";
   state.weapon = chosen;
+
 
   // Search
   let best = { angle: 45, power: 60, dist: Infinity };
@@ -54,7 +55,7 @@ function simulate(state: GameState, angle: number, power: number, weaponId: keyo
     if (x < 0 || x > width || y > height) break;
     // Check hit terrain
     if (isSolid(state, x, y)) return Math.hypot(x - enemy.x, y - (enemy.y - 8));
-    if (w.kind === "hitscan") return Math.hypot(x - enemy.x, y - (enemy.y - 8));
+
   }
   return Math.hypot(x - enemy.x, y - (enemy.y - 8));
 }

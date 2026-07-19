@@ -198,6 +198,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   // Projectiles
   for (const p of state.projectiles) {
     const w2 = WEAPONS[p.weapon];
+    const ang = Math.atan2(p.vy, p.vx);
+
     // Glow trail
     ctx.save();
     for (let i = 0; i < p.trail.length; i++) {
@@ -208,14 +210,61 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.beginPath(); ctx.arc(tx, ty, 1 + a * 2.5, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
-    // Core
-    ctx.save();
-    ctx.shadowColor = w2.color;
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.arc(p.x, p.y, w2.id === "grenade" ? 5 : 3.5, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
+
+    if (w2.id === "bow") {
+      // Arrow oriented along velocity
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(ang);
+      // shaft
+      ctx.strokeStyle = "#6b3a1e"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(6, 0); ctx.stroke();
+      // head
+      ctx.fillStyle = "#dfe4ea";
+      ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(2, -2.4); ctx.lineTo(2, 2.4); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#889099"; ctx.lineWidth = 0.6; ctx.stroke();
+      // fletching
+      ctx.fillStyle = w2.color;
+      ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-13, -3); ctx.lineTo(-8, 0); ctx.lineTo(-13, 3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else if (w2.id === "rpg") {
+      // Rocket body + flame
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(ang);
+      // flame
+      const flick = 1 + (Math.sin(now * 0.06) + 1) * 0.25;
+      const fg = ctx.createLinearGradient(-14 * flick, 0, -4, 0);
+      fg.addColorStop(0, "rgba(255,80,20,0)");
+      fg.addColorStop(0.5, "rgba(255,160,60,0.8)");
+      fg.addColorStop(1, "rgba(255,240,180,1)");
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.moveTo(-4, -2.8); ctx.lineTo(-14 * flick, 0); ctx.lineTo(-4, 2.8); ctx.closePath(); ctx.fill();
+      // body
+      const bg = ctx.createLinearGradient(0, -3, 0, 3);
+      bg.addColorStop(0, "#e8e4dd"); bg.addColorStop(1, "#6a655c");
+      ctx.fillStyle = bg;
+      roundRect(ctx, -4, -3, 12, 6, 1.5); ctx.fill();
+      // nose cone
+      ctx.fillStyle = "#c94a1e";
+      ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(13, 0); ctx.lineTo(8, 3); ctx.closePath(); ctx.fill();
+      // fins
+      ctx.fillStyle = "#4a4a52";
+      ctx.beginPath(); ctx.moveTo(-4, -3); ctx.lineTo(-7, -5); ctx.lineTo(-2, -3); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4, 3); ctx.lineTo(-7, 5); ctx.lineTo(-2, 3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else {
+      // Default core (bazooka, grenade, artillery)
+      ctx.save();
+      ctx.shadowColor = w2.color;
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(p.x, p.y, w2.id === "grenade" ? 5 : 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
   }
+
 
   // Explosions
   for (const e of state.explosions) {
@@ -293,151 +342,301 @@ function drawDog(
   ctx.save();
   ctx.translate(x, y);
 
-  const bodyLight = color === "green" ? "#a4855a" : "#9a6f52";
-  const bodyBase = color === "green" ? "#7d6238" : "#78503a";
+  const bodyLight = color === "green" ? "#b0916a" : "#a67a5e";
+  const bodyBase = color === "green" ? "#836841" : "#7d5540";
   const bodyDark = color === "green" ? "#4a3820" : "#4a2e20";
   const teamColor = color === "green" ? "#7dd66a" : "#ff5148";
   const teamDark = color === "green" ? "#3f7a2c" : "#a02824";
+  const teamNum = color === "green" ? "01" : "02";
+
+  // Ground shadow (soft, always drawn)
+  ctx.save();
+  const shadowG = ctx.createRadialGradient(0, 14, 2, 0, 14, 22);
+  shadowG.addColorStop(0, "rgba(0,0,0,0.5)");
+  shadowG.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = shadowG;
+  ctx.beginPath(); ctx.ellipse(0, 14, 22, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 
   if (hp <= 0) {
-    ctx.rotate(Math.PI / 2 * facing * 0.9);
-    ctx.globalAlpha = 0.7;
+    // Fallen dog lying on side + tiny cross
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.rotate((Math.PI / 2) * facing * 0.85);
     ctx.fillStyle = bodyDark;
-    roundRect(ctx, -14, -6, 28, 12, 6); ctx.fill();
+    roundRect(ctx, -14, -7, 28, 14, 7); ctx.fill();
+    ctx.fillStyle = bodyBase;
+    roundRect(ctx, -12, -5, 24, 10, 5); ctx.fill();
     ctx.fillStyle = "#000";
-    ctx.font = "bold 11px Chakra Petch, sans-serif";
-    ctx.fillText("X_X", -8, -10);
+    ctx.font = "bold 10px Chakra Petch, sans-serif";
+    ctx.fillText("X_X", -8, -9);
+    ctx.restore();
+    // cross behind
+    ctx.strokeStyle = "#6a5033"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-6, -6); ctx.lineTo(-6, -20); ctx.moveTo(-11, -13); ctx.lineTo(-1, -13); ctx.stroke();
     ctx.restore();
     return;
   }
 
-  // Idle breathing bob
-  const bob = Math.sin(now * 0.004) * 0.9;
+  // Idle breathing bob + injured tremor
+  const injured = hp < 40;
+  const bob = Math.sin(now * 0.004) * 0.9 + (injured ? Math.sin(now * 0.02) * 0.6 : 0);
   ctx.translate(0, bob);
 
   ctx.scale(facing, 1);
 
-  // Ground shadow
+  // ---- Legs (4 visible: 2 back, 2 front with slight offset) ----
+  ctx.fillStyle = bodyDark;
+  roundRect(ctx, -11, 5, 5, 8, 2); ctx.fill();      // back far
+  roundRect(ctx, -8, 5.5, 5, 7.5, 2); ctx.fill();   // back near (lighter y offset)
+  ctx.fillStyle = "#3a2c18";
+  roundRect(ctx, 3, 5, 5, 8, 2); ctx.fill();
+  roundRect(ctx, 6, 5.5, 5, 7.5, 2); ctx.fill();
+  // paws
+  ctx.fillStyle = "#2a1e10";
+  ctx.fillRect(-11, 12, 5, 1.5);
+  ctx.fillRect(-8, 12.5, 5, 1);
+  ctx.fillRect(3, 12, 5, 1.5);
+  ctx.fillRect(6, 12.5, 5, 1);
+
+  // ---- Tail: two-segment Bezier, wag when active ----
+  const wag = active ? Math.sin(now * 0.012) * 0.35 : Math.sin(now * 0.003) * 0.08;
   ctx.save();
-  ctx.scale(1 / facing, 1);
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.beginPath(); ctx.ellipse(0, 12, 20, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.translate(-13, -8);
+  ctx.rotate(-0.6 + wag);
+  ctx.strokeStyle = bodyBase; ctx.lineWidth = 5; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(-6, -3, -10, -1);
+  ctx.stroke();
+  ctx.strokeStyle = bodyDark; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-8, -1);
+  ctx.quadraticCurveTo(-12, 1, -14, -1);
+  ctx.stroke();
   ctx.restore();
 
-  // Tail (wagging when active)
-  const wag = active ? Math.sin(now * 0.012) * 0.25 : 0;
+  // ---- Body silhouette (Bezier for canine curve) ----
   ctx.save();
-  ctx.translate(-13, -10);
-  ctx.rotate(-0.5 + wag);
-  ctx.fillStyle = bodyBase;
-  roundRect(ctx, -10, -3, 12, 5, 2.5); ctx.fill();
-  ctx.fillStyle = bodyDark;
-  ctx.beginPath(); ctx.arc(-10, -0.5, 2.8, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-
-  // Back legs
-  ctx.fillStyle = bodyDark;
-  roundRect(ctx, -10, 4, 6, 8, 2); ctx.fill();
-  roundRect(ctx, 4, 4, 6, 8, 2); ctx.fill();
-
-  // Body with gradient
-  const bodyG = ctx.createLinearGradient(0, -14, 0, 8);
+  const bodyG = ctx.createLinearGradient(0, -15, 0, 8);
   bodyG.addColorStop(0, bodyLight);
+  bodyG.addColorStop(0.55, bodyBase);
   bodyG.addColorStop(1, bodyDark);
   ctx.fillStyle = bodyG;
-  roundRect(ctx, -14, -14, 28, 22, 10); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-13, -6);
+  ctx.bezierCurveTo(-15, -16, -6, -18, 2, -16);   // back curve
+  ctx.bezierCurveTo(10, -15, 15, -12, 15, -6);    // shoulder
+  ctx.bezierCurveTo(15, 2, 12, 8, 6, 8);          // chest to belly
+  ctx.bezierCurveTo(-4, 9, -12, 6, -13, -6);      // belly to hip
+  ctx.closePath();
+  ctx.fill();
+  // Subtle fur strokes along back
+  ctx.strokeStyle = "rgba(0,0,0,0.14)"; ctx.lineWidth = 0.6;
+  for (let i = -10; i <= 8; i += 3) {
+    ctx.beginPath();
+    ctx.moveTo(i, -14);
+    ctx.lineTo(i + 1.5, -12);
+    ctx.stroke();
+  }
+  ctx.restore();
 
-  // Tactical vest
-  ctx.fillStyle = teamDark;
-  roundRect(ctx, -12, -6, 24, 10, 4); ctx.fill();
-  // Vest pockets
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(-8, -2, 5, 5);
-  ctx.fillRect(-1, -2, 5, 5);
-  ctx.fillRect(6, -2, 4, 5);
-  // Vest team stripe
-  ctx.fillStyle = teamColor;
-  ctx.fillRect(-12, -6, 24, 1.5);
-
-  // Head
+  // ---- Ammo belt across chest ----
   ctx.save();
-  ctx.translate(10, -14);
-  // Snout
-  ctx.fillStyle = bodyBase;
-  roundRect(ctx, 4, -2, 12, 9, 4); ctx.fill();
-  ctx.fillStyle = bodyDark;
-  ctx.beginPath(); ctx.arc(15, 0, 2, 0, Math.PI * 2); ctx.fill();
-  // Head main
-  const headG = ctx.createLinearGradient(0, -10, 0, 8);
-  headG.addColorStop(0, bodyLight);
-  headG.addColorStop(1, bodyBase);
-  ctx.fillStyle = headG;
-  roundRect(ctx, -4, -10, 16, 16, 7); ctx.fill();
+  ctx.rotate(-0.25);
+  ctx.fillStyle = "#4a3a24";
+  ctx.fillRect(-2, -8, 18, 3);
+  ctx.fillStyle = "#d4a84a";
+  for (let i = 0; i < 6; i++) ctx.fillRect(-1 + i * 3, -7.5, 1.6, 2);
+  ctx.restore();
 
-  // Ear (folded)
+  // ---- Tactical vest ----
+  ctx.fillStyle = teamDark;
+  roundRect(ctx, -11, -5, 22, 10, 4); ctx.fill();
+  // dashed stitching
+  ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 0.6;
+  ctx.setLineDash([1.5, 1.5]);
+  ctx.strokeRect(-10.5, -4.5, 21, 9);
+  ctx.setLineDash([]);
+  // 3 pockets with tiny gold buckle
+  const pocketY = -1;
+  for (let i = 0; i < 3; i++) {
+    const px = -8 + i * 6.5;
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(px, pocketY, 4.5, 4.5);
+    ctx.fillStyle = "#d4a84a";
+    ctx.fillRect(px + 1.5, pocketY + 3.2, 1.5, 1);
+  }
+  // team stripe on top
+  ctx.fillStyle = teamColor;
+  ctx.fillRect(-11, -5, 22, 1.5);
+  // shoulder patch
+  ctx.fillStyle = teamColor;
+  ctx.beginPath(); ctx.arc(-9, -4, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 3.5px Chakra Petch";
+  ctx.textAlign = "center";
+  ctx.fillText(teamNum, -9, -3);
+  ctx.textAlign = "start";
+
+  // ---- Head ----
+  ctx.save();
+  ctx.translate(11, -14);
+
+  // Snout (rounded rect + nose)
+  const snoutG = ctx.createLinearGradient(0, -2, 0, 8);
+  snoutG.addColorStop(0, bodyLight); snoutG.addColorStop(1, bodyBase);
+  ctx.fillStyle = snoutG;
+  roundRect(ctx, 4, -1, 13, 8, 4); ctx.fill();
+  // mouth line
+  ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 0.7;
+  ctx.beginPath(); ctx.moveTo(6, 5); ctx.quadraticCurveTo(11, 6.5, 15, 5); ctx.stroke();
+  // tongue if active
+  if (active && Math.sin(now * 0.005) > 0.6) {
+    ctx.fillStyle = "#e85a75";
+    roundRect(ctx, 10, 5, 4, 2.2, 1); ctx.fill();
+  }
+  // nose (glossy black)
+  const noseG = ctx.createRadialGradient(15, 0, 0, 15, 0, 3);
+  noseG.addColorStop(0, "#3a2a24"); noseG.addColorStop(1, "#0a0806");
+  ctx.fillStyle = noseG;
+  ctx.beginPath(); ctx.arc(16, 0, 2.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath(); ctx.arc(15.4, -0.6, 0.7, 0, Math.PI * 2); ctx.fill();
+
+  // Skull (two overlapping circles blended)
+  const headG = ctx.createLinearGradient(0, -10, 0, 8);
+  headG.addColorStop(0, bodyLight); headG.addColorStop(1, bodyBase);
+  ctx.fillStyle = headG;
+  ctx.beginPath();
+  ctx.moveTo(-4, -2);
+  ctx.bezierCurveTo(-5, -10, 4, -12, 8, -10);
+  ctx.bezierCurveTo(13, -8, 13, 2, 8, 5);
+  ctx.bezierCurveTo(2, 6, -4, 4, -4, -2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Floppy ear (animated slight sway)
+  const earSway = Math.sin(now * 0.003) * 0.08;
+  ctx.save();
+  ctx.translate(-1, -8);
+  ctx.rotate(earSway);
   ctx.fillStyle = bodyDark;
   ctx.beginPath();
-  ctx.moveTo(-2, -10); ctx.quadraticCurveTo(-6, -6, -2, -2); ctx.quadraticCurveTo(2, -6, 2, -10); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
-  ctx.beginPath(); ctx.moveTo(-1, -8); ctx.quadraticCurveTo(-3, -5, -1, -3); ctx.closePath(); ctx.fill();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(-5, 3, -2, 8);
+  ctx.quadraticCurveTo(2, 3, 3, -1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,220,200,0.25)";
+  ctx.beginPath();
+  ctx.moveTo(0, 1);
+  ctx.quadraticCurveTo(-2, 4, -1, 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 
-  // Tactical goggles
-  const goggleG = ctx.createLinearGradient(0, -4, 0, 2);
-  goggleG.addColorStop(0, "#0a0a0a");
-  goggleG.addColorStop(1, "#1a1a1a");
+  // Eye with rare blink (closed 80ms every ~4s)
+  const cycle = (now / 4000) % 1;
+  const blink = cycle > 0.98;
+  if (!blink) {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(4, -3, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#1a2a1a";
+    const pupilShift = active ? Math.sin(now * 0.002) * 0.4 : 0;
+    ctx.beginPath(); ctx.arc(4 + pupilShift, -3, 0.9, 0, Math.PI * 2); ctx.fill();
+  } else {
+    ctx.strokeStyle = bodyDark; ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.moveTo(2.5, -3); ctx.lineTo(5.5, -3); ctx.stroke();
+  }
+
+  // Tactical goggles with metallic frame
+  const goggleG = ctx.createLinearGradient(0, -5, 0, 1);
+  goggleG.addColorStop(0, "#0f0f10"); goggleG.addColorStop(1, "#242428");
   ctx.fillStyle = goggleG;
-  roundRect(ctx, 0, -4, 12, 4, 2); ctx.fill();
-  // Lens shine
-  ctx.fillStyle = "rgba(140,220,180,0.7)";
-  ctx.fillRect(2, -3.5, 3, 1);
-  ctx.fillRect(8, -3.5, 2, 1);
-  // Goggle strap
+  roundRect(ctx, -1, -5, 13, 4, 1.8); ctx.fill();
+  ctx.strokeStyle = "#6a6a72"; ctx.lineWidth = 0.6;
+  ctx.strokeRect(-0.5, -4.7, 12, 3.5);
+  ctx.fillStyle = "rgba(160,240,190,0.7)";
+  ctx.beginPath(); ctx.moveTo(1, -4.2); ctx.lineTo(4, -4.2); ctx.lineTo(3, -1.8); ctx.lineTo(0, -1.8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(160,240,190,0.5)";
+  ctx.fillRect(7, -4.3, 3, 0.8);
+  // strap
   ctx.strokeStyle = bodyDark; ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.moveTo(-4, -2); ctx.lineTo(12, -2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4, -3); ctx.lineTo(12, -3); ctx.stroke();
 
   // Helmet
   ctx.fillStyle = teamDark;
   ctx.beginPath();
   ctx.ellipse(4, -10, 12, 7, 0, Math.PI, Math.PI * 2);
   ctx.fill();
-  // Helmet highlight
   const helmG = ctx.createLinearGradient(0, -17, 0, -8);
-  helmG.addColorStop(0, teamColor);
-  helmG.addColorStop(1, teamDark);
+  helmG.addColorStop(0, teamColor); helmG.addColorStop(1, teamDark);
   ctx.fillStyle = helmG;
   ctx.beginPath();
   ctx.ellipse(4, -10, 11, 6, 0, Math.PI, Math.PI * 2);
   ctx.fill();
-  // Helmet rim
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
-  ctx.fillRect(-8, -10, 24, 1.5);
-  // Star
+  // side band
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fillRect(-7, -10, 22, 1.4);
+  // helmet number stencil
   ctx.fillStyle = "#fff";
-  drawStar(ctx, 4, -13, 2.4, 5);
+  ctx.font = "bold 4.5px Black Ops One, Chakra Petch";
+  ctx.textAlign = "center";
+  ctx.fillText(teamNum, 4, -11.5);
+  ctx.textAlign = "start";
+  // antenna
+  ctx.strokeStyle = "#2a2a2a"; ctx.lineWidth = 0.7;
+  ctx.beginPath(); ctx.moveTo(-6, -14); ctx.lineTo(-8, -20); ctx.stroke();
+  ctx.fillStyle = teamColor;
+  ctx.beginPath(); ctx.arc(-8, -20.5, 0.9, 0, Math.PI * 2); ctx.fill();
+  // small star patch
+  ctx.fillStyle = "#ffe4a3";
+  drawStar(ctx, 11, -12, 1.6, 5);
 
   ctx.restore();
+
+  // Bandage when injured
+  if (injured) {
+    ctx.fillStyle = "#f4ecd8";
+    ctx.fillRect(-6, 1, 8, 3);
+    ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 0.5;
+    ctx.setLineDash([1.2, 1.2]);
+    ctx.strokeRect(-6, 1, 8, 3);
+    ctx.setLineDash([]);
+    // red dot
+    ctx.fillStyle = "#c02020";
+    ctx.beginPath(); ctx.arc(-2, 2.5, 0.8, 0, Math.PI * 2); ctx.fill();
+  }
 
   // Weapon (rotates by angle when active)
   const gunAngle = active ? -angle * Math.PI / 180 : -0.3;
   ctx.save();
   ctx.translate(14, -6);
   ctx.rotate(gunAngle);
-  // Stock
   ctx.fillStyle = "#2a1e14";
   roundRect(ctx, -2, -2, 6, 4, 1); ctx.fill();
-  // Barrel
   const barrelG = ctx.createLinearGradient(0, -1.5, 0, 1.5);
-  barrelG.addColorStop(0, "#4a4a52");
-  barrelG.addColorStop(1, "#1a1a20");
+  barrelG.addColorStop(0, "#4a4a52"); barrelG.addColorStop(1, "#1a1a20");
   ctx.fillStyle = barrelG;
   roundRect(ctx, 4, -1.5, 14, 3, 1); ctx.fill();
-  // Muzzle
   ctx.fillStyle = "#0a0a0a";
   ctx.fillRect(17, -1, 2, 2);
   ctx.restore();
 
   ctx.restore();
+
+  // Active pulse ring at base
+  if (active) {
+    ctx.save();
+    const t = (now % 1200) / 1200;
+    ctx.globalAlpha = (1 - t) * 0.65;
+    ctx.strokeStyle = teamColor; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.ellipse(0, 14, 10 + t * 14, 3 + t * 3, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
 }
+
 
 function drawActiveMarker(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, team: "green" | "red") {
   const bob = Math.sin(now * 0.006) * 3;
