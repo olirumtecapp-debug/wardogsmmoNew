@@ -244,57 +244,58 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   }
 
 
-  // Stars
-  const st = ensureStars(w, h, state.seed);
-  ctx.save();
-  for (const s of st) {
-    const tw = 0.5 + 0.5 * Math.sin(now * 0.002 + s.p);
-    ctx.globalAlpha = 0.4 * tw + 0.15;
-    ctx.fillStyle = "#e6f0ff";
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.restore();
+  if (!keyArtActive) {
+    // Stars
+    const st = ensureStars(w, h, state.seed);
+    ctx.save();
+    for (const s of st) {
+      const tw = 0.5 + 0.5 * Math.sin(now * 0.002 + s.p);
+      ctx.globalAlpha = 0.4 * tw + 0.15;
+      ctx.fillStyle = "#e6f0ff";
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
 
-  // Distant mountains
-  ctx.fillStyle = "#20293a";
-  ctx.beginPath();
-  ctx.moveTo(0, h * 0.66);
-  for (let x = 0; x <= w; x += 30) {
-    ctx.lineTo(x, h * 0.66 - Math.sin(x * 0.006 + state.seed * 0.001) * 55 - 20);
-  }
-  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    // Distant mountains
+    ctx.fillStyle = "#20293a";
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.66);
+    for (let x = 0; x <= w; x += 30) {
+      ctx.lineTo(x, h * 0.66 - Math.sin(x * 0.006 + state.seed * 0.001) * 55 - 20);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
 
-  // Mid mountains
-  ctx.fillStyle = "#182234";
-  ctx.beginPath();
-  ctx.moveTo(0, h * 0.74);
-  for (let x = 0; x <= w; x += 20) {
-    ctx.lineTo(x, h * 0.74 - Math.sin(x * 0.011 + state.seed * 0.002 + 1.3) * 40 - 12);
-  }
-  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    // Mid mountains
+    ctx.fillStyle = "#182234";
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.74);
+    for (let x = 0; x <= w; x += 20) {
+      ctx.lineTo(x, h * 0.74 - Math.sin(x * 0.011 + state.seed * 0.002 + 1.3) * 40 - 12);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
 
-  // Ruins silhouettes (close parallax) — broken buildings
-  ctx.fillStyle = "#0e1521";
-  const ruinSeed = state.seed * 0.001;
-  for (let rx = 40; rx < w; rx += 130) {
-    const off = Math.sin(rx * 0.02 + ruinSeed) * 10;
-    const bh = 40 + Math.abs(Math.sin(rx * 0.05)) * 30;
-    const by = h * 0.78 + off;
-    ctx.fillRect(rx, by - bh, 24, bh);
-    // broken top
-    ctx.fillRect(rx + 6, by - bh - 6, 8, 6);
-    // window slit
-    ctx.fillStyle = "rgba(255,180,80,0.15)";
-    ctx.fillRect(rx + 8, by - bh + 12, 3, 5);
+    // Ruins silhouettes (close parallax) — broken buildings
     ctx.fillStyle = "#0e1521";
+    const ruinSeed = state.seed * 0.001;
+    for (let rx = 40; rx < w; rx += 130) {
+      const off = Math.sin(rx * 0.02 + ruinSeed) * 10;
+      const bh = 40 + Math.abs(Math.sin(rx * 0.05)) * 30;
+      const by = h * 0.78 + off;
+      ctx.fillRect(rx, by - bh, 24, bh);
+      ctx.fillRect(rx + 6, by - bh - 6, 8, 6);
+      ctx.fillStyle = "rgba(255,180,80,0.15)";
+      ctx.fillRect(rx + 8, by - bh + 12, 3, 5);
+      ctx.fillStyle = "#0e1521";
+    }
+
+    // Ground haze
+    const haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    haze.addColorStop(0, "rgba(60,50,30,0)");
+    haze.addColorStop(1, "rgba(60,50,30,0.4)");
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, h * 0.6, w, h * 0.4);
   }
 
-  // Ground haze
-  const haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
-  haze.addColorStop(0, "rgba(60,50,30,0)");
-  haze.addColorStop(1, "rgba(60,50,30,0.4)");
-  ctx.fillStyle = haze;
-  ctx.fillRect(0, h * 0.6, w, h * 0.4);
 
   // Wind dust particles behind terrain
   updateDust(w, h, state.wind, dt, now);
