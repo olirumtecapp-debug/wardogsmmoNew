@@ -10,63 +10,91 @@ interface Props {
   onExit: () => void;
 }
 
-// Inline SVG icons per weapon — stencil style, monochrome + colored accents
+// Inline SVG icons per weapon — sticker-style with color gradients
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
-  const common = {
-    className: className ?? "w-6 h-6",
-    viewBox: "0 0 32 32",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.6,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  };
+  const cls = className ?? "w-7 h-7";
   switch (id) {
     case "bazooka":
       return (
-        <svg {...common}>
-          <path d="M4 18 L22 14 L28 15 L28 19 L22 20 L4 16 Z" fill="currentColor" fillOpacity="0.18" />
-          <path d="M8 14 L11 10 L15 12" />
-          <circle cx="26" cy="17" r="1" fill="currentColor" />
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <linearGradient id="wi-bz" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#ffcf6b" />
+              <stop offset="1" stopColor="#ff5a0e" />
+            </linearGradient>
+          </defs>
+          <path d="M3 17 L21 12 L28 13 L29 17 L28 21 L21 22 L3 18 Z" fill="url(#wi-bz)" stroke="#1a1108" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M8 13 L11 8 L15 10" stroke="#1a1108" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="26" cy="17" r="1.4" fill="#1a1108" />
+          <path d="M3 17 L1 15 M3 17 L1 19" stroke="#ffe08a" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
       );
     case "grenade":
       return (
-        <svg {...common}>
-          <path d="M14 8 h4 v3 h-4z" fill="currentColor" fillOpacity="0.4" />
-          <circle cx="21" cy="8" r="2" />
-          <circle cx="16" cy="20" r="7" fill="currentColor" fillOpacity="0.18" />
-          <path d="M9 20 h14 M16 13 v14" strokeOpacity="0.5" />
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <radialGradient id="wi-gr" cx="0.35" cy="0.3" r="0.8">
+              <stop offset="0" stopColor="#c3e07a" />
+              <stop offset="1" stopColor="#3d5220" />
+            </radialGradient>
+          </defs>
+          <path d="M14 4 h4 v3 h-4z" fill="#8a8a8a" />
+          <path d="M20 4 a2.5 2.5 0 1 1 -0.01 0" stroke="#f4d02c" strokeWidth="1.4" fill="none" />
+          <circle cx="16" cy="19" r="9" fill="url(#wi-gr)" stroke="#1a1108" strokeWidth="1.2" />
+          <path d="M7 19 h18 M16 10 v18 M9 12 l14 14 M23 12 l-14 14" stroke="#1a1108" strokeWidth="0.9" strokeOpacity="0.55" />
+          <circle cx="16" cy="10" r="1.2" fill="#f4d02c" />
         </svg>
       );
     case "rpg":
       return (
-        <svg {...common}>
-          <path d="M4 18 L20 14 L26 15 L28 17 L26 19 L20 20 L4 16 Z" fill="currentColor" fillOpacity="0.18" />
-          <path d="M4 16 L2 14 M4 18 L2 20" />
-          <path d="M22 12 L20 14 M22 22 L20 20" />
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <linearGradient id="wi-rp" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#7ff0ff" />
+              <stop offset="0.5" stopColor="#2b7fff" />
+              <stop offset="1" stopColor="#0e2a80" />
+            </linearGradient>
+          </defs>
+          <path d="M5 17 L21 13 L27 14 L29 16 L27 18 L21 19 L5 18 Z" fill="url(#wi-rp)" stroke="#0a1128" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M5 17 L1 14 M5 18 L1 20 M22 11 L20 13 M22 23 L20 20" stroke="#0a1128" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="24" cy="16" r="1.1" fill="#7ff0ff" />
         </svg>
       );
     case "bow":
       return (
-        <svg {...common}>
-          <path d="M8 4 C 20 8, 20 24, 8 28" />
-          <path d="M8 4 L8 28" strokeDasharray="2 2" strokeOpacity="0.5" />
-          <path d="M6 16 L26 16" />
-          <path d="M26 16 L22 13 M26 16 L22 19 M4 16 L7 13 M4 16 L7 19" />
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <linearGradient id="wi-bw" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#dfffb0" />
+              <stop offset="1" stopColor="#5a8a2e" />
+            </linearGradient>
+          </defs>
+          <path d="M9 4 C 22 8, 22 24, 9 28" stroke="url(#wi-bw)" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+          <path d="M9 4 L9 28" stroke="#1a1108" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.6" />
+          <path d="M4 16 L26 16" stroke="#c9b48a" strokeWidth="1.4" />
+          <path d="M26 16 L21 13 L21 19 Z" fill="#e8e8ee" stroke="#1a1108" strokeWidth="0.8" />
+          <path d="M4 16 L7 13 M4 16 L7 19" stroke="#ff4d9e" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
       );
     case "artillery":
       return (
-        <svg {...common}>
-          <path d="M6 22 L14 22 L22 12 L26 12 L26 16 L18 26 L6 26 Z" fill="currentColor" fillOpacity="0.18" />
-          <circle cx="9" cy="26" r="2" />
-          <circle cx="15" cy="26" r="2" />
-          <path d="M22 12 L26 8" />
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <linearGradient id="wi-ar" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#ff8a95" />
+              <stop offset="1" stopColor="#8a1428" />
+            </linearGradient>
+          </defs>
+          <path d="M6 22 L14 22 L23 11 L27 11 L27 15 L18 26 L6 26 Z" fill="url(#wi-ar)" stroke="#1a0308" strokeWidth="1.2" strokeLinejoin="round" />
+          <circle cx="9" cy="26" r="2.4" fill="#1a1108" stroke="#3a3a42" strokeWidth="0.6" />
+          <circle cx="15" cy="26" r="2.4" fill="#1a1108" stroke="#3a3a42" strokeWidth="0.6" />
+          <path d="M22 12 L28 6" stroke="#ffcc33" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="28" cy="6" r="1.3" fill="#ffcc33" />
         </svg>
       );
   }
 }
+
 
 
 export function WarDogsGame({ mode, onExit }: Props) {
@@ -207,7 +235,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
           <div className="panel px-3 py-1.5 pointer-events-auto text-center max-w-[45%]">
             <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-              {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentTeam === "green" ? "Verde" : "Vermelho"}`}
+              {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentTeam === "green" ? "Ranger" : "Brutus"}`}
             </div>
             <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
             {s.phase === "aiming" && s.winner === null && (
@@ -310,7 +338,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
           <div className="panel p-6 sm:p-8 text-center max-w-sm">
             <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
             <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? "var(--team-green)" : s.winner === 1 ? "var(--team-red)" : undefined }}>
-              {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? "Verde" : "Vermelho"}`}
+              {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? "Ranger" : "Brutus"}`}
             </h2>
             <div className="flex gap-2 mt-6 justify-center">
               <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
@@ -325,13 +353,14 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
 function MiniPlayer({ team, hp, active }: { team: "green" | "red"; hp: number; active: boolean }) {
   const color = team === "green" ? "var(--team-green)" : "var(--team-red)";
+  const name = team === "green" ? "Ranger" : "Brutus";
   return (
     <div
       className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
       style={active ? { boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`, borderColor: color } : undefined}
     >
       <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
-      <div className="stencil text-[9px] uppercase tracking-widest">{team === "green" ? "Verde" : "Vermelho"}</div>
+      <div className="stencil text-[9px] uppercase tracking-widest">{name}</div>
       <div className="w-16 h-1.5 bg-black/50 rounded-full overflow-hidden">
         <div className="h-full transition-all rounded-full" style={{ width: `${hp}%`, background: color }} />
       </div>
