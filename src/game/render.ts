@@ -42,6 +42,10 @@ function ensureTerrainCanvas(state: GameState) {
     terrainDirty = true;
   }
   if (terrainDirty) {
+    const sc = getActiveScenario();
+    const [tR, tG, tB] = sc.terrainTop;
+    const [mR, mG, mB] = sc.terrainMid;
+    const [dR, dG, dB] = sc.terrainDeep;
     const tctx = terrainCanvas.getContext("2d")!;
     const img = tctx.createImageData(state.width, state.height);
     const t = state.terrain;
@@ -59,39 +63,36 @@ function ensureTerrainCanvas(state: GameState) {
 
           let r: number, g: number, b: number;
           if (above) {
-            // Grass rim highlight with slight variation
             const gn = ((x * 17 + y * 31) % 20) - 10;
-            r = 0x9c + (gn >> 2); g = 0xd1 + (gn >> 1); b = 0x54 + (gn >> 3);
+            r = tR + (gn >> 2); g = tG + (gn >> 1); b = tB + (gn >> 3);
           } else if (near1) {
-            r = 0x74; g = 0x9c; b = 0x3d;
+            r = mR; g = mG; b = mB;
           } else if (near2) {
-            r = 0x56; g = 0x72; b = 0x2d;
+            r = Math.round((mR + dR) / 2); g = Math.round((mG + dG) / 2); b = Math.round((mB + dB) / 2);
           } else if (y > h * 0.72) {
             const nn = n >> 1;
-            r = 0x2a + nn; g = 0x24 + nn; b = 0x22 + nn;
+            r = Math.max(0, dR - 20 + nn); g = Math.max(0, dG - 12 + nn); b = Math.max(0, dB - 4 + nn);
           } else {
-            r = 0x46 + (n >> 1); g = 0x2f + (n >> 2); b = 0x1e + (n >> 2);
+            r = dR + (n >> 1); g = dG + (n >> 2); b = dB + (n >> 2);
             r = Math.max(0, r - Math.floor(depthT * 6));
             g = Math.max(0, g - Math.floor(depthT * 6));
           }
 
-          // Crater edge shadow
           if (!above && (
             (x > 0 && !t[i - 1]) ||
             (x < w - 1 && !t[i + 1]) ||
             (y > 0 && !t[i - w])
           )) {
-            r = Math.max(0, r - 26);
-            g = Math.max(0, g - 26);
-            b = Math.max(0, b - 26);
+            r = Math.max(0, r - 26); g = Math.max(0, g - 26); b = Math.max(0, b - 26);
           }
 
-          // Scattered charred pebbles inside terrain
           if (!above && !near1 && ((x * 7 + y * 13) % 173 === 0)) {
             r = Math.max(0, r - 20); g = Math.max(0, g - 20); b = Math.max(0, b - 20);
           }
 
-          img.data[j] = r; img.data[j + 1] = g; img.data[j + 2] = b;
+          img.data[j] = Math.min(255, Math.max(0, r));
+          img.data[j + 1] = Math.min(255, Math.max(0, g));
+          img.data[j + 2] = Math.min(255, Math.max(0, b));
           img.data[j + 3] = 0xff;
         } else {
           img.data[j + 3] = 0;
