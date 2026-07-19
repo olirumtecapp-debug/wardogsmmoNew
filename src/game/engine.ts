@@ -1,7 +1,8 @@
 import type { Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
+import { markTerrainDirty } from "./render";
 
-const GRAVITY = 380; // px/s^2
+const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
 
 // Deterministic PRNG (mulberry32)
@@ -95,6 +96,7 @@ export function destroyTerrain(state: GameState, cx: number, cy: number, r: numb
       if (dx * dx + dy * dy <= r2) terrain[y * w + x] = 0;
     }
   }
+  markTerrainDirty();
 }
 
 export function fire(state: GameState) {
@@ -108,9 +110,10 @@ export function fire(state: GameState) {
   const dog = state.dogs[state.currentPlayer];
   const rad = (state.angle * Math.PI) / 180;
   const dir = dog.facing;
-  const speedScale = 6;
-  const vx = Math.cos(rad) * state.power * 0.12 * weapon.speed * dir * 0.06 * speedScale;
-  const vy = -Math.sin(rad) * state.power * 0.12 * weapon.speed * 0.06 * speedScale;
+  // Worms-style muzzle velocity: power (10..100) * weapon.speed * 0.6
+  const v = state.power * weapon.speed * 0.6;
+  const vx = Math.cos(rad) * v * dir;
+  const vy = -Math.sin(rad) * v;
   const muzzleX = dog.x + dir * 18;
   const muzzleY = dog.y - 6;
 
@@ -345,6 +348,7 @@ export function endTurn(state: GameState) {
 }
 
 export function cycleWeapon(state: GameState, dir: 1 | -1) {
+  if (state.phase !== "aiming" || state.winner !== null) return;
   const idx = WEAPON_ORDER.indexOf(state.weapon);
   for (let i = 1; i <= WEAPON_ORDER.length; i++) {
     const next = WEAPON_ORDER[(idx + dir * i + WEAPON_ORDER.length) % WEAPON_ORDER.length];
@@ -353,6 +357,7 @@ export function cycleWeapon(state: GameState, dir: 1 | -1) {
 }
 
 export function setWeapon(state: GameState, id: WeaponId) {
+  if (state.phase !== "aiming" || state.winner !== null) return;
   if (state.ammo[id] === 0) return;
   state.weapon = id;
 }

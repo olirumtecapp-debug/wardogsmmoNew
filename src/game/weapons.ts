@@ -2,11 +2,11 @@ import type { Weapon, WeaponId } from "./types";
 
 export const WEAPONS: Record<WeaponId, Weapon> = {
   revolver: {
-    id: "revolver", name: "Revólver", damage: 25, radius: 12, ammo: -1,
+    id: "revolver", name: "Revólver", damage: 25, radius: 18, ammo: -1,
     speed: 14, kind: "hitscan", affectedByWind: false, color: "#f6d365", gravityScale: 0,
   },
   ak47: {
-    id: "ak47", name: "AK-47", damage: 18, radius: 10, ammo: 4,
+    id: "ak47", name: "AK-47", damage: 18, radius: 16, ammo: 4,
     speed: 16, kind: "hitscan", affectedByWind: false, color: "#ffb347", gravityScale: 0,
   },
   bazooka: {

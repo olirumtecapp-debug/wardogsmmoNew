@@ -222,8 +222,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
                 return (
                   <button
                     key={id}
-                    disabled={disabled || isAiTurn}
-                    onClick={() => setWeapon(s, id)}
+                    disabled={disabled || isAiTurn || s.phase !== "aiming"}
+                    onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
                     className={`btn-hud text-xs px-2.5 py-2 whitespace-nowrap ${active ? "btn-primary" : ""} ${disabled ? "opacity-30" : ""}`}
                   >
                     <span className="mr-1" style={{ color: w.color }}>●</span>
