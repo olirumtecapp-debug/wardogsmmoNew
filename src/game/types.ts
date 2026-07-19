@@ -44,6 +44,27 @@ export interface Explosion {
   particles: Array<{ x: number; y: number; vx: number; vy: number; life: number; color: string }>;
 }
 
+export interface FloatingText {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  value: string;
+  color: string;
+  size: number;
+}
+
+export interface ScorchMark {
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+}
+
 export type GamePhase = "aiming" | "firing" | "resolving" | "gameover";
 export type GameMode = "ai" | "hotseat" | "online";
 
@@ -54,6 +75,8 @@ export interface GameState {
   dogs: [Dog, Dog];
   projectiles: Projectile[];
   explosions: Explosion[];
+  floatingTexts: FloatingText[];
+  scorchMarks: ScorchMark[];
   currentPlayer: 0 | 1;
   wind: number; // -1..1
   angle: number; // degrees, 0 = right, 90 = up
