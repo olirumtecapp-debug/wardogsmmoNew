@@ -1,6 +1,7 @@
 import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
 import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
+import { getActiveScenario } from "./scenarios";
 import bgIngameAsset from "@/assets/wardogs-bg-ingame.jpg.asset.json";
 import rangerPortraitAsset from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortraitAsset from "@/assets/wardogs-brutus.png.asset.json";
