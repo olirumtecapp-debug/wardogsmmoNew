@@ -348,6 +348,7 @@ export function endTurn(state: GameState) {
 }
 
 export function cycleWeapon(state: GameState, dir: 1 | -1) {
+  if (state.phase !== "aiming" || state.winner !== null) return;
   const idx = WEAPON_ORDER.indexOf(state.weapon);
   for (let i = 1; i <= WEAPON_ORDER.length; i++) {
     const next = WEAPON_ORDER[(idx + dir * i + WEAPON_ORDER.length) % WEAPON_ORDER.length];
@@ -356,6 +357,7 @@ export function cycleWeapon(state: GameState, dir: 1 | -1) {
 }
 
 export function setWeapon(state: GameState, id: WeaponId) {
+  if (state.phase !== "aiming" || state.winner !== null) return;
   if (state.ammo[id] === 0) return;
   state.weapon = id;
 }
