@@ -31,13 +31,15 @@ function Home() {
       <div className="absolute inset-0 -z-10">
         <MenuBackdrop />
       </div>
-      {/* Hero photo overlay (desktop) */}
+      {/* Hero photo overlay */}
       <div
-        className="absolute inset-0 -z-10 hidden sm:block opacity-55 mix-blend-screen"
+        className="absolute inset-0 -z-10 opacity-80"
         style={{
           backgroundImage: `url(${heroImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center 35%",
+          backgroundPosition: "center 40%",
+          maskImage: "radial-gradient(ellipse at 50% 45%, black 30%, transparent 85%)",
+          WebkitMaskImage: "radial-gradient(ellipse at 50% 45%, black 30%, transparent 85%)",
         }}
         aria-hidden
       />
