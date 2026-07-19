@@ -158,6 +158,28 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   const tc = ensureTerrainCanvas(state);
   ctx.drawImage(tc, 0, 0);
 
+  // Persistent scorch marks over the terrain
+  for (const s of state.scorchMarks) {
+    const t = s.life / s.maxLife;
+    const alpha = Math.min(1, t) * 0.55;
+    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.radius);
+    g.addColorStop(0, `rgba(10,6,4,${alpha})`);
+    g.addColorStop(0.6, `rgba(20,12,8,${alpha * 0.75})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2); ctx.fill();
+    // Fresh rim shockwave (first 0.4s of life relative to maxLife)
+    const freshT = (s.maxLife - s.life);
+    if (freshT < 0.4) {
+      ctx.save();
+      ctx.globalAlpha = 1 - freshT / 0.4;
+      ctx.strokeStyle = "#ff9138";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.radius * (0.9 + freshT * 0.6), 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   // Dogs
   for (let i = 0; i < state.dogs.length; i++) {
     const dog = state.dogs[i];
