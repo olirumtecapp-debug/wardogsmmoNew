@@ -1,5 +1,7 @@
-import type { GameState, Explosion } from "./types";
+import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
+import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
+
 
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
@@ -279,11 +281,14 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   // Dogs
   for (let i = 0; i < state.dogs.length; i++) {
     const dog = state.dogs[i];
+    const idx = i as 0 | 1;
+    const skin = teamSkin(idx);
     const active = state.phase === "aiming" && state.currentPlayer === i && state.winner === null;
-    drawDog(ctx, dog.x, dog.y, dog.team === 0 ? "green" : "red", dog.facing, dog.hp, now, active, state.angle);
-    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, dog.team === 0 ? "green" : "red");
-    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, dog.team === 0 ? "green" : "red");
+    drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
+    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, skin.teamColor, skin.teamDark);
+    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
   }
+
 
   // Aim indicator
   if (state.phase === "aiming" && state.winner === null) {
@@ -295,6 +300,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const p of state.projectiles) {
     const w2 = WEAPONS[p.weapon];
     const ang = Math.atan2(p.vy, p.vx);
+    const wcol = weaponColor(p.weapon);
+    const wacc = weaponAccent(p.weapon);
 
     // Trail
     ctx.save();
@@ -302,13 +309,13 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       const [tx, ty] = p.trail[i];
       const a = i / p.trail.length;
       ctx.globalAlpha = a * 0.7;
-      ctx.fillStyle = w2.color;
+      ctx.fillStyle = wcol;
       ctx.beginPath(); ctx.arc(tx, ty, 1 + a * 2.5, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
 
     if (w2.id === "bow") {
-      drawArrow(ctx, p.x, p.y, ang, w2.color, now);
+      drawArrow(ctx, p.x, p.y, ang, wcol, now);
     } else if (w2.id === "rpg") {
       drawRocket(ctx, p.x, p.y, ang, now);
     } else if (w2.id === "grenade") {
@@ -317,9 +324,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       drawShell(ctx, p.x, p.y, ang);
     } else {
       // Bazooka projectile — small missile
-      drawMissile(ctx, p.x, p.y, ang, w2.color);
+      drawMissile(ctx, p.x, p.y, ang, wacc);
     }
   }
+
 
   // Explosions
   for (const e of state.explosions) {
@@ -582,7 +590,7 @@ function drawExplosionParticles(ctx: CanvasRenderingContext2D, e: Explosion) {
 function drawDog(
   ctx: CanvasRenderingContext2D,
   x: number, y: number,
-  color: "green" | "red",
+  skin: TeamSkin,
   facing: 1 | -1,
   hp: number,
   now: number,
@@ -592,23 +600,23 @@ function drawDog(
   ctx.save();
   ctx.translate(x, y);
 
-  // Team-specific breed traits
-  // green = German Shepherd (pointy ears, longer snout, tan+black)
-  // red = Bulldog (flat wide face, stub ears, muscular)
-  const isShepherd = color === "green";
+  // Silhouette + palette come from the active skin pack.
+  // pointy = shepherd/husky/doberman-style; stocky = bulldog-style.
+  const pointy = skin.silhouette === "pointy";
+  const isShepherd = pointy; // alias to preserve existing branch logic below
+  const bodyLight = skin.bodyLight;
+  const bodyBase  = skin.bodyBase;
+  const bodyDark  = skin.bodyDark;
+  const teamColor = skin.teamColor;
+  const teamDark  = skin.teamDark;
+  const helmetBase = skin.helmetBase;
+  const helmetTop  = skin.helmetTop;
+  const badgeColor = skin.badgeColor;
+  const teamNum   = skin.teamNum;
+  const eyeIris   = skin.eyeIris;
+  const name      = skin.name;
+  const badgeGlyph = skin.badgeGlyph;
 
-  const bodyLight = isShepherd ? "#d2a06d" : "#efe4d6";
-  const bodyBase  = isShepherd ? "#a76a2c" : "#b57548";
-  const bodyDark  = isShepherd ? "#2a1a0c" : "#5a3120";
-  const teamColor = isShepherd ? "#ff8a1a" : "#ff4838";
-  const teamDark  = isShepherd ? "#a04a10" : "#a02420";
-  // Ranger = black tactical helmet w/ gold badge; Brutus = olive helmet
-  const helmetBase = isShepherd ? "#0f0f12" : "#3d4a2a";
-  const helmetTop  = isShepherd ? "#2a2a30" : "#6b7a44";
-  const badgeColor = isShepherd ? "#e0b64a" : "#d8d3c9";
-  const teamNum   = isShepherd ? "01" : "02";
-  const eyeIris   = isShepherd ? "#ffb84a" : "#e2a24a";
-  const name      = isShepherd ? "RANGER" : "BRUTUS";
 
   // Ground shadow
   ctx.save();
@@ -1004,8 +1012,9 @@ function drawDog(
   ctx.fillStyle = "rgba(0,0,0,0.75)";
   ctx.font = "bold 3.2px Black Ops One, Chakra Petch";
   ctx.textAlign = "center";
-  ctx.fillText(isShepherd ? "★" : "■", 4, -11.7);
+  ctx.fillText(badgeGlyph, 4, -11.7);
   ctx.textAlign = "start";
+
   // Antenna with blinking LED (kept in team color for turn feedback)
   ctx.strokeStyle = "#2a2a2a"; ctx.lineWidth = 0.7;
   ctx.beginPath(); ctx.moveTo(-6, -14); ctx.lineTo(-8, -22); ctx.stroke();
@@ -1085,9 +1094,8 @@ function drawDog(
 }
 
 
-function drawActiveMarker(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, team: "green" | "red") {
+function drawActiveMarker(ctx: CanvasRenderingContext2D, x: number, y: number, now: number, color: string) {
   const bob = Math.sin(now * 0.006) * 3;
-  const color = team === "green" ? "#7dd66a" : "#ff5148";
   ctx.save();
   ctx.translate(x, y + bob);
   // Golden halo behind
@@ -1113,6 +1121,7 @@ function drawActiveMarker(ctx: CanvasRenderingContext2D, x: number, y: number, n
   ctx.restore();
 }
 
+
 function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, points: number) {
   ctx.beginPath();
   for (let i = 0; i < points * 2; i++) {
@@ -1135,7 +1144,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, team: "green" | "red") {
+function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, color: string, dark: string) {
   const segCount = 10;
   const segW = 4, segGap = 1;
   const totalW = segCount * segW + (segCount - 1) * segGap;
@@ -1145,8 +1154,6 @@ function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: numb
   // backdrop
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   roundRect(ctx, startX - 3, y - 2, totalW + 6, barH + 4, 3); ctx.fill();
-  const color = team === "green" ? "#7dd66a" : "#ff5148";
-  const dark = team === "green" ? "#3f7a2c" : "#a02824";
   const filled = Math.round((hp / 100) * segCount);
   const critical = hp < 30;
   const pulse = critical ? 0.6 + 0.4 * Math.abs(Math.sin(performance.now() * 0.008)) : 1;
@@ -1174,6 +1181,7 @@ function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: numb
   ctx.restore();
 }
 
+
 function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; facing: 1 | -1 }, angle: number, power: number, _wind: number, weapon: string, now: number) {
   const rad = (angle * Math.PI) / 180;
   const dir = dog.facing;
@@ -1182,7 +1190,7 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   const y0 = dog.y - 10;
   const x1 = x0 + Math.cos(rad) * dir * len;
   const y1 = y0 - Math.sin(rad) * len;
-  const color = WEAPONS[weapon as keyof typeof WEAPONS]?.color ?? "#fff";
+  const color = weaponColor(weapon as WeaponId);
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
