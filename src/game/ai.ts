@@ -1,6 +1,6 @@
 import type { GameState, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER } from "./weapons";
-import { fire } from "./engine";
+import { activateRage, fire, RAGE_READY_THRESHOLD } from "./engine";
 import { getAIDifficulty } from "./scenarioContext";
 
 // Difficulty-aware AI.
@@ -14,6 +14,11 @@ export function aiTakeTurn(state: GameState) {
   if (!me || me.hp <= 0 || !enemy) return;
 
   me.facing = enemy.x > me.x ? 1 : -1;
+
+  // Auto-Fúria: se disponível e barra pronta, ativa antes de mirar
+  if (state.rageEnabled && !me.rageActive && me.rageCharge >= RAGE_READY_THRESHOLD) {
+    activateRage(state);
+  }
 
   const diff = getAIDifficulty();
 
