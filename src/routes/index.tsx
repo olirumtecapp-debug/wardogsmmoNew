@@ -43,6 +43,7 @@ function Home() {
   }
 
   return (
+    <OrientationGate soft>
     <div className="relative min-h-screen overflow-hidden flex flex-col">
       {/* Key art background — primary layer */}
       <div
@@ -97,11 +98,11 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end justify-items-center gap-3 sm:gap-6 max-w-3xl mx-auto pb-2">
+          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end justify-items-center gap-3 sm:gap-6 max-w-3xl mx-auto pb-3">
             <img
               src={PORTRAITS.RANGER}
               alt="Ranger"
-              className="max-h-[20vh] sm:max-h-[24vh] lg:max-h-[28vh] w-auto object-contain object-bottom drop-shadow-[0_10px_24px_rgba(0,0,0,0.7)] title-in-left justify-self-end"
+              className="max-h-[16vh] sm:max-h-[20vh] lg:max-h-[24vh] w-auto object-contain object-bottom drop-shadow-[0_10px_24px_rgba(0,0,0,0.7)] title-in-left justify-self-end"
               style={{ animationDelay: "0ms" }}
             />
             <img
@@ -112,7 +113,7 @@ function Home() {
             <img
               src={PORTRAITS.BRUTUS}
               alt="Brutus"
-              className="max-h-[20vh] sm:max-h-[24vh] lg:max-h-[28vh] w-auto object-contain object-bottom drop-shadow-[0_10px_24px_rgba(0,0,0,0.7)] title-in-left justify-self-start"
+              className="max-h-[16vh] sm:max-h-[20vh] lg:max-h-[24vh] w-auto object-contain object-bottom drop-shadow-[0_10px_24px_rgba(0,0,0,0.7)] title-in-left justify-self-start"
               style={{ animationDelay: "120ms" }}
             />
           </div>
@@ -232,6 +233,7 @@ function Home() {
         Segure firme o capacete · Ajuste o ângulo · Boa sorte, soldado
       </footer>
     </div>
+    </OrientationGate>
   );
 }
 
