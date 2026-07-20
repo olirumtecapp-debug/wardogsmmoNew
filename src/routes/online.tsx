@@ -68,20 +68,39 @@ function OnlineHome() {
         <div className="w-full max-w-2xl space-y-4">
           <section className="panel p-4 space-y-3">
             <div className="stencil text-xs uppercase tracking-widest text-muted-foreground">Seu operador</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-xs">
-                <span className="block mb-1 text-muted-foreground uppercase tracking-widest text-[10px]">Codinome</span>
-                <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 20))}
-                  className="w-full bg-secondary/70 border border-border/60 rounded px-2 py-1.5 text-sm" />
-              </label>
-              <div className="text-xs">
-                <span className="block mb-1 text-muted-foreground uppercase tracking-widest text-[10px]">Personagem</span>
-                <div className="flex flex-wrap gap-1">
-                  {CHAR_IDS.map(id => (
-                    <button key={id} onClick={() => setCharId(id)}
-                      className={`btn-hud text-[11px] px-2 py-1 ${charId === id ? "is-selected" : ""}`}>{CHARACTERS[id].name}</button>
-                  ))}
-                </div>
+            <label className="block text-xs">
+              <span className="block mb-1 text-muted-foreground uppercase tracking-widest text-[10px]">Codinome</span>
+              <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 20))}
+                className="w-full bg-secondary/70 border border-border/60 rounded px-2 py-1.5 text-sm" />
+            </label>
+            <div>
+              <span className="block mb-1.5 text-muted-foreground uppercase tracking-widest text-[10px]">Personagem</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {CHAR_IDS.map(id => {
+                  const c = CHARACTERS[id];
+                  const selected = charId === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setCharId(id)}
+                      className={`relative rounded-lg border p-2 flex flex-col items-center gap-1 transition-all duration-200 ${
+                        selected
+                          ? "border-primary ring-2 ring-primary/60 bg-primary/10 scale-[1.03] shadow-lg"
+                          : "border-border/60 bg-secondary/40 opacity-80 hover:opacity-100 hover:border-border"
+                      }`}
+                    >
+                      {selected && (
+                        <CheckCircle2 size={16} className="absolute top-1 right-1 text-primary drop-shadow" />
+                      )}
+                      <div className="w-full aspect-square rounded-md overflow-hidden bg-black/30 flex items-center justify-center">
+                        <img src={c.portraitUrl} alt={c.name} className={`w-full h-full object-contain ${selected ? "" : "grayscale-[30%]"}`} />
+                      </div>
+                      <div className={`stencil text-[11px] uppercase tracking-wider ${selected ? "text-primary" : "text-foreground"}`}>{c.name}</div>
+                      <div className="text-[9px] text-muted-foreground leading-none">HP {c.stats.hp} · MOB {c.stats.mobility}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </section>
