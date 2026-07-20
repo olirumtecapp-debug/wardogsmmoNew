@@ -269,7 +269,7 @@ export function step(state: GameState, dt: number) {
       if (Math.abs((sy - 18) - dog.y) > 2) dog.y = sy - 18;
     }
 
-    if (dog.y > state.height + 40) dog.hp = 0;
+    if (dog.y > (state.height - state.hudReserve) + 40) dog.hp = 0;
     dog.x = Math.max(10, Math.min(state.width - 10, dog.x));
   }
 
