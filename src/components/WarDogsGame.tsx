@@ -133,8 +133,10 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const angleHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
   const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const gameOverFiredRef = useRef(false);
-  const onGameOverRef = useRef(props_onGameOver);
-  const missionConfigRef = useRef(props_missionConfig);
+  const onGameOverRef = useRef(onGameOver);
+  const missionConfigRef = useRef(missionConfig);
+  useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
+  useEffect(() => { missionConfigRef.current = missionConfig; }, [missionConfig]);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
   const [arsenalOpen, setArsenalOpen] = useState(false);
