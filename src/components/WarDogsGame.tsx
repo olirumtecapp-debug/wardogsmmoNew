@@ -146,6 +146,8 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const rageTipShownRef = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
