@@ -808,7 +808,7 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
             <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1 sm:gap-1.5">
             {WEAPON_ORDER.map(id => {
               const w = WEAPONS[id];
               const a = ammo[id];
@@ -825,12 +825,12 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
                   onBlur={() => setHovered(null)}
                   aria-pressed={active}
                   aria-label={`${w.name}${a === -1 ? "" : `, ${a} munições`}${empty ? ", sem munição" : ""}`}
-                  className={`btn-hud btn-hud-weapon flex-col items-center py-1.5 ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
+                  className={`btn-hud btn-hud-weapon flex-col items-center !px-1 py-1.5 min-w-0 overflow-hidden ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
                   style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : undefined}
                 >
                   <span aria-hidden><WeaponIcon id={id} className="w-6 h-6" /></span>
-                  <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center">
-                    {w.name.split(" ")[0]}
+                  <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center w-full truncate">
+                    {WEAPON_SHORT[id]}
                   </span>
                   <span className="text-[9px] opacity-70 tabular-nums leading-none">
                     {a === -1 ? "∞" : `×${a}`}
