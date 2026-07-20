@@ -15,6 +15,7 @@ import {
 import { setActiveScenario, SCENARIOS } from "@/game/scenarios";
 import { _setAIDifficulty } from "@/game/scenarioContext";
 import { CHARACTER_LIST, CHARACTERS, type CharacterId } from "@/game/characters";
+import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
 
 export const Route = createFileRoute("/campaign/$missionId")({
