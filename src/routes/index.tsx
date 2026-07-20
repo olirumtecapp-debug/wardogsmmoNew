@@ -8,8 +8,8 @@ import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
 const logoImg = logoAsset.url;
-const bgImg = keyHeroAsset.url;
-const keyArtImg = keyArtAsset.url;
+const bgImg = keyArtAsset.url;
+void keyHeroAsset;
 
 import type { GameMode } from "@/game/types";
 import type { CharacterId } from "@/game/characters";
@@ -56,32 +56,28 @@ function Home() {
     <div className="relative min-h-screen overflow-hidden flex flex-col">
       {/* Background layer — key art */}
       <div
-        className="absolute inset-0 -z-30"
+        className="fixed inset-0 -z-30"
         style={{
           backgroundImage: `url(${bgImg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center 30%",
+          backgroundRepeat: "no-repeat",
           backgroundColor: "#0b0f16",
         }}
         aria-hidden
       />
-      <div
-        className="absolute inset-0 -z-25"
-        style={{ background: "rgba(6,10,16,0.15)" }}
-        aria-hidden
-      />
-      <div className="absolute inset-0 -z-20 opacity-30 mix-blend-screen pointer-events-none">
+      <div className="fixed inset-0 -z-20 opacity-20 mix-blend-screen pointer-events-none">
         <MenuBackdrop />
       </div>
       <div
-        className="absolute inset-0 -z-10"
+        className="fixed inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, rgba(8,10,14,0.55) 0%, rgba(8,10,14,0.00) 30%, rgba(8,10,14,0.00) 70%, rgba(8,10,14,0.85) 100%)",
+            "linear-gradient(180deg, rgba(6,9,14,0.75) 0%, rgba(6,9,14,0.35) 35%, rgba(6,9,14,0.45) 65%, rgba(6,9,14,0.92) 100%)",
         }}
         aria-hidden
       />
-      <div className="absolute inset-0 -z-10 hero-vignette pointer-events-none" aria-hidden />
+      <div className="fixed inset-0 -z-10 hero-vignette pointer-events-none" aria-hidden />
 
       {/* Header — logo canto superior */}
       <header className="p-3 sm:p-5 flex items-center justify-between relative gap-3 shrink-0">
@@ -111,14 +107,8 @@ function Home() {
           </div>
         </div>
 
-        {/* Key art hero */}
-        <div className="w-full flex-1 flex items-center justify-center min-h-0 card-in">
-          <img
-            src={keyArtImg}
-            alt="Ranger e Brutus"
-            className="max-h-[42vh] sm:max-h-[46vh] w-auto object-contain drop-shadow-[0_10px_40px_rgba(255,138,26,0.35)]"
-          />
-        </div>
+        {/* Espaço reservado para a arte de fundo respirar */}
+        <div className="flex-1 min-h-0" aria-hidden />
 
         {/* Modos — compactos */}
         <div className="w-full max-w-2xl grid gap-2 grid-cols-3">
