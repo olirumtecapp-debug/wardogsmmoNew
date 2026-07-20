@@ -529,21 +529,36 @@ export function endTurn(state: GameState) {
     if (next) state.weapon = next;
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
+  // Consome Fúria enfileirada (pedida no turno anterior enquanto o tiro resolvia)
+  if (dog.rageQueued && dog.hp > 0 && dog.rageCharge >= RAGE_READY_THRESHOLD) {
+    dog.rageQueued = false;
+    activateRage(state);
+  } else {
+    dog.rageQueued = false;
+  }
 }
 
-export function activateRage(state: GameState) {
-  if (!state.rageEnabled) return;
-  if (state.phase !== "aiming" || state.winner !== null) return;
+export function activateRage(state: GameState): "activated" | "queued" | "low" | "unavailable" {
+  if (!state.rageEnabled || state.winner !== null) return "unavailable";
   const dog = state.dogs[state.currentPlayer];
-  if (dog.hp <= 0 || dog.rageActive || dog.rageCharge < 100) return;
+  if (dog.hp <= 0 || dog.rageActive) return "unavailable";
+  if (dog.rageCharge < RAGE_READY_THRESHOLD) return "low";
+  if (state.phase !== "aiming") {
+    dog.rageQueued = true;
+    state.floatingTexts.push({
+      id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
+      life: 1.4, maxLife: 1.4, value: "FÚRIA NO PRÓXIMO TURNO", color: "#ffb84a", size: 18,
+    });
+    return "queued";
+  }
   dog.rageActive = true;
-  dog.rageCharge = 100;
   state.turnTimer = Math.min(MAX_TURN_TIME + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
   state.message = "MODO FÚRIA ATIVADO";
   state.floatingTexts.push({
     id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
     life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
   });
+  return "activated";
 }
 
 
