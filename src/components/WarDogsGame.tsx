@@ -242,13 +242,13 @@ export function WarDogsGame({ mode, onExit }: Props) {
         <canvas ref={canvasRef} className="block w-full h-full" />
 
         {s && (
-          <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-2 sm:p-3 gap-2 pointer-events-none">
+          <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
             <div className="flex flex-col gap-1.5 pointer-events-auto">
               <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
               <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
             </div>
 
-            <div className="panel px-3 py-1.5 pointer-events-auto text-center max-w-[45%]">
+            <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center max-w-full">
               <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
                 {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
               </div>
@@ -260,7 +260,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               )}
             </div>
 
-            <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
+            <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
               <div className="flex gap-1.5">
                 <button
                   onClick={() => setSettingsOpen(v => !v)}
@@ -327,9 +327,12 @@ export function WarDogsGame({ mode, onExit }: Props) {
       </div>
 
       {s && s.phase !== "gameover" && (
-        <div className={`shrink-0 p-2 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent ${hudVisible ? "hud-show" : "hud-hide"}`}>
-          <div className="max-w-3xl mx-auto flex flex-col gap-2">
-            <div className="panel px-2 py-1.5 flex gap-1.5 overflow-x-auto justify-center scrollbar-none">
+        <div
+          className={`shrink-0 px-2 pb-2 pt-1 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent ${hudVisible ? "hud-show" : "hud-hide"}`}
+          style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="max-w-3xl mx-auto flex flex-col gap-1.5 sm:gap-2">
+            <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center">
               {WEAPON_ORDER.map(id => {
                 const w = WEAPONS[id];
                 const ammo = s.ammo[id];
@@ -344,7 +347,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
                     className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
                     style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
                   >
-                    <span className="weapon-icon"><WeaponIcon id={id} className="w-6 h-6" /></span>
+                    <span className="weapon-icon"><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
                     <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
                       {ammo === -1 ? "∞" : `×${ammo}`}
                     </span>
@@ -353,11 +356,11 @@ export function WarDogsGame({ mode, onExit }: Props) {
               })}
             </div>
 
-            <div className="flex items-stretch gap-2">
-              <div className="panel px-2 py-1.5 flex-1 flex items-center gap-2">
-                <div className="flex items-center gap-1">
+            <div className="flex flex-col sm:flex-row items-stretch gap-1.5 sm:gap-2">
+              <div className="panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2">
+                <div className="flex items-center gap-1 shrink-0">
                   <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
-                  <div className="flex flex-col items-center min-w-[42px]">
+                  <div className="flex flex-col items-center min-w-[38px]">
                     <span className="stencil text-[9px] text-muted-foreground leading-none">ÂNG</span>
                     <span className="stencil text-base leading-tight" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
                   </div>
@@ -391,7 +394,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               <button
                 disabled={isAiTurn || s.phase !== "aiming"}
                 onClick={() => fire(s)}
-                className="fire-btn"
+                className="fire-btn fire-btn-compact sm:!w-[4.75rem] sm:!h-[4.75rem] sm:!rounded-full sm:!text-[0.9rem]"
               >
                 FOGO
               </button>
