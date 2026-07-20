@@ -101,6 +101,8 @@ function MissionPage() {
         onDone={() => setStage("playing")}
       />
     );
+  }
+
 
   if (stage === "result" && result) {
     return <ResultScreen mission={mission} result={result} onRetry={() => {
