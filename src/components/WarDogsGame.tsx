@@ -127,26 +127,41 @@ export function WarDogsGame({ mode, onExit }: Props) {
     const parent = canvas.parentElement!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
 
-    const resize = () => {
+    const initIfNeeded = () => {
+      if (stateRef.current) return;
       const rect = parent.getBoundingClientRect();
-      const w = Math.floor(rect.width);
-      const h = Math.floor(rect.height);
+      const w = Math.max(320, Math.floor(rect.width));
+      const h = Math.max(240, Math.floor(rect.height));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      if (!stateRef.current) {
-        stateRef.current = createGame(w, h, mode);
-      } else if (stateRef.current.width !== w || stateRef.current.height !== h) {
-        stateRef.current = createGame(w, h, mode, stateRef.current.seed);
-      }
+      stateRef.current = createGame(w, h, mode);
       markTerrainDirty();
     };
-    resize();
-    const ro = new ResizeObserver(resize);
+
+    // Adapt display size to the container without recreating the world.
+    // This prevents terrain regeneration when the HUD height changes.
+    const adaptDisplay = () => {
+      const s = stateRef.current;
+      if (!s) return;
+      const rect = parent.getBoundingClientRect();
+      const availW = Math.max(1, rect.width);
+      const availH = Math.max(1, rect.height);
+      const scale = Math.min(availW / s.width, availH / s.height);
+      const cssW = s.width * scale;
+      const cssH = s.height * scale;
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+    };
+
+    initIfNeeded();
+    adaptDisplay();
+    const ro = new ResizeObserver(adaptDisplay);
     ro.observe(parent);
+
 
     let last = performance.now();
     const loop = (now: number) => {
@@ -182,20 +197,25 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
   useEffect(() => {
     const canvas = canvasRef.current!;
+    const toWorld = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const s = stateRef.current;
+      const sx = s ? s.width / Math.max(1, rect.width) : 1;
+      const sy = s ? s.height / Math.max(1, rect.height) : 1;
+      return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
+    };
     const onDown = (e: PointerEvent) => {
       const s = stateRef.current;
       if (!s || s.phase !== "aiming" || s.winner === null && mode === "ai" && s.currentPlayer === 1) return;
-      const rect = canvas.getBoundingClientRect();
+      const { x, y } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
-      dragRef.current = { startX: e.clientX - rect.left, startY: e.clientY - rect.top, dogX: dog.x, dogY: dog.y };
+      dragRef.current = { startX: x, startY: y, dogX: dog.x, dogY: dog.y };
     };
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
       const drag = dragRef.current;
       if (!s || !drag) return;
-      const rect = canvas.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
+      const { x: px, y: py } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
       const dx = (px - drag.startX) * -dog.facing;
       const dy = drag.startY - py;
@@ -211,9 +231,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       const drag = dragRef.current;
       dragRef.current = null;
       if (!s || !drag) return;
-      const rect = canvas.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
+      const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist > 20 && s.phase === "aiming" && s.winner === null) fire(s);
     };
@@ -227,6 +245,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointercancel", onUp);
     };
+
   }, [mode]);
 
   const s = stateRef.current;
@@ -238,8 +257,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
-      <div className="relative flex-1 min-h-0">
-        <canvas ref={canvasRef} className="block w-full h-full" />
+      <div className="relative flex-1 min-h-0 flex items-center justify-center">
+        <canvas ref={canvasRef} className="block" />
+
 
         {s && (
           <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
@@ -328,9 +348,11 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
       {s && s.phase !== "gameover" && (
         <div
-          className={`shrink-0 px-2 pb-2 pt-1 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent ${hudVisible ? "hud-show" : "hud-hide"}`}
-          style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+          className="shrink-0 px-2 pb-2 pt-1 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent min-h-[168px] sm:min-h-[180px]"
+          aria-hidden={!hudVisible}
+          style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", opacity: hudVisible ? 1 : 0.85 }}
         >
+
           <div className="max-w-3xl mx-auto flex flex-col gap-1.5 sm:gap-2">
             <div
               role="toolbar"
@@ -365,20 +387,20 @@ export function WarDogsGame({ mode, onExit }: Props) {
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch gap-1.5 sm:gap-2">
-              <div className="panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2">
+              <div className={`panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                 <div className="flex items-center gap-1 shrink-0">
-                  <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
                   <div className="flex flex-col items-center min-w-[38px]">
                     <span className="stencil text-[9px] text-muted-foreground leading-none">ÂNG</span>
                     <span className="stencil text-base leading-tight" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
                   </div>
-                  <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
                 </div>
 
                 <div className="hud-divider" />
 
                 <div className="flex items-center gap-1 flex-1 min-w-0">
-                  <HoldButton onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
                   <div className="flex flex-col flex-1 min-w-0 gap-0.5">
                     <div className="flex justify-between items-baseline">
                       <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
@@ -395,9 +417,10 @@ export function WarDogsGame({ mode, onExit }: Props) {
                       />
                     </div>
                   </div>
-                  <HoldButton onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
                 </div>
               </div>
+
 
               <button
                 disabled={isAiTurn || s.phase !== "aiming"}
@@ -455,14 +478,15 @@ function WindGauge({ wind }: { wind: number }) {
   );
 }
 
-function HoldButton({ children, onHold, onRelease, dir }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1 }) {
+function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1; disabled?: boolean }) {
   const [held, setHeld] = useState(false);
-  const down = (e: React.PointerEvent) => { e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
+  const down = (e: React.PointerEvent) => { if (disabled) return; e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
   const up = () => { setHeld(false); onRelease(); };
   return (
     <button
       aria-label={dir > 0 ? "Diminuir" : "Aumentar"}
-      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""}`}
+      disabled={disabled}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""} disabled:opacity-50 disabled:cursor-not-allowed`}
       onPointerDown={down}
       onPointerUp={up}
       onPointerLeave={up}
@@ -474,5 +498,6 @@ function HoldButton({ children, onHold, onRelease, dir }: { children: React.Reac
     </button>
   );
 }
+
 
 export type { WeaponId };
