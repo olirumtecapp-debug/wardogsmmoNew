@@ -549,5 +549,68 @@ function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: 
   );
 }
 
+function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
+  dog: import("@/game/types").Dog;
+  disabled: boolean;
+  onHold: (dir: 1 | -1) => void;
+  onRelease: () => void;
+  onJump: () => void;
+}) {
+  const pct = Math.max(0, Math.min(100, (dog.moveBudget / MOVE_BUDGET) * 100));
+  const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
+  const canJump = !disabled && !dog.hasJumped && !dog.airborne;
+  return (
+    <div className={`panel px-2 py-1 flex items-center gap-2 ${disabled ? "opacity-70" : ""}`}>
+      <div className="flex items-center gap-1 shrink-0">
+        <MoveHoldButton disabled={!canMove} onHold={() => onHold(-1)} onRelease={onRelease} label="Andar esquerda">◀</MoveHoldButton>
+        <MoveHoldButton disabled={!canMove} onHold={() => onHold(1)} onRelease={onRelease} label="Andar direita">▶</MoveHoldButton>
+      </div>
+      <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+        <div className="flex justify-between items-baseline">
+          <span className="stencil text-[9px] text-muted-foreground leading-none">MOVIMENTO</span>
+          <span className="stencil text-[10px] leading-none tabular-nums" style={{ color: "var(--accent)" }}>{Math.round(pct)}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-black/40 overflow-hidden border border-white/5">
+          <div
+            className="h-full rounded-full transition-[width] duration-100"
+            style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--team-green), var(--accent))" }}
+          />
+        </div>
+      </div>
+      <button
+        disabled={!canJump}
+        onClick={onJump}
+        aria-label="Pular"
+        title={dog.hasJumped ? "Pulo já usado neste turno" : "Pular (Espaço)"}
+        className="btn-hud !px-2 !py-1 !text-[11px] leading-none min-h-[36px] disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+      >
+        ⇧ PULO
+      </button>
+    </div>
+  );
+}
+
+function MoveHoldButton({ children, onHold, onRelease, disabled, label }: {
+  children: React.ReactNode; onHold: () => void; onRelease: () => void; disabled?: boolean; label: string;
+}) {
+  const [held, setHeld] = useState(false);
+  const down = (e: React.PointerEvent) => { if (disabled) return; e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(); };
+  const up = () => { setHeld(false); onRelease(); };
+  return (
+    <button
+      aria-label={label}
+      disabled={disabled}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-sm leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerLeave={up}
+      onPointerCancel={up}
+    >
+      {children}
+    </button>
+  );
+}
+
+
 
 export type { WeaponId };
