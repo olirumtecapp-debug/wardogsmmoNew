@@ -1329,10 +1329,10 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, maxHp: number, color: string, dark: string) {
-  const segCount = 10;
-  const segW = 2.4, segGap = 0.8;
+  const segCount = 8;
+  const segW = 2.0, segGap = 0.6;
   const totalW = segCount * segW + (segCount - 1) * segGap;
-  const barH = 3;
+  const barH = 2.4;
   const startX = x - totalW / 2;
   ctx.save();
   ctx.fillStyle = "rgba(0,0,0,0.5)";
