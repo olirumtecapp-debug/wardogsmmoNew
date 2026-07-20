@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { HelpCircle, X } from "lucide-react";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
@@ -26,6 +27,14 @@ type Stage =
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showOnlineNotice, setShowOnlineNotice] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
+
+  useEffect(() => {
+    if (!showHowTo) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowHowTo(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showHowTo]);
 
   if (stage.kind === "playing") {
     return (
@@ -125,25 +134,14 @@ function Home() {
           </div>
         )}
 
-        {/* Atalhos — justificados em grade */}
-        <div className="w-full max-w-2xl panel p-3 text-[11px]">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex-1 h-px bg-border/60" />
-            <div className="stencil text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Como jogar</div>
-            <div className="flex-1 h-px bg-border/60" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1.5">
-            <ShortcutRow label="Ângulo" keys={["←", "→"]} />
-            <ShortcutRow label="Força" keys={["↑", "↓"]} />
-            <ShortcutRow label="Atirar" keys={["Espaço"]} />
-            <ShortcutRow label="Mover" keys={["A", "D"]} />
-            <ShortcutRow label="Pulo" keys={["W"]} />
-            <ShortcutRow label="Arma" keys={["1", "–", "8"]} />
-          </div>
-          <div className="mt-2 pt-2 border-t border-border/40 text-center text-muted-foreground text-[10px] uppercase tracking-widest">
-            No celular · arraste do cachorro pra mirar e solte pra atirar
-          </div>
-        </div>
+        {/* Botão discreto — Como Jogar */}
+        <button
+          onClick={() => setShowHowTo(true)}
+          className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
+        >
+          <HelpCircle size={14} />
+          Como jogar
+        </button>
       </main>
 
 
@@ -151,8 +149,50 @@ function Home() {
       <footer className="py-2 text-center text-[10px] text-muted-foreground uppercase tracking-[0.25em] shrink-0">
         Segure firme o capacete · Ajuste o ângulo · Boa sorte, soldado
       </footer>
+
+      {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
     </div>
     </OrientationGate>
+  );
+}
+
+function HowToPlayModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm card-in"
+      onClick={onClose}
+    >
+      <div
+        className="panel relative w-full max-w-lg p-5 max-h-[85dvh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="stencil text-sm uppercase tracking-[0.3em] text-[color:var(--accent)]">
+            Como jogar
+          </div>
+          <button
+            onClick={onClose}
+            className="btn-hud p-1.5"
+            aria-label="Fechar"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
+          <ShortcutRow label="Ângulo" keys={["←", "→"]} />
+          <ShortcutRow label="Força" keys={["↑", "↓"]} />
+          <ShortcutRow label="Atirar" keys={["Espaço"]} />
+          <ShortcutRow label="Mover" keys={["A", "D"]} />
+          <ShortcutRow label="Pulo" keys={["W"]} />
+          <ShortcutRow label="Arma" keys={["1", "–", "8"]} />
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-border/40 text-center text-muted-foreground text-[10px] uppercase tracking-widest">
+          No celular · arraste do cachorro pra mirar e solte pra atirar
+        </div>
+      </div>
+    </div>
   );
 }
 
