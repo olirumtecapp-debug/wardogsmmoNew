@@ -7,6 +7,16 @@ export interface MissionModifiers {
   enemyHpBonus?: number;
   allowedWeapons?: WeaponId[];
   windMultiplier?: number;
+  /** Desliga a mira assistida (arco preditivo) e trava o toggle na HUD. */
+  disableAimAssist?: boolean;
+  /** Inimigo começa com a barra de Fúria cheia. */
+  enemyRageCharged?: boolean;
+  /** Oculta o valor numérico da força no HUD. */
+  hidePower?: boolean;
+  /** Sobrescreve o tempo de cada turno em segundos. */
+  turnTimeSeconds?: number;
+  /** Re-sorteia o vento a cada projétil disparado. */
+  chaosWind?: boolean;
 }
 
 export interface Mission {
