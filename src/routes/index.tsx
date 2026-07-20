@@ -43,6 +43,7 @@ function Home() {
   }
 
   return (
+    <OrientationGate soft>
     <div className="relative min-h-screen overflow-hidden flex flex-col">
       {/* Key art background — primary layer */}
       <div
