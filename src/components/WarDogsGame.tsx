@@ -354,6 +354,44 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const hudReserve = s?.hudReserve ?? 148;
   const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
 
+  const tryRage = () => {
+    if (!s) return;
+    const dog = s.dogs[s.currentPlayer];
+    const before = dog.rageActive;
+    const result = activateRage(s);
+    if (result === "low") {
+      s.floatingTexts.push({
+        id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+        life: 1.4, maxLife: 1.4,
+        value: `Fúria ${Math.floor(dog.rageCharge)}/${RAGE_READY_THRESHOLD}`,
+        color: "#ffb84a", size: 18,
+      });
+    } else if (result === "unavailable" && !before && dog.hp > 0) {
+      s.floatingTexts.push({
+        id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+        life: 1.2, maxLife: 1.2, value: "Fúria indisponível", color: "#b8b8b8", size: 16,
+      });
+    }
+  };
+
+  // Dica automática na 1ª vez que a barra ficar pronta (campanha)
+  useEffect(() => {
+    if (!s || !s.rageEnabled) return;
+    if (rageTipShownRef.current) return;
+    const dog = s.dogs[s.currentPlayer];
+    if (!dog || dog.rageActive || dog.rageCharge < RAGE_READY_THRESHOLD) return;
+    try {
+      if (localStorage.getItem("wardogs.rage.tipShown") === "1") {
+        rageTipShownRef.current = true;
+        return;
+      }
+      localStorage.setItem("wardogs.rage.tipShown", "1");
+    } catch {}
+    rageTipShownRef.current = true;
+    setRageHelpOpen(true);
+  });
+
+
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
       <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
