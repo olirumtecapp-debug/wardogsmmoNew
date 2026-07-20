@@ -478,14 +478,15 @@ function WindGauge({ wind }: { wind: number }) {
   );
 }
 
-function HoldButton({ children, onHold, onRelease, dir }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1 }) {
+function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1; disabled?: boolean }) {
   const [held, setHeld] = useState(false);
-  const down = (e: React.PointerEvent) => { e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
+  const down = (e: React.PointerEvent) => { if (disabled) return; e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
   const up = () => { setHeld(false); onRelease(); };
   return (
     <button
       aria-label={dir > 0 ? "Diminuir" : "Aumentar"}
-      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""}`}
+      disabled={disabled}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""} disabled:opacity-50 disabled:cursor-not-allowed`}
       onPointerDown={down}
       onPointerUp={up}
       onPointerLeave={up}
@@ -497,5 +498,6 @@ function HoldButton({ children, onHold, onRelease, dir }: { children: React.Reac
     </button>
   );
 }
+
 
 export type { WeaponId };
