@@ -69,23 +69,20 @@ function Home() {
       <div className="absolute inset-0 -z-10 hero-vignette pointer-events-none" aria-hidden />
 
 
-      <header className="p-5 sm:p-8 flex items-center justify-between relative">
-        <div className="flex items-center gap-3">
+      <header className="p-4 sm:p-6 flex items-center justify-between relative gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <img
-            src={emblem}
-            alt=""
-            width={48}
-            height={48}
-            className="w-11 h-11 sm:w-14 sm:h-14 float-slow drop-shadow-[0_0_18px_rgba(255,138,26,0.45)]"
+            src={logoImg}
+            alt="WarDogs"
+            className="h-8 sm:h-10 w-auto object-contain float-slow drop-shadow-[0_0_18px_rgba(255,138,26,0.35)] shrink-0"
           />
-          <div>
-            <div className="stencil text-xl sm:text-2xl leading-none tracking-wider">WarDogs</div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em]">
-              Artilharia canina · 2v1v1
+          <div className="min-w-0 hidden xs:block sm:block">
+            <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em] truncate">
+              Artilharia canina · 2 jogadores
             </div>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest">
+        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--team-green)] badge-live" />
           Pelotão pronto
         </div>
