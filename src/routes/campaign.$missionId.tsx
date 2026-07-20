@@ -92,6 +92,16 @@ function MissionPage() {
     );
   }
 
+  if (stage === "intro") {
+    return (
+      <ComicIntro
+        chars={[player, mission.enemy]}
+        scenarioLabel={scenario.label}
+        bgImage={scenario.bgImage}
+        onDone={() => setStage("playing")}
+      />
+    );
+
   if (stage === "result" && result) {
     return <ResultScreen mission={mission} result={result} onRetry={() => {
       setResult(null);
