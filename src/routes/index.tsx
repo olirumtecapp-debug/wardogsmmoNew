@@ -4,11 +4,10 @@ import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
-import heroImg from "@/assets/wardogs-menu-bg.jpg";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 const logoImg = logoAsset.url;
-const keyHeroImg = keyHeroAsset.url;
+const bgImg = keyHeroAsset.url;
 
 import type { GameMode } from "@/game/types";
 
