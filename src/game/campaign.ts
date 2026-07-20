@@ -7,6 +7,16 @@ export interface MissionModifiers {
   enemyHpBonus?: number;
   allowedWeapons?: WeaponId[];
   windMultiplier?: number;
+  /** Desliga a mira assistida (arco preditivo) e trava o toggle na HUD. */
+  disableAimAssist?: boolean;
+  /** Inimigo começa com a barra de Fúria cheia. */
+  enemyRageCharged?: boolean;
+  /** Oculta o valor numérico da força no HUD. */
+  hidePower?: boolean;
+  /** Sobrescreve o tempo de cada turno em segundos. */
+  turnTimeSeconds?: number;
+  /** Re-sorteia o vento a cada projétil disparado. */
+  chaosWind?: boolean;
 }
 
 export interface Mission {
@@ -90,8 +100,48 @@ export const MISSIONS: Mission[] = [
     },
   },
   {
-    id: "bonus1",
+    id: "m7",
     index: 7,
+    name: "Névoa Cortante",
+    brief: "Rajadas erráticas cortam o Ártico. Confie no instinto — não no vento.",
+    scenario: "arctic",
+    difficulty: "sergeant",
+    enemy: "ozzy",
+    modifiers: { chaosWind: true, turnTimeSeconds: 20 },
+    suggestedPlayer: "ranger",
+  },
+  {
+    id: "m8",
+    index: 8,
+    name: "Sniper de Dunas",
+    brief: "Sem mira assistida. Só arco, RPG e bazuca. Leia o vento e respire.",
+    scenario: "desert",
+    difficulty: "general",
+    enemy: "ranger",
+    modifiers: {
+      disableAimAssist: true,
+      allowedWeapons: ["bow", "rpg", "bazooka"],
+    },
+    suggestedPlayer: "musa",
+  },
+  {
+    id: "m9",
+    index: 9,
+    name: "Trovoada",
+    brief: "Vento dobrado, força escondida, sem mira assistida. Só cães de verdade sobrevivem.",
+    scenario: "jungle",
+    difficulty: "general",
+    enemy: "brutus",
+    modifiers: {
+      windMultiplier: 2,
+      disableAimAssist: true,
+      hidePower: true,
+    },
+    suggestedPlayer: "ozzy",
+  },
+  {
+    id: "bonus1",
+    index: 10,
     name: "Cão Louco",
     brief: "Missão bônus. Vento errante, blindagem inimiga máxima e General à espreita.",
     scenario: "jungle",
@@ -99,6 +149,40 @@ export const MISSIONS: Mission[] = [
     enemy: "ozzy",
     suggestedPlayer: "musa",
     modifiers: { enemyHpBonus: 40, windMultiplier: 2 },
+    bonus: true,
+  },
+  {
+    id: "bonus2",
+    index: 11,
+    name: "Cão Insano",
+    brief: "Reforço inimigo em campo: HP dobrado, Fúria pronta desde o 1º turno, mira travada, vento caótico. Só pra veteranos.",
+    scenario: "battlefield",
+    difficulty: "general",
+    enemy: "brutus",
+    suggestedPlayer: "ranger",
+    modifiers: {
+      enemyHpBonus: 80,
+      enemyRageCharged: true,
+      disableAimAssist: true,
+      chaosWind: true,
+      turnTimeSeconds: 20,
+    },
+    bonus: true,
+  },
+  {
+    id: "bonus3",
+    index: 12,
+    name: "Blackout",
+    brief: "Missão bônus: só explosivos de área, sem mira assistida e inimigo reforçado.",
+    scenario: "arctic",
+    difficulty: "general",
+    enemy: "musa",
+    suggestedPlayer: "ranger",
+    modifiers: {
+      allowedWeapons: ["grenade", "frag", "cluster"],
+      disableAimAssist: true,
+      enemyHpBonus: 30,
+    },
     bonus: true,
   },
 ];

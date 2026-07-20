@@ -36,6 +36,11 @@ interface MissionConfig {
   enemyHpBonus?: number;
   allowedWeapons?: WeaponId[];
   windMultiplier?: number;
+  disableAimAssist?: boolean;
+  enemyRageCharged?: boolean;
+  hidePower?: boolean;
+  turnTimeSeconds?: number;
+  chaosWind?: boolean;
 }
 
 interface Props {
@@ -159,13 +164,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const aimAssistLocked = !!missionConfig?.disableAimAssist;
+  const hidePower = !!missionConfig?.hidePower;
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
+    if (missionConfig?.disableAimAssist) return false;
     try { return localStorage.getItem("wardogs.aimAssist") !== "0"; } catch { return true; }
   });
   useEffect(() => {
-    setAimAssist(aimAssist);
-    try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
-  }, [aimAssist]);
+    const effective = aimAssistLocked ? false : aimAssist;
+    setAimAssist(effective);
+    if (!aimAssistLocked) {
+      try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
+    }
+  }, [aimAssist, aimAssistLocked]);
   const rageTipShownRef = useRef(false);
 
   useEffect(() => {
@@ -205,6 +216,14 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
         }
         if (cfg.windMultiplier && cfg.windMultiplier !== 1) {
           st.wind = Math.max(-1, Math.min(1, st.wind * cfg.windMultiplier));
+        }
+        if (cfg.turnTimeSeconds && cfg.turnTimeSeconds > 0) {
+          st.turnTimeLimit = cfg.turnTimeSeconds;
+          st.turnTimer = cfg.turnTimeSeconds;
+        }
+        if (cfg.chaosWind) st.chaosWind = true;
+        if (cfg.enemyRageCharged && st.rageEnabled) {
+          st.dogs[1].rageCharge = 100;
         }
       }
       markTerrainDirty();
@@ -437,7 +456,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
               <div className="flex flex-col gap-1.5 pointer-events-auto">
                 <MiniPlayer dog={s.dogs[0]} active={s.currentPlayer === 0} />
-                <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} />
+                <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} reinforced={(missionConfig?.enemyHpBonus ?? 0) >= 60} />
               </div>
 
               <div className="flex flex-col items-center gap-1 justify-self-center min-w-0 max-w-full pointer-events-auto">
@@ -460,12 +479,13 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => setAimAssistState(v => !v)}
-                    className={`btn-hud text-[10px] px-2 py-1 ${aimAssist ? "is-selected" : "opacity-70"}`}
-                    aria-pressed={aimAssist}
-                    title="Mira assistida: mostra o arco previsto do tiro"
+                    onClick={() => { if (!aimAssistLocked) setAimAssistState(v => !v); }}
+                    disabled={aimAssistLocked}
+                    className={`btn-hud text-[10px] px-2 py-1 ${aimAssist && !aimAssistLocked ? "is-selected" : "opacity-70"} ${aimAssistLocked ? "cursor-not-allowed" : ""}`}
+                    aria-pressed={aimAssist && !aimAssistLocked}
+                    title={aimAssistLocked ? "Mira assistida travada nesta missão" : "Mira assistida: mostra o arco previsto do tiro"}
                   >
-                    🎯 {aimAssist ? "Mira ON" : "Mira OFF"}
+                    🎯 {aimAssistLocked ? "Mira 🔒" : (aimAssist ? "Mira ON" : "Mira OFF")}
                   </button>
                   <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
                 </div>
@@ -518,7 +538,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                     <div className="flex flex-col flex-1 min-w-0 gap-0.5">
                       <div className="flex justify-between items-baseline">
                         <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
-                        <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.power)}</span>
+                        <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{hidePower ? "??" : Math.round(s.power)}</span>
                       </div>
                       <div className="h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
                         <div
@@ -686,7 +706,7 @@ function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; 
   );
 }
 
-function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: boolean }) {
+function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").Dog; active: boolean; reinforced?: boolean }) {
   const char = CHARACTERS[dog.charId];
   const color = char.skin.teamColor;
   const portrait = char.portraitUrl;
@@ -694,7 +714,7 @@ function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: 
   const pct = Math.max(0, Math.min(100, (hp / dog.maxHp) * 100));
   return (
     <div
-      className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
+      className={`panel px-2 py-1 flex items-center gap-1.5 transition-all relative ${active ? "" : "opacity-60 scale-95"}`}
       style={active ? { boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`, borderColor: color } : undefined}
     >
       {portrait ? (
@@ -706,6 +726,11 @@ function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: 
         <div className="stencil text-[9px] uppercase tracking-widest truncate">{char.name}</div>
         <div className="text-[8px] text-muted-foreground truncate">{char.breed}</div>
       </div>
+      {reinforced && (
+        <span className="absolute -top-1.5 -right-1 stencil text-[8px] tracking-widest px-1 py-[1px] rounded bg-[color:var(--destructive)] text-white shadow-[0_0_6px_rgba(255,56,56,0.7)] animate-pulse">
+          REFORÇO
+        </span>
+      )}
       <div className="w-16 h-1.5 bg-black/50 rounded-full overflow-hidden">
         <div className="h-full transition-all rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>

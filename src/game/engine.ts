@@ -58,6 +58,7 @@ export function createGame(
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
     turnTimer: MAX_TURN_TIME,
+    turnTimeLimit: MAX_TURN_TIME,
     matchTimer: dur,
     matchDuration: dur,
     mode,
@@ -143,6 +144,10 @@ export function fire(state: GameState) {
   if (state.phase !== "aiming") return;
   const weapon = WEAPONS[state.weapon];
   if (state.ammo[state.weapon] === 0) return;
+  if (state.chaosWind) {
+    const sc = getActiveScenario();
+    state.wind = (Math.random() - 0.5) * 2 * Math.max(1, sc.windScale);
+  }
   if (state.ammo[state.weapon] > 0) state.ammo[state.weapon]--;
   state.phase = "firing";
   state.message = "Fogo!";
@@ -538,7 +543,7 @@ export function endTurn(state: GameState) {
   }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
   state.phase = "aiming";
-  state.turnTimer = MAX_TURN_TIME;
+  state.turnTimer = state.turnTimeLimit ?? MAX_TURN_TIME;
   const windScale = getActiveScenario().windScale;
   state.wind = Math.max(-1, Math.min(1, state.wind + (Math.random() - 0.5) * 0.6 * windScale));
   const dog = state.dogs[state.currentPlayer];
@@ -576,7 +581,8 @@ export function activateRage(state: GameState): "activated" | "queued" | "low" |
     return "queued";
   }
   dog.rageActive = true;
-  state.turnTimer = Math.min(MAX_TURN_TIME + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
+  const limit = state.turnTimeLimit ?? MAX_TURN_TIME;
+  state.turnTimer = Math.min(limit + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
   state.message = "MODO FÚRIA ATIVADO";
   state.floatingTexts.push({
     id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
