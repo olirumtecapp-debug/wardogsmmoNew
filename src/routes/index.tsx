@@ -8,11 +8,10 @@ import { teamSkin, type TeamSkin } from "@/game/skins";
 import heroImg from "@/assets/wardogs-menu-bg.jpg";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 const logoImg = logoAsset.url;
-import keyartAsset from "@/assets/wardogs-keyart-v2.png.asset.json";
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 
-const keyartImg = keyartAsset.url;
+
 const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
   BRUTUS: brutusPortrait.url,
@@ -98,11 +97,23 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center justify-items-center gap-3 sm:gap-6 max-w-3xl mx-auto">
             <img
-              src={keyartImg}
-              alt="WarDogs — Ranger e Brutus"
-              className="w-[min(70vw,380px)] sm:w-[min(55vw,440px)] lg:w-[480px] h-auto object-contain drop-shadow-[0_18px_40px_rgba(0,0,0,0.75)] title-in-left"
+              src={PORTRAITS.RANGER}
+              alt="Ranger"
+              className="max-h-[22vh] sm:max-h-[26vh] lg:max-h-[32vh] w-auto object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.7)] title-in-left justify-self-end"
+              style={{ animationDelay: "0ms", objectPosition: "center" }}
+            />
+            <img
+              src={logoImg}
+              alt="WarDogs"
+              className="w-[min(38vw,220px)] sm:w-[min(30vw,240px)] lg:w-[280px] h-auto object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
+            />
+            <img
+              src={PORTRAITS.BRUTUS}
+              alt="Brutus"
+              className="max-h-[22vh] sm:max-h-[26vh] lg:max-h-[32vh] w-auto object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.7)] title-in-left justify-self-start"
+              style={{ animationDelay: "120ms", objectPosition: "center" }}
             />
           </div>
 
