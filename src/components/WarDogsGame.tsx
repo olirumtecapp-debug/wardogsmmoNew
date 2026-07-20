@@ -127,26 +127,41 @@ export function WarDogsGame({ mode, onExit }: Props) {
     const parent = canvas.parentElement!;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
 
-    const resize = () => {
+    const initIfNeeded = () => {
+      if (stateRef.current) return;
       const rect = parent.getBoundingClientRect();
-      const w = Math.floor(rect.width);
-      const h = Math.floor(rect.height);
+      const w = Math.max(320, Math.floor(rect.width));
+      const h = Math.max(240, Math.floor(rect.height));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      if (!stateRef.current) {
-        stateRef.current = createGame(w, h, mode);
-      } else if (stateRef.current.width !== w || stateRef.current.height !== h) {
-        stateRef.current = createGame(w, h, mode, stateRef.current.seed);
-      }
+      stateRef.current = createGame(w, h, mode);
       markTerrainDirty();
     };
-    resize();
-    const ro = new ResizeObserver(resize);
+
+    // Adapt display size to the container without recreating the world.
+    // This prevents terrain regeneration when the HUD height changes.
+    const adaptDisplay = () => {
+      const s = stateRef.current;
+      if (!s) return;
+      const rect = parent.getBoundingClientRect();
+      const availW = Math.max(1, rect.width);
+      const availH = Math.max(1, rect.height);
+      const scale = Math.min(availW / s.width, availH / s.height);
+      const cssW = s.width * scale;
+      const cssH = s.height * scale;
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+    };
+
+    initIfNeeded();
+    adaptDisplay();
+    const ro = new ResizeObserver(adaptDisplay);
     ro.observe(parent);
+
 
     let last = performance.now();
     const loop = (now: number) => {
