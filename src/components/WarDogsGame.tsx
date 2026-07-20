@@ -368,11 +368,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 </div>
                 <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
                 {s.phase === "aiming" && s.winner === null && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {isAiTurn ? "IA pensando..." : `${Math.max(0, Math.ceil(s.turnTimer))}s`}
+                  <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-2">
+                    <span>Turno {isAiTurn ? "IA…" : `${Math.max(0, Math.ceil(s.turnTimer))}s`}</span>
+                    <span className="opacity-40">•</span>
+                    <span
+                      className="stencil"
+                      style={{ color: s.matchTimer <= 30 ? "var(--destructive)" : undefined }}
+                    >
+                      Partida {Math.floor(Math.max(0, s.matchTimer) / 60)}:{String(Math.floor(Math.max(0, s.matchTimer) % 60)).padStart(2, "0")}
+                    </span>
                   </div>
                 )}
               </div>
+
 
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
                 <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
