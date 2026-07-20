@@ -69,7 +69,7 @@ function generateTerrain(w: number, h: number, usableH: number, rng: () => numbe
   for (let x = 0; x < w; x++) {
     let y = baseline;
     for (const o of octaves) y += Math.sin(x * o.freq + o.phase) * o.amp;
-    heights[x] = Math.max(60, Math.min(usableH - 12, y));
+    heights[x] = Math.max(usableH * 0.42, Math.min(usableH - 12, y));
   }
   for (let x = 0; x < w; x++) {
     const top = Math.floor(heights[x]);
