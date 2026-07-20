@@ -75,6 +75,7 @@ export const SCENARIOS: Scenario[] = [
     terrainTop: [0xf0, 0xc0, 0x66],
     terrainMid: [0xc4, 0x8a, 0x3a],
     terrainDeep: [0x5a, 0x2e, 0x14],
+    aimColor: "#00e5ff",
   },
   {
     id: "jungle",
