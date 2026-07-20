@@ -2,8 +2,8 @@ import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
 import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
 import { getActiveScenario } from "./scenarios";
-import rangerPortraitAsset from "@/assets/wardogs-ranger.png.asset.json";
-import brutusPortraitAsset from "@/assets/wardogs-brutus.png.asset.json";
+import rangerSideAsset from "@/assets/wardogs-ranger-side.png.asset.json";
+import brutusSideAsset from "@/assets/wardogs-brutus-side.png.asset.json";
 
 // Image asset cache — loaded once
 function loadImg(src: string): HTMLImageElement {
@@ -11,8 +11,10 @@ function loadImg(src: string): HTMLImageElement {
   img.src = src;
   return img;
 }
-const rangerImg = typeof window !== "undefined" ? loadImg(rangerPortraitAsset.url) : null;
-const brutusImg = typeof window !== "undefined" ? loadImg(brutusPortraitAsset.url) : null;
+// In-game sprites use the side poses (both face right in the source art;
+// drawDog flips horizontally via ctx.scale(facing, 1)).
+const rangerImg = typeof window !== "undefined" ? loadImg(rangerSideAsset.url) : null;
+const brutusImg = typeof window !== "undefined" ? loadImg(brutusSideAsset.url) : null;
 
 // Per-scenario background cache
 const scenarioBgCache: Record<string, HTMLImageElement> = {};
