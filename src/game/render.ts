@@ -406,7 +406,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   // Aim indicator
   if (state.phase === "aiming" && state.winner === null) {
     const dog = state.dogs[state.currentPlayer];
-    if (dog.hp > 0) drawAim(ctx, dog, state.angle, state.power, state.wind, state.weapon, now);
+    if (dog.hp > 0) {
+      if (aimAssistEnabled) drawAimPreview(ctx, state);
+      drawAim(ctx, dog, state.angle, state.power, state.wind, state.weapon, now);
+    }
   }
 
   // Projectiles
