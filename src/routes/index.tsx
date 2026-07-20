@@ -6,10 +6,11 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
 import { teamSkin, type TeamSkin } from "@/game/skins";
 import heroImg from "@/assets/wardogs-menu-bg.jpg";
-import logoImg from "@/assets/wardogs-logo.png";
+import logoAsset from "@/assets/wardogs-logo.png.asset.json";
+const logoImg = logoAsset.url;
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
-import emblem from "@/assets/emblem-paw.png";
+
 
 const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
@@ -68,23 +69,20 @@ function Home() {
       <div className="absolute inset-0 -z-10 hero-vignette pointer-events-none" aria-hidden />
 
 
-      <header className="p-5 sm:p-8 flex items-center justify-between relative">
-        <div className="flex items-center gap-3">
+      <header className="p-4 sm:p-6 flex items-center justify-between relative gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <img
-            src={emblem}
-            alt=""
-            width={48}
-            height={48}
-            className="w-11 h-11 sm:w-14 sm:h-14 float-slow drop-shadow-[0_0_18px_rgba(255,138,26,0.45)]"
+            src={logoImg}
+            alt="WarDogs"
+            className="h-8 sm:h-10 w-auto object-contain float-slow drop-shadow-[0_0_18px_rgba(255,138,26,0.35)] shrink-0"
           />
-          <div>
-            <div className="stencil text-xl sm:text-2xl leading-none tracking-wider">WarDogs</div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em]">
-              Artilharia canina · 2v1v1
+          <div className="min-w-0 hidden xs:block sm:block">
+            <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em] truncate">
+              Artilharia canina · 2 jogadores
             </div>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest">
+        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--team-green)] badge-live" />
           Pelotão pronto
         </div>
@@ -97,23 +95,23 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-4 sm:gap-8">
+          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end justify-items-center gap-3 sm:gap-6 max-w-4xl mx-auto">
             <img
               src={PORTRAITS.RANGER}
               alt="Ranger"
-              className="hidden md:block h-[280px] lg:h-[340px] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left"
-              style={{ animationDelay: "0ms" }}
+              className="hidden md:block max-h-[38vh] lg:max-h-[44vh] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left justify-self-end"
+              style={{ animationDelay: "0ms", objectPosition: "bottom" }}
             />
             <img
               src={logoImg}
               alt="WarDogs"
-              className="w-[min(70vw,360px)] lg:w-[420px] h-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
+              className="w-[min(55vw,300px)] lg:w-[340px] h-auto object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
             />
             <img
               src={PORTRAITS.BRUTUS}
               alt="Brutus"
-              className="hidden md:block h-[280px] lg:h-[340px] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left"
-              style={{ animationDelay: "120ms", transform: "scaleX(-1)" }}
+              className="hidden md:block max-h-[38vh] lg:max-h-[44vh] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left justify-self-start"
+              style={{ animationDelay: "120ms", objectPosition: "bottom" }}
             />
           </div>
 
