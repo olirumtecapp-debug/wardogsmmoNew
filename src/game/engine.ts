@@ -577,7 +577,8 @@ export function activateRage(state: GameState): "activated" | "queued" | "low" |
     return "queued";
   }
   dog.rageActive = true;
-  state.turnTimer = Math.min(MAX_TURN_TIME + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
+  const limit = state.turnTimeLimit ?? MAX_TURN_TIME;
+  state.turnTimer = Math.min(limit + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
   state.message = "MODO FÚRIA ATIVADO";
   state.floatingTexts.push({
     id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
