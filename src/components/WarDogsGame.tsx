@@ -410,17 +410,17 @@ export function WarDogsGame({ mode, onExit }: Props) {
                 })}
               </div>
 
-              <MobilityBar
-                dog={s.dogs[s.currentPlayer]}
-                disabled={!hudVisible || isAiTurn}
-                onHold={(dir) => { moveHoldRef.current = { dir }; }}
-                onRelease={() => { moveHoldRef.current = null; }}
-                onJump={() => jumpDog(s)}
-              />
+              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap">
+                <MobilityBar
+                  dog={s.dogs[s.currentPlayer]}
+                  disabled={!hudVisible || isAiTurn}
+                  onHold={(dir) => { moveHoldRef.current = { dir }; }}
+                  onRelease={() => { moveHoldRef.current = null; }}
+                  onJump={() => jumpDog(s)}
+                />
 
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2">
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[180px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
                     <div className="flex flex-col items-center min-w-[38px]">
