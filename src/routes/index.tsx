@@ -258,3 +258,12 @@ function GlobeIcon() {
     </svg>
   );
 }
+
+function StarIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+      <path d="M18 3 L22.2 13.2 L33 14.2 L24.6 21.6 L27.2 32 L18 26.4 L8.8 32 L11.4 21.6 L3 14.2 L13.8 13.2 Z"
+        fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
