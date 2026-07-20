@@ -197,36 +197,45 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  const keyArtActive = sc.useKeyArtBg && bgIngameImg && bgIngameImg.complete && bgIngameImg.naturalWidth > 0;
+  const bgImg = getScenarioBg(sc.bgImage);
+  const keyArtActive = !!(bgImg && bgImg.complete && bgImg.naturalWidth > 0);
 
-  // Key art only for battlefield scenario — full cover, dominant
   if (keyArtActive) {
-    const iw = bgIngameImg!.naturalWidth;
-    const ih = bgIngameImg!.naturalHeight;
+    const iw = bgImg!.naturalWidth;
+    const ih = bgImg!.naturalHeight;
     // cover fit: fill entire canvas, cropping as needed
     const scale = Math.max(w / iw, h / ih);
     const dw = iw * scale;
     const dh = ih * scale;
     const px = Math.sin(now * 0.00008) * 10 + state.wind * 15;
     const dx = (w - dw) / 2 + px;
-    const dy = (h - dh) * 0.35; // anchor slightly above center so characters in art sit low
-    ctx.drawImage(bgIngameImg!, dx, dy, dw, dh);
+    const dy = (h - dh) * 0.5;
+    ctx.drawImage(bgImg!, dx, dy, dw, dh);
 
-    // Only a very light bottom fade for terrain blend
-    const fade = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    // Scenario tint on top of background
+    if (sc.tint) {
+      ctx.save();
+      ctx.globalCompositeOperation = sc.tintBlend;
+      ctx.fillStyle = sc.tint;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+
+    // Bottom fade for terrain blend
+    const fade = ctx.createLinearGradient(0, h * 0.55, 0, h);
     fade.addColorStop(0, "rgba(10,8,4,0)");
-    fade.addColorStop(1, "rgba(10,8,4,0.7)");
+    fade.addColorStop(1, "rgba(10,8,4,0.75)");
     ctx.fillStyle = fade;
     ctx.fillRect(0, 0, w, h);
 
-    // Gentle edge vignette
-    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.8);
+    // Edge vignette
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.85);
     vg.addColorStop(0, "rgba(0,0,0,0)");
-    vg.addColorStop(1, "rgba(0,0,0,0.5)");
+    vg.addColorStop(1, "rgba(0,0,0,0.55)");
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, w, h);
   } else {
-    // Aurora shimmer (subtle horizontal band) — only when no key art
+    // Aurora shimmer (fallback while image loads)
     const auroraY = h * 0.28;
     const auroraShift = Math.sin(now * 0.0004) * 40;
     const aur = ctx.createLinearGradient(0, auroraY - 20, 0, auroraY + 40);
@@ -238,16 +247,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.translate(auroraShift, 0);
     ctx.fillRect(-40, auroraY - 20, w + 80, 60);
     ctx.restore();
-
-    // Sun glow
-    const sunX = w * 0.72, sunY = h * 0.55;
-    const sunG = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.55);
-    sunG.addColorStop(0, "rgba(255,180,90,0.35)");
-    sunG.addColorStop(0.4, "rgba(255,140,60,0.12)");
-    sunG.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = sunG;
-    ctx.fillRect(0, 0, w, h);
   }
+
 
 
   if (!keyArtActive) {
