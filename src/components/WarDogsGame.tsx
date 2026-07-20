@@ -605,5 +605,100 @@ function MoveHoldButton({ children, onHold, onRelease, disabled, label }: {
 }
 
 
+function ArsenalPopup({ open, onClose, current, ammo, hovered, setHovered, onSelect, disabled }: {
+  open: boolean;
+  onClose: () => void;
+  current: WeaponId;
+  ammo: Record<WeaponId, number>;
+  hovered: WeaponId | null;
+  setHovered: (id: WeaponId | null) => void;
+  onSelect: (id: WeaponId) => void;
+  disabled: boolean;
+}) {
+  const currentW = WEAPONS[current];
+  const currentAmmo = ammo[current];
+  const focus = hovered ?? current;
+  const focusW = WEAPONS[focus];
+
+  return (
+    <div className="relative">
+      {open && (
+        <div className="absolute left-0 right-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
+            <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onClose} aria-label="Fechar arsenal">✕</button>
+          </div>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+            {WEAPON_ORDER.map(id => {
+              const w = WEAPONS[id];
+              const a = ammo[id];
+              const empty = a === 0;
+              const active = current === id;
+              return (
+                <button
+                  key={id}
+                  disabled={empty || disabled}
+                  onClick={() => onSelect(id)}
+                  onPointerEnter={() => setHovered(id)}
+                  onPointerLeave={() => setHovered(null)}
+                  onFocus={() => setHovered(id)}
+                  onBlur={() => setHovered(null)}
+                  aria-pressed={active}
+                  aria-label={`${w.name}${a === -1 ? "" : `, ${a} munições`}${empty ? ", sem munição" : ""}`}
+                  className={`btn-hud btn-hud-weapon flex-col items-center py-1.5 ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
+                  style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : undefined}
+                >
+                  <span aria-hidden><WeaponIcon id={id} className="w-6 h-6" /></span>
+                  <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center">
+                    {w.name.split(" ")[0]}
+                  </span>
+                  <span className="text-[9px] opacity-70 tabular-nums leading-none">
+                    {a === -1 ? "∞" : `×${a}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2 pt-2 border-t border-white/10 flex items-start gap-2 text-[10px]">
+            <div className="shrink-0" style={{ color: focusW.color }} aria-hidden>
+              <WeaponIcon id={focus} className="w-7 h-7" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="stencil text-xs" style={{ color: focusW.color }}>{focusW.name}</div>
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-muted-foreground mt-0.5">
+                <span>Dano <b className="text-foreground">{focusW.damage}</b></span>
+                <span>Raio <b className="text-foreground">{focusW.radius}</b></span>
+                <span>Tipo <b className="text-foreground">{focusW.kind === "ballistic" ? "Balístico" : focusW.kind === "cluster" ? "Cluster" : "Aéreo"}</b></span>
+                <span>Vento <b className="text-foreground">{focusW.affectedByWind ? "sim" : "não"}</b></span>
+                <span>Munição <b className="text-foreground">{ammo[focus] === -1 ? "∞" : ammo[focus]}</b></span>
+              </div>
+              <div className="mt-1 text-foreground/80 leading-snug">{WEAPON_DESC[focus]}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => (open ? onClose() : (setHovered(null), (open ? null : null), (arguments as any), null))}
+        aria-expanded={open}
+        aria-label={`Arsenal — ${currentW.name}`}
+        disabled={disabled}
+        className={`btn-hud w-full flex items-center gap-2 px-2 py-1.5 ${open ? "is-selected" : ""}`}
+        style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
+      >
+        <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
+        <span className="flex flex-col items-start min-w-0 flex-1">
+          <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arsenal</span>
+          <span className="stencil text-xs sm:text-sm truncate max-w-full" style={{ color: currentW.color }}>{currentW.name}</span>
+        </span>
+        <span className="text-[10px] tabular-nums shrink-0 opacity-80">
+          {currentAmmo === -1 ? "∞" : `×${currentAmmo}`}
+        </span>
+        <span className="text-[10px] opacity-70 shrink-0" aria-hidden>{open ? "▾" : "▸"}</span>
+      </button>
+    </div>
+  );
+}
+
 
 export type { WeaponId };
