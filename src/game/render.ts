@@ -1374,18 +1374,25 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   const y0 = dog.y - 10;
   const x1 = x0 + Math.cos(rad) * dir * len;
   const y1 = y0 - Math.sin(rad) * len;
-  const color = weaponColor(weapon as WeaponId);
+  const core = getActiveScenario().aimColor ?? "#ffdd33";
   ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
   ctx.setLineDash([5, 5]);
   ctx.lineDashOffset = -now * 0.03;
+  // Halo (dark outline) for contrast on light backgrounds
+  ctx.strokeStyle = "rgba(0,0,0,0.8)";
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  // Neon core
+  ctx.strokeStyle = core;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = core;
+  ctx.shadowBlur = 6;
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
   ctx.setLineDash([]);
-  // Reticle
-  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 0;
+  // Reticle: dark halo then neon core
+  ctx.strokeStyle = "rgba(0,0,0,0.8)";
+  ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(x1, y1, 6, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(x1 - 10, y1); ctx.lineTo(x1 - 4, y1);
@@ -1393,9 +1400,20 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   ctx.moveTo(x1, y1 - 10); ctx.lineTo(x1, y1 - 4);
   ctx.moveTo(x1, y1 + 4); ctx.lineTo(x1, y1 + 10);
   ctx.stroke();
-  // center dot
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(x1, y1, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = core;
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = core;
+  ctx.shadowBlur = 6;
+  ctx.beginPath(); ctx.arc(x1, y1, 6, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x1 - 10, y1); ctx.lineTo(x1 - 4, y1);
+  ctx.moveTo(x1 + 4, y1); ctx.lineTo(x1 + 10, y1);
+  ctx.moveTo(x1, y1 - 10); ctx.lineTo(x1, y1 - 4);
+  ctx.moveTo(x1, y1 + 4); ctx.lineTo(x1, y1 + 10);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.arc(x1, y1, 1.4, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
 
@@ -1440,10 +1458,10 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
   const maxPoints = 26;
   const windMul = dog.rageActive ? 0.5 : 1;
   const maxY = state.height - state.hudReserve - 2;
+  const core = getActiveScenario().aimColor ?? "#ffdd33";
 
   ctx.save();
   for (let i = 0; i < maxPoints; i++) {
-    // RPG boost matches engine: 260 accel along velocity for the first 1.4s
     if (weapon.id === "rpg" && i * dt < 1.4) {
       const sp = Math.hypot(vx, vy) || 1;
       vx += (vx / sp) * 260 * dt;
@@ -1455,28 +1473,53 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     y += vy * dt;
 
     if (x < 0 || x > state.width || y > maxY) break;
-
-    // Skip drawing the first couple of samples so the arc doesn't overlap the dog.
     if (i < 2) continue;
 
-    // Stop if we hit terrain
     const xi = Math.floor(x), yi = Math.floor(y);
-    if (xi >= 0 && xi < state.width && yi >= 0 && yi < state.height &&
-        state.terrain[yi * state.width + xi] === 1) {
-      // Impact reticle
-      ctx.globalAlpha = 0.85;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.stroke();
+    const hitTerrain = xi >= 0 && xi < state.width && yi >= 0 && yi < state.height &&
+      state.terrain[yi * state.width + xi] === 1;
+
+    if (hitTerrain) {
+      // Impact target: dark halo + neon ring + white cross
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(0,0,0,0.85)";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 9, y); ctx.lineTo(x + 9, y);
+      ctx.moveTo(x, y - 9); ctx.lineTo(x, y + 9);
+      ctx.stroke();
+      ctx.strokeStyle = core;
+      ctx.shadowColor = core;
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = "#fff";
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x - 9, y); ctx.lineTo(x + 9, y);
+      ctx.moveTo(x, y - 9); ctx.lineTo(x, y + 9);
+      ctx.stroke();
       break;
     }
 
     const t = i / maxPoints;
-    const alpha = 0.65 * (1 - t * 0.6);
-    const r = 2.4 - t * 1.2;
+    const alpha = 1 - t * 0.55;
+    const r = 2.6 - t * 1.1;
+    const rr = Math.max(1, r);
+    // Dark halo
+    ctx.globalAlpha = Math.min(1, alpha + 0.15);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.beginPath(); ctx.arc(x, y, rr + 1.4, 0, Math.PI * 2); ctx.fill();
+    // Neon core
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(x, y, Math.max(0.8, r), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = core;
+    ctx.shadowColor = core;
+    ctx.shadowBlur = 6;
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }
