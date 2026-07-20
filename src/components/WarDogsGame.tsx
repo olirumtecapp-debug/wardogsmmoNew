@@ -115,7 +115,7 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
 }
 
 
-export function WarDogsGame({ mode, onExit }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
