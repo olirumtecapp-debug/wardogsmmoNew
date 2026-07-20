@@ -179,7 +179,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const w = Math.max(320, Math.floor(rect.width));
       const h = Math.max(280, Math.floor(rect.height));
       // Reserve bottom band for the overlaid HUD (scales with viewport)
-      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 88 : 128;
+      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 112 : 148;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
