@@ -6,6 +6,7 @@ import { CHARACTERS, type CharacterId } from "./characters";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
+const MATCH_DURATION = 300; // 5 minutes
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
 const STEP_UP = 14; // max ledge height (px) to walk over
@@ -49,6 +50,8 @@ export function createGame(
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
     turnTimer: MAX_TURN_TIME,
+    matchTimer: MATCH_DURATION,
+    matchDuration: MATCH_DURATION,
     mode,
     seed,
     hudReserve,
@@ -423,6 +426,11 @@ export function step(state: GameState, dt: number) {
     if (s.life <= 0) state.scorchMarks.splice(i, 1);
   }
 
+  // Match timer — decrement whenever the fight is ongoing
+  if (state.phase !== "gameover") {
+    state.matchTimer = Math.max(0, state.matchTimer - dt);
+  }
+
   // Win check
   if (state.phase !== "gameover") {
     const alive0 = state.dogs[0].hp > 0;
@@ -433,6 +441,13 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate!"
         : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+    } else if (state.matchTimer <= 0) {
+      state.phase = "gameover";
+      const hp0 = state.dogs[0].hp, hp1 = state.dogs[1].hp;
+      state.winner = hp0 > hp1 ? 0 : hp1 > hp0 ? 1 : null;
+      state.message = state.winner === null
+        ? "Empate por tempo!"
+        : `Tempo esgotado — vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
     }
   }
 

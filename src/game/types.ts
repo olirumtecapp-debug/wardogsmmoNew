@@ -95,6 +95,8 @@ export interface GameState {
   winner: 0 | 1 | null;
   message: string;
   turnTimer: number;
+  matchTimer: number;
+  matchDuration: number;
   mode: GameMode;
   seed: number;
   airstrikeMarker?: { x: number; life: number };
