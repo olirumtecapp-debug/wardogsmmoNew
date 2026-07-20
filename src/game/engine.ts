@@ -6,11 +6,15 @@ import { CHARACTERS, type CharacterId } from "./characters";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
-const MATCH_DURATION = 300; // 5 minutes
+const RAGE_TURN_BONUS = 10; // segundos extras no turno em Fúria
+const RAGE_DAMAGE_MULT = 1.4;
+const RAGE_WIND_MULT = 0.5;
+export const MATCH_DURATION_DEFAULT = 300; // 5 minutos
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
 const STEP_UP = 14; // max ledge height (px) to walk over
 const JUMP_VY = -280;
+
 
 function mulberry32(seed: number) {
   let t = seed >>> 0;
@@ -30,6 +34,8 @@ export function createGame(
   seed = Date.now(),
   hudReserve = 150,
   chars: [CharacterId, CharacterId] = ["ranger", "brutus"],
+  matchDuration: number = MATCH_DURATION_DEFAULT,
+  rageEnabled: boolean = false,
 ): GameState {
   const rng = mulberry32(seed);
   const usableH = Math.max(200, height - hudReserve);
@@ -37,6 +43,7 @@ export function createGame(
   const dogs = placeDogs(terrain, width, height, rng, chars);
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
+  const dur = Math.max(0, matchDuration);
   return {
     width, height, terrain, dogs,
     projectiles: [], explosions: [],
@@ -50,13 +57,15 @@ export function createGame(
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
     turnTimer: MAX_TURN_TIME,
-    matchTimer: MATCH_DURATION,
-    matchDuration: MATCH_DURATION,
+    matchTimer: dur,
+    matchDuration: dur,
     mode,
     seed,
     hudReserve,
+    rageEnabled,
   };
 }
+
 
 function generateTerrain(w: number, h: number, usableH: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
@@ -95,8 +104,10 @@ function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number,
       moveBudget: c.stats.mobility, moveMax: c.stats.mobility,
       jumpScale: c.stats.jump, defense: c.stats.defense,
       charId, hasJumped: false,
+      rageCharge: 0, rageActive: false,
     };
   };
+
   return [mk(p1x, 0, 1, chars[0]), mk(p2x, 1, -1, chars[1])];
 }
 
