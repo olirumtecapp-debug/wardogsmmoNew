@@ -233,6 +233,7 @@ function Home() {
         Segure firme o capacete · Ajuste o ângulo · Boa sorte, soldado
       </footer>
     </div>
+    </OrientationGate>
   );
 }
 
