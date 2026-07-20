@@ -21,6 +21,7 @@ export interface Scenario {
   terrainTop: [number, number, number];
   terrainMid: [number, number, number];
   terrainDeep: [number, number, number];
+  aimColor?: string;
 }
 
 export const SCENARIOS: Scenario[] = [
