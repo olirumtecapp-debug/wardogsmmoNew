@@ -391,8 +391,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowBlur = active ? (dog.rageActive ? 22 : 14) : 8;
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
     ctx.restore();
-    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
-    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
+    drawHpBar(ctx, dog.x, dog.y - 52, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
+    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 64, now, skin.teamColor);
 
   }
   ctx.restore();
