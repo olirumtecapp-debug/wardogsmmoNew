@@ -389,23 +389,22 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && (
             <div
-              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/55 to-transparent flex flex-col justify-end gap-1.5 sm:gap-2"
+              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <ArsenalPopup
-                open={arsenalOpen}
-                onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
-                current={s.weapon}
-                ammo={s.ammo}
-                hovered={hoveredWeapon}
-                setHovered={setHoveredWeapon}
-                disabled={isAiTurn || s.phase !== "aiming"}
-                onSelect={(id) => { setWeapon(s, id); setArsenalOpen(false); setHoveredWeapon(null); setTick(t => (t + 1) % 1000); }}
-              />
+              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+                <ArsenalPopup
+                  open={arsenalOpen}
+                  onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
+                  current={s.weapon}
+                  ammo={s.ammo}
+                  hovered={hoveredWeapon}
+                  setHovered={setHoveredWeapon}
+                  disabled={isAiTurn || s.phase !== "aiming"}
+                  onSelect={(id) => { setWeapon(s, id); setArsenalOpen(false); setHoveredWeapon(null); setTick(t => (t + 1) % 1000); }}
+                />
 
-
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap">
                 <MobilityBar
                   dog={s.dogs[s.currentPlayer]}
                   disabled={!hudVisible || isAiTurn}
@@ -414,7 +413,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
                   onJump={() => jumpDog(s)}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[180px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -460,6 +459,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               </div>
             </div>
           )}
+
 
           {s?.phase === "gameover" && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
