@@ -454,8 +454,8 @@ export function step(state: GameState, dt: number) {
     if (s.life <= 0) state.scorchMarks.splice(i, 1);
   }
 
-  // Match timer — decrement whenever the fight is ongoing
-  if (state.phase !== "gameover") {
+  // Match timer — decrement whenever the fight is ongoing (skip se sem limite)
+  if (state.phase !== "gameover" && state.matchDuration > 0) {
     state.matchTimer = Math.max(0, state.matchTimer - dt);
   }
 
@@ -469,7 +469,7 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate!"
         : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
-    } else if (state.matchTimer <= 0) {
+    } else if (state.matchDuration > 0 && state.matchTimer <= 0) {
       state.phase = "gameover";
       const hp0 = state.dogs[0].hp, hp1 = state.dogs[1].hp;
       state.winner = hp0 > hp1 ? 0 : hp1 > hp0 ? 1 : null;
@@ -478,6 +478,7 @@ export function step(state: GameState, dt: number) {
         : `Tempo esgotado — vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
     }
   }
+
 
   if (state.phase === "firing" && state.projectiles.length === 0) {
     state.phase = "resolving";
@@ -499,6 +500,12 @@ export function step(state: GameState, dt: number) {
 
 export function endTurn(state: GameState) {
   if (state.phase === "gameover") return;
+  // Encerra Fúria de quem estava jogando
+  const prev = state.dogs[state.currentPlayer];
+  if (prev.rageActive) {
+    prev.rageActive = false;
+    prev.rageCharge = 0;
+  }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
   state.phase = "aiming";
   state.turnTimer = MAX_TURN_TIME;
@@ -517,6 +524,22 @@ export function endTurn(state: GameState) {
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
 }
+
+export function activateRage(state: GameState) {
+  if (!state.rageEnabled) return;
+  if (state.phase !== "aiming" || state.winner !== null) return;
+  const dog = state.dogs[state.currentPlayer];
+  if (dog.hp <= 0 || dog.rageActive || dog.rageCharge < 100) return;
+  dog.rageActive = true;
+  dog.rageCharge = 100;
+  state.turnTimer = Math.min(MAX_TURN_TIME + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
+  state.message = "MODO FÚRIA ATIVADO";
+  state.floatingTexts.push({
+    id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
+    life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
+  });
+}
+
 
 export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
   if (state.phase !== "aiming" || state.winner !== null) return;
