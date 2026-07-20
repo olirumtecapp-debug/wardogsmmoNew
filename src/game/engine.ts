@@ -9,6 +9,7 @@ const MAX_TURN_TIME = 30;
 const RAGE_TURN_BONUS = 10; // segundos extras no turno em Fúria
 const RAGE_DAMAGE_MULT = 1.4;
 const RAGE_WIND_MULT = 0.5;
+export const RAGE_READY_THRESHOLD = 60; // barra pronta para ativação
 export const MATCH_DURATION_DEFAULT = 300; // 5 minutos
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
