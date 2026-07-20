@@ -106,6 +106,8 @@ export interface GameState {
   airstrikeMarker?: { x: number; life: number };
   hudReserve: number;
   rageEnabled: boolean;      // Modo Fúria disponível (Campanha)
+  turnTimeLimit?: number;    // segundos por turno (padrão MAX_TURN_TIME)
+  chaosWind?: boolean;       // re-sorteia o vento a cada tiro
   onExplosion?: (x: number, y: number, radius: number) => void;
 }
 
