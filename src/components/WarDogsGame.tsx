@@ -325,7 +325,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
       else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
       else if (e.code === "Enter") { e.preventDefault(); fire(s); }
-      else if (e.code === "KeyF") { e.preventDefault(); activateRage(s); }
+      else if (e.code === "KeyF") { e.preventDefault(); tryRage(); }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
