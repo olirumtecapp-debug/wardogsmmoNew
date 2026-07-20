@@ -560,15 +560,24 @@ function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
   const canJump = !disabled && !dog.hasJumped && !dog.airborne;
   return (
-    <div className={`panel px-2 py-1 flex items-center gap-2 ${disabled ? "opacity-70" : ""}`}>
-      <div className="flex items-center gap-1 shrink-0">
+    <div className={`panel px-2 py-1.5 flex flex-col gap-1 shrink-0 w-[112px] sm:w-[124px] ${disabled ? "opacity-70" : ""}`}>
+      <div className="flex items-center gap-1 justify-center">
         <MoveHoldButton disabled={!canMove} onHold={() => onHold(-1)} onRelease={onRelease} label="Andar esquerda">◀</MoveHoldButton>
+        <button
+          disabled={!canJump}
+          onClick={onJump}
+          aria-label="Pular"
+          title={dog.hasJumped ? "Pulo já usado neste turno" : "Pular (Espaço)"}
+          className="btn-hud !px-1.5 !py-1 !text-[10px] leading-none min-h-[34px] flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          ⇧
+        </button>
         <MoveHoldButton disabled={!canMove} onHold={() => onHold(1)} onRelease={onRelease} label="Andar direita">▶</MoveHoldButton>
       </div>
-      <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+      <div className="flex flex-col gap-0.5">
         <div className="flex justify-between items-baseline">
-          <span className="stencil text-[9px] text-muted-foreground leading-none">MOVIMENTO</span>
-          <span className="stencil text-[10px] leading-none tabular-nums" style={{ color: "var(--accent)" }}>{Math.round(pct)}%</span>
+          <span className="stencil text-[8px] text-muted-foreground leading-none tracking-widest">MOV</span>
+          <span className="stencil text-[9px] leading-none tabular-nums" style={{ color: "var(--accent)" }}>{Math.round(pct)}%</span>
         </div>
         <div className="h-1.5 rounded-full bg-black/40 overflow-hidden border border-white/5">
           <div
@@ -577,15 +586,6 @@ function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
           />
         </div>
       </div>
-      <button
-        disabled={!canJump}
-        onClick={onJump}
-        aria-label="Pular"
-        title={dog.hasJumped ? "Pulo já usado neste turno" : "Pular (Espaço)"}
-        className="btn-hud !px-2 !py-1 !text-[11px] leading-none min-h-[36px] disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-      >
-        ⇧ PULO
-      </button>
     </div>
   );
 }
