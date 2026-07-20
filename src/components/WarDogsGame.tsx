@@ -248,7 +248,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
             </div>
 
-            <div className="panel px-3 py-1.5 pointer-events-auto text-center max-w-[45%]">
+            <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center max-w-full">
               <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
                 {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
               </div>
