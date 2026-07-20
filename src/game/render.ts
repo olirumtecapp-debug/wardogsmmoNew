@@ -209,7 +209,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     const dh = ih * scale;
     const fx = sc.bgFocus?.x ?? 0.5;
     const fy = sc.bgFocus?.y ?? 0.5;
-    const px = Math.sin(now * 0.00008) * 8 + state.wind * 10;
+    const px = Math.sin(now * 0.00006) * 3;
     const dx = (w - dw) * fx + px;
     const dy = (h - dh) * fy;
     ctx.drawImage(bgImg!, dx, dy, dw, dh);
@@ -223,10 +223,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.restore();
     }
 
-    // Bottom fade for terrain blend
-    const fade = ctx.createLinearGradient(0, h * 0.55, 0, h);
+    // Bottom fade for terrain blend (softer so horizon doesn't disappear)
+    const fade = ctx.createLinearGradient(0, h * 0.70, 0, h);
     fade.addColorStop(0, "rgba(10,8,4,0)");
-    fade.addColorStop(1, "rgba(10,8,4,0.75)");
+    fade.addColorStop(1, "rgba(10,8,4,0.45)");
     ctx.fillStyle = fade;
     ctx.fillRect(0, 0, w, h);
 
