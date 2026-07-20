@@ -260,7 +260,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               )}
             </div>
 
-            <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
+            <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
               <div className="flex gap-1.5">
                 <button
                   onClick={() => setSettingsOpen(v => !v)}
