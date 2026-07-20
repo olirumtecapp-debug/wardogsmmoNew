@@ -6,9 +6,10 @@ import { CHARACTER_LIST, CHARACTERS, characterBars, type CharacterId } from "@/g
 
 interface Props {
   mode: GameMode;
-  onStart: (chars: [CharacterId, CharacterId]) => void;
+  onStart: (chars: [CharacterId, CharacterId], matchDuration: number) => void;
   onBack: () => void;
 }
+
 
 type PickerKey = "scenario" | "difficulty" | "p1" | "p2" | null;
 
