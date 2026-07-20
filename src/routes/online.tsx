@@ -25,6 +25,7 @@ function OnlineHome() {
   const [scenario, setScenario] = useState(SCENARIOS[0].id);
   const [difficulty] = useState("sergeant");
   const [maxPlayers, setMaxPlayers] = useState<2 | 3 | 4>(2);
+  const [matchDuration, setMatchDuration] = useState<number>(300);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,13 +35,14 @@ function OnlineHome() {
   const onCreate = async () => {
     setError(null); setBusy("create");
     try {
-      const m = await createMatch({ nickname, charId, scenario, difficulty, maxPlayers });
+      const m = await createMatch({ nickname, charId, scenario, difficulty, maxPlayers, matchDuration });
       navigate({ to: "/lobby/$code", params: { code: m.code } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao criar sala");
       setBusy(null);
     }
   };
+
 
   const onJoin = async () => {
     setError(null); setBusy("join");

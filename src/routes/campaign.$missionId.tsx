@@ -54,8 +54,10 @@ function MissionPage() {
   const [player, setPlayer] = useState<CharacterId>(
     progress.lastCharacter ?? mission.suggestedPlayer,
   );
+  const [duration, setDuration] = useState<number>(300);
   const [stage, setStage] = useState<Stage>("briefing");
   const [result, setResult] = useState<{ won: boolean; stars: number } | null>(null);
+
 
   useEffect(() => {
     setActiveScenario(mission.scenario);
@@ -72,6 +74,8 @@ function MissionPage() {
             mode="ai"
             chars={[player, mission.enemy]}
             missionConfig={mission.modifiers}
+            matchDuration={duration}
+            rageEnabled
             onExit={() => navigate({ to: "/campaign" })}
             onGameOver={({ winner, playerHpPct }) => {
               const won = winner === 0;
@@ -81,6 +85,7 @@ function MissionPage() {
               setStage("result");
             }}
           />
+
         </div>
       </OrientationGate>
     );

@@ -34,7 +34,7 @@ export interface MatchPlayerRow {
   connected: boolean;
 }
 
-export async function createMatch(opts: { nickname: string; charId: string; scenario: string; difficulty: string; maxPlayers?: number }) {
+export async function createMatch(opts: { nickname: string; charId: string; scenario: string; difficulty: string; maxPlayers?: number; matchDuration?: number }) {
   const s = await ensureAnonSession();
   if (!s) throw new Error("Sem sessão");
   const seed = Math.floor(Math.random() * 0x7fffffff);
@@ -53,6 +53,12 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
   }
   if (!match) throw new Error("Não foi possível gerar código único");
 
+  // Persist chosen duration client-side (schema não tem coluna dedicada).
+  // Guests recebem via snapshot do host durante a partida.
+  if (typeof sessionStorage !== "undefined" && opts.matchDuration !== undefined) {
+    try { sessionStorage.setItem(`wardogs.dur.${match.code}`, String(opts.matchDuration)); } catch { /* ignore */ }
+  }
+
   const { error: pErr } = await supabase.from("match_players").insert({
     match_id: match.id, user_id: s.userId, slot: 0, nickname: opts.nickname, char_id: opts.charId,
   });
@@ -60,6 +66,15 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
 
   return match;
 }
+
+export function getStoredMatchDuration(code: string): number | undefined {
+  if (typeof sessionStorage === "undefined") return undefined;
+  try {
+    const v = sessionStorage.getItem(`wardogs.dur.${code}`);
+    return v === null ? undefined : Math.max(0, parseInt(v, 10));
+  } catch { return undefined; }
+}
+
 
 export async function joinMatchByCode(code: string, nickname: string, charId: string) {
   await ensureAnonSession();
