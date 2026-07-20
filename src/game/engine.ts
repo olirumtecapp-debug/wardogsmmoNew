@@ -58,8 +58,8 @@ export function createGame(
 function generateTerrain(w: number, h: number, usableH: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
   const heights = new Float32Array(w);
-  const baseline = usableH * 0.55;
-  const amp = usableH * 0.22;
+  const baseline = usableH * 0.68;
+  const amp = usableH * 0.16;
   const octaves = [
     { freq: 0.002, amp: amp * 0.7, phase: rng() * Math.PI * 2 },
     { freq: 0.006, amp: amp * 0.25, phase: rng() * Math.PI * 2 },
