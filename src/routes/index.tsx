@@ -8,14 +8,10 @@ import { teamSkin, type TeamSkin } from "@/game/skins";
 import heroImg from "@/assets/wardogs-menu-bg.jpg";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 const logoImg = logoAsset.url;
-import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
-import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
+import keyartAsset from "@/assets/wardogs-keyart-v2.png.asset.json";
 
+const keyartImg = keyartAsset.url;
 
-const PORTRAITS: Record<string, string> = {
-  RANGER: rangerPortrait.url,
-  BRUTUS: brutusPortrait.url,
-};
 import type { GameMode } from "@/game/types";
 
 export const Route = createFileRoute("/")({
