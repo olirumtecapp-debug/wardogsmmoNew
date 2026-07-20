@@ -10,6 +10,7 @@ export interface Scenario {
   label: string;
   description: string;
   bgImage: string;
+  bgFocus: { x: number; y: number };
   sky: [string, string, string, string];
   tint: string | null;
   tintBlend: GlobalCompositeOperation;

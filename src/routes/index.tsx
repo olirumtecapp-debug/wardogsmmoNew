@@ -10,7 +10,7 @@ import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 const logoImg = logoAsset.url;
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
-import emblem from "@/assets/emblem-paw.png";
+
 
 const PORTRAITS: Record<string, string> = {
   RANGER: rangerPortrait.url,
