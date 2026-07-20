@@ -523,6 +523,39 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 }
 
 
+function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; matchTimer: number }) {
+  if (matchDuration === 0) {
+    return (
+      <div className="panel px-2.5 py-1 flex items-center gap-1.5 shadow-lg">
+        <span className="stencil text-[9px] text-muted-foreground uppercase tracking-[0.2em]">Partida</span>
+        <span className="stencil text-base leading-none opacity-80">∞</span>
+      </div>
+    );
+  }
+  const t = Math.max(0, matchTimer);
+  const mm = Math.floor(t / 60);
+  const ss = Math.floor(t % 60);
+  const expired = t <= 0;
+  const critical = t <= 30 && !expired;
+  const warn = !critical && t <= 60;
+  const color = expired || critical ? "var(--destructive)" : warn ? "var(--accent)" : "var(--team-green)";
+  return (
+    <div
+      className={`panel px-2.5 py-1 flex items-center gap-1.5 shadow-lg ${critical || expired ? "animate-pulse" : ""}`}
+      style={{ borderColor: color, boxShadow: `0 0 12px ${color}55` }}
+    >
+      <span className="stencil text-[9px] text-muted-foreground uppercase tracking-[0.2em]">Partida</span>
+      {expired ? (
+        <span className="stencil text-[11px] leading-none" style={{ color }}>TEMPO ESGOTADO</span>
+      ) : (
+        <span className="stencil text-base leading-none tabular-nums" style={{ color }}>
+          {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: boolean }) {
   const char = CHARACTERS[dog.charId];
   const color = char.skin.teamColor;
