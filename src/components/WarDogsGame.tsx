@@ -112,6 +112,7 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
 
 export function WarDogsGame({ mode, onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
   const rafRef = useRef<number | null>(null);
   const aiTriggeredRef = useRef(false);
@@ -121,29 +122,30 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const [, setTick] = useState(0);
   const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const parent = canvas.parentElement!;
+    const parent = canvas.parentElement!.parentElement!; // the flex-1 container
     const dpr = Math.min(2, window.devicePixelRatio || 1);
 
     const initIfNeeded = () => {
       if (stateRef.current) return;
       const rect = parent.getBoundingClientRect();
       const w = Math.max(320, Math.floor(rect.width));
-      const h = Math.max(240, Math.floor(rect.height));
+      const h = Math.max(280, Math.floor(rect.height));
+      // Reserve bottom band for the overlaid HUD (scales with viewport)
+      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 168 : 148;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stateRef.current = createGame(w, h, mode);
+      stateRef.current = createGame(w, h, mode, undefined, hudReserve);
       markTerrainDirty();
     };
 
     // Adapt display size to the container without recreating the world.
-    // This prevents terrain regeneration when the HUD height changes.
+    // Terrain is baked into the state; we only rescale the CSS box.
     const adaptDisplay = () => {
       const s = stateRef.current;
       if (!s) return;
@@ -151,16 +153,19 @@ export function WarDogsGame({ mode, onExit }: Props) {
       const availW = Math.max(1, rect.width);
       const availH = Math.max(1, rect.height);
       const scale = Math.min(availW / s.width, availH / s.height);
-      const cssW = s.width * scale;
-      const cssH = s.height * scale;
+      const cssW = Math.floor(s.width * scale);
+      const cssH = Math.floor(s.height * scale);
       canvas.style.width = `${cssW}px`;
       canvas.style.height = `${cssH}px`;
+      setDisplaySize(prev => (prev.w === cssW && prev.h === cssH ? prev : { w: cssW, h: cssH }));
     };
 
     initIfNeeded();
     adaptDisplay();
     const ro = new ResizeObserver(adaptDisplay);
     ro.observe(parent);
+
+
 
 
     let last = performance.now();
