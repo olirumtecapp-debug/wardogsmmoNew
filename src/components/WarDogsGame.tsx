@@ -325,7 +325,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
       else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
       else if (e.code === "Enter") { e.preventDefault(); fire(s); }
-      else if (e.code === "KeyF") { e.preventDefault(); tryRage(); }
+      else if (e.code === "KeyF") {
+        e.preventDefault();
+        const dog = s.dogs[s.currentPlayer];
+        const r = activateRage(s);
+        if (r === "low") {
+          s.floatingTexts.push({
+            id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+            life: 1.4, maxLife: 1.4,
+            value: `Fúria ${Math.floor(dog.rageCharge)}/${RAGE_READY_THRESHOLD}`,
+            color: "#ffb84a", size: 18,
+          });
+        }
+      }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
