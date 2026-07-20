@@ -242,7 +242,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
         <canvas ref={canvasRef} className="block w-full h-full" />
 
         {s && (
-          <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-2 sm:p-3 gap-2 pointer-events-none">
+          <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
             <div className="flex flex-col gap-1.5 pointer-events-auto">
               <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
               <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
