@@ -393,7 +393,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
             >
               <ArsenalPopup
                 open={arsenalOpen}
-                onClose={() => { setArsenalOpen(false); setHoveredWeapon(null); }}
+                onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
                 current={s.weapon}
                 ammo={s.ammo}
                 hovered={hoveredWeapon}
