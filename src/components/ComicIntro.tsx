@@ -18,30 +18,31 @@ interface Props {
   scenarioLabel?: string;
   bgImage?: string;
   onDone: () => void;
-  autoMs?: number;
 }
 
-export function ComicIntro({ chars, scenarioLabel, bgImage, onDone, autoMs = 4800 }: Props) {
+export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   const [a, b] = chars;
   const A = CHARACTERS[a];
   const B = CHARACTERS[b];
   const [dlg] = useState(() => pickDialogue(a, b));
   const [panel, setPanel] = useState(0); // 0,1,2
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPanel(1), 1100);
-    const t2 = setTimeout(() => setPanel(2), 2400);
-    const t3 = setTimeout(() => onDone(), autoMs);
+    const t1 = setTimeout(() => setPanel(1), 900);
+    const t2 = setTimeout(() => setPanel(2), 1900);
+    const t3 = setTimeout(() => setReady(true), 2600);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onDone, autoMs]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") onDone();
+      if (e.key === "Escape") onDone();
+      if ((e.key === "Enter" || e.key === " ") && ready) onDone();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onDone]);
+  }, [onDone, ready]);
 
   const bgStyle: React.CSSProperties = bgImage
     ? { backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -50,10 +51,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone, autoMs = 480
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-3 sm:p-6 gap-3">
       <div
-        onClick={onDone}
-        className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-5xl cursor-pointer select-none"
-        role="button"
-        aria-label="Pular introdução"
+        className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-5xl select-none"
       >
         <ComicPanel
           visible={panel >= 0}
@@ -78,22 +76,33 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone, autoMs = 480
         <VsPanel visible={panel >= 2} scenarioLabel={scenarioLabel} colorA={A.skin.teamColor} colorB={B.skin.teamColor} />
       </div>
 
-      <div className="flex items-center gap-3 mt-1">
+      <div className="flex flex-col items-center gap-3 mt-2">
         <button
           onClick={onDone}
-          className="btn-hud text-[11px] uppercase tracking-[0.3em] px-3 py-1.5"
+          disabled={!ready}
+          className={`btn-hud btn-primary text-sm sm:text-base uppercase tracking-[0.3em] px-6 py-3 sm:px-8 sm:py-3.5 transition-all ${
+            ready ? "animate-pulse shadow-[0_0_24px_rgba(255,180,80,0.55)]" : "opacity-40 cursor-not-allowed"
+          }`}
         >
-          Pular ▶
+          {ready ? "▶ Iniciar Batalha" : "Preparando..."}
         </button>
-        <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer">
-          <input
-            type="checkbox"
-            defaultChecked={shouldSkipIntro()}
-            onChange={(e) => setSkipIntro(e.target.checked)}
-            className="accent-[color:var(--accent)]"
-          />
-          Não mostrar mais
-        </label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onDone}
+            className="btn-hud text-[10px] uppercase tracking-[0.3em] px-3 py-1.5 opacity-80"
+          >
+            Pular ▶
+          </button>
+          <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              defaultChecked={shouldSkipIntro()}
+              onChange={(e) => setSkipIntro(e.target.checked)}
+              className="accent-[color:var(--accent)]"
+            />
+            Não mostrar mais
+          </label>
+        </div>
       </div>
     </div>
   );

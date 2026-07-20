@@ -396,8 +396,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowBlur = active ? (dog.rageActive ? 22 : 14) : 8;
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
     ctx.restore();
-    drawHpBar(ctx, dog.x, dog.y - 52, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
-    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 64, now, skin.teamColor);
+    drawHpBar(ctx, dog.x, dog.y - 60, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
+    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 72, now, skin.teamColor);
 
   }
   ctx.restore();
@@ -1329,10 +1329,10 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, maxHp: number, color: string, dark: string) {
-  const segCount = 10;
-  const segW = 2.4, segGap = 0.8;
+  const segCount = 8;
+  const segW = 2.0, segGap = 0.6;
   const totalW = segCount * segW + (segCount - 1) * segGap;
-  const barH = 3;
+  const barH = 2.4;
   const startX = x - totalW / 2;
   ctx.save();
   ctx.fillStyle = "rgba(0,0,0,0.5)";
