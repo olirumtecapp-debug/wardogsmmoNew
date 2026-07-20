@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as OnlineRouteImport } from './routes/online'
+import { Route as CampaignRouteImport } from './routes/campaign'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MatchCodeRouteImport } from './routes/match.$code'
 import { Route as LobbyCodeRouteImport } from './routes/lobby.$code'
@@ -23,6 +24,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const OnlineRoute = OnlineRouteImport.update({
   id: '/online',
   path: '/online',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignRoute = CampaignRouteImport.update({
+  id: '/campaign',
+  path: '/campaign',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,6 +49,7 @@ const LobbyCodeRoute = LobbyCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/campaign': typeof CampaignRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/lobby/$code': typeof LobbyCodeRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/campaign': typeof CampaignRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/lobby/$code': typeof LobbyCodeRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/campaign': typeof CampaignRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/lobby/$code': typeof LobbyCodeRoute
@@ -65,12 +74,25 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/online' | '/sitemap.xml' | '/lobby/$code' | '/match/$code'
+  fullPaths:
+    | '/'
+    | '/campaign'
+    | '/online'
+    | '/sitemap.xml'
+    | '/lobby/$code'
+    | '/match/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/online' | '/sitemap.xml' | '/lobby/$code' | '/match/$code'
+  to:
+    | '/'
+    | '/campaign'
+    | '/online'
+    | '/sitemap.xml'
+    | '/lobby/$code'
+    | '/match/$code'
   id:
     | '__root__'
     | '/'
+    | '/campaign'
     | '/online'
     | '/sitemap.xml'
     | '/lobby/$code'
@@ -79,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CampaignRoute: typeof CampaignRoute
   OnlineRoute: typeof OnlineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LobbyCodeRoute: typeof LobbyCodeRoute
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/online'
       fullPath: '/online'
       preLoaderRoute: typeof OnlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaign': {
+      id: '/campaign'
+      path: '/campaign'
+      fullPath: '/campaign'
+      preLoaderRoute: typeof CampaignRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -127,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CampaignRoute: CampaignRoute,
   OnlineRoute: OnlineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LobbyCodeRoute: LobbyCodeRoute,
