@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
 import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step } from "@/game/engine";
-import { render, markTerrainDirty } from "@/game/render";
+import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
