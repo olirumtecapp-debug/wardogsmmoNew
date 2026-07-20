@@ -391,37 +391,17 @@ export function WarDogsGame({ mode, onExit }: Props) {
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div
-                role="toolbar"
-                aria-label="Seleção de arma"
-                className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center"
-                style={{ WebkitMaskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)", maskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)" }}
-              >
-                {WEAPON_ORDER.map(id => {
-                  const w = WEAPONS[id];
-                  const ammo = s.ammo[id];
-                  const disabled = ammo === 0;
-                  const active = s.weapon === id;
-                  return (
-                    <button
-                      key={id}
-                      ref={active ? (el => { if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }) : undefined}
-                      disabled={disabled || isAiTurn || s.phase !== "aiming"}
-                      onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
-                      aria-label={`${w.name}${ammo === -1 ? "" : `, ${ammo} munições`}${disabled ? ", sem munição" : ""}`}
-                      aria-pressed={active}
-                      title={w.name}
-                      className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
-                      style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
-                    >
-                      <span className="weapon-icon" aria-hidden><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
-                      <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
-                        {ammo === -1 ? "∞" : `×${ammo}`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <ArsenalPopup
+                open={arsenalOpen}
+                onClose={() => { setArsenalOpen(false); setHoveredWeapon(null); }}
+                current={s.weapon}
+                ammo={s.ammo}
+                hovered={hoveredWeapon}
+                setHovered={setHoveredWeapon}
+                disabled={isAiTurn || s.phase !== "aiming"}
+                onSelect={(id) => { setWeapon(s, id); setArsenalOpen(false); setHoveredWeapon(null); setTick(t => (t + 1) % 1000); }}
+              />
+
 
               <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap">
                 <MobilityBar
