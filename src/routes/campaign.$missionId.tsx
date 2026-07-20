@@ -188,7 +188,7 @@ function MissionPage() {
             <button
               className="btn-hud is-selected flex-[2] py-3 stencil text-base tracking-widest"
               style={{ borderColor: "var(--accent)", boxShadow: "inset 0 0 0 1px var(--accent), 0 0 20px var(--accent)" }}
-              onClick={() => setStage("playing")}
+              onClick={() => setStage(shouldSkipIntro() ? "playing" : "intro")}
             >
               Iniciar Missão ▸
             </button>
