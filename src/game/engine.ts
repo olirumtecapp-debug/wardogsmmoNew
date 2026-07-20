@@ -340,7 +340,12 @@ export function step(state: GameState, dt: number) {
       p.vy += uy * 260 * dt;
     }
     p.vy += GRAVITY * w.gravityScale * dt;
-    if (w.affectedByWind) p.vx += state.wind * 40 * dt;
+    if (w.affectedByWind) {
+      const shooter = state.dogs.find(d => d.team === p.ownerTeam);
+      const windMul = shooter?.rageActive ? RAGE_WIND_MULT : 1;
+      p.vx += state.wind * 40 * dt * windMul;
+    }
+
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
@@ -393,7 +398,7 @@ export function step(state: GameState, dt: number) {
 
     if (exploded) {
       spawnExplosion(state, p.x, p.y, w.radius, w.color);
-      applyExplosionDamage(state, p.x, p.y, w.radius, w.damage);
+      applyExplosionDamage(state, p.x, p.y, w.radius, w.damage, p.ownerTeam);
 
       // Cluster bomb: on first-stage explosion, spawn 4 short-fuse sub-grenades
       if (w.id === "cluster" && !p.isSub) {
