@@ -120,10 +120,12 @@ function OnlineHome() {
               </div>
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Vagas</div>
-                <div className="flex gap-1">
+                <div className="grid grid-cols-3 gap-1">
                   {[2, 3, 4].map(n => (
                     <button key={n} onClick={() => setMaxPlayers(n as 2 | 3 | 4)}
-                      className={`btn-hud text-[11px] px-3 py-1 ${maxPlayers === n ? "is-selected" : ""}`}>{n} jogadores</button>
+                      className={`btn-hud text-xs px-2 py-1.5 inline-flex items-center justify-center gap-1 ${maxPlayers === n ? "is-selected" : ""}`}>
+                      <Users size={12} />{n}P
+                    </button>
                   ))}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-1">
