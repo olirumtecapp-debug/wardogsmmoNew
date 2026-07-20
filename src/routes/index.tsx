@@ -99,12 +99,21 @@ function Home() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-end px-4 pb-6 gap-4 relative">
+      <main className="flex-1 flex flex-col items-center justify-between px-4 pb-4 gap-3 relative">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full panel text-[10px] uppercase tracking-[0.3em] badge-live">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)]" />
             Ranger &amp; Brutus · 8 armas · 4 cenários
           </div>
+        </div>
+
+        {/* Key art hero */}
+        <div className="w-full flex-1 flex items-center justify-center min-h-0 card-in">
+          <img
+            src={keyArtImg}
+            alt="Ranger e Brutus"
+            className="max-h-[42vh] sm:max-h-[46vh] w-auto object-contain drop-shadow-[0_10px_40px_rgba(255,138,26,0.35)]"
+          />
         </div>
 
         {/* Modos — compactos */}
@@ -122,22 +131,27 @@ function Home() {
           </div>
         )}
 
-        {/* Atalhos — sempre visíveis */}
-        <div className="w-full max-w-2xl panel p-3 text-[11px] text-left space-y-1">
-          <div className="stencil text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Como jogar</div>
-          <div>
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded">← →</kbd> ângulo ·{" "}
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded">↑ ↓</kbd> força ·{" "}
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded">Espaço</kbd> atirar ·{" "}
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded">1–8</kbd> arma
+        {/* Atalhos — justificados em grade */}
+        <div className="w-full max-w-2xl panel p-3 text-[11px]">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1 h-px bg-border/60" />
+            <div className="stencil text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Como jogar</div>
+            <div className="flex-1 h-px bg-border/60" />
           </div>
-          <div>
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded">A / D</kbd> mover ·{" "}
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded">W</kbd> pulo
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+            <ShortcutRow label="Ângulo" keys={["←", "→"]} />
+            <ShortcutRow label="Força" keys={["↑", "↓"]} />
+            <ShortcutRow label="Atirar" keys={["Espaço"]} />
+            <ShortcutRow label="Mover" keys={["A", "D"]} />
+            <ShortcutRow label="Pulo" keys={["W"]} />
+            <ShortcutRow label="Arma" keys={["1", "–", "8"]} />
           </div>
-          <div className="text-muted-foreground">No celular: arraste a partir do cachorro pra mirar e solte pra atirar.</div>
+          <div className="mt-2 pt-2 border-t border-border/40 text-center text-muted-foreground text-[10px] uppercase tracking-widest">
+            No celular · arraste do cachorro pra mirar e solte pra atirar
+          </div>
         </div>
       </main>
+
 
       <div className="stripe-warn h-2 opacity-70 shrink-0" aria-hidden />
       <footer className="py-2 text-center text-[10px] text-muted-foreground uppercase tracking-[0.25em] shrink-0">
