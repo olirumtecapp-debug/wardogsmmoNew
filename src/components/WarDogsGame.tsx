@@ -36,6 +36,11 @@ interface MissionConfig {
   enemyHpBonus?: number;
   allowedWeapons?: WeaponId[];
   windMultiplier?: number;
+  disableAimAssist?: boolean;
+  enemyRageCharged?: boolean;
+  hidePower?: boolean;
+  turnTimeSeconds?: number;
+  chaosWind?: boolean;
 }
 
 interface Props {
