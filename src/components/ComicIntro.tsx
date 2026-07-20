@@ -52,10 +52,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-3 sm:p-6 gap-3">
       <div
-        onClick={onDone}
-        className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-5xl cursor-pointer select-none"
-        role="button"
-        aria-label="Pular introdução"
+        className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-5xl select-none"
       >
         <ComicPanel
           visible={panel >= 0}
@@ -80,22 +77,33 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
         <VsPanel visible={panel >= 2} scenarioLabel={scenarioLabel} colorA={A.skin.teamColor} colorB={B.skin.teamColor} />
       </div>
 
-      <div className="flex items-center gap-3 mt-1">
+      <div className="flex flex-col items-center gap-3 mt-2">
         <button
           onClick={onDone}
-          className="btn-hud text-[11px] uppercase tracking-[0.3em] px-3 py-1.5"
+          disabled={!ready}
+          className={`btn-hud btn-primary text-sm sm:text-base uppercase tracking-[0.3em] px-6 py-3 sm:px-8 sm:py-3.5 transition-all ${
+            ready ? "animate-pulse shadow-[0_0_24px_rgba(255,180,80,0.55)]" : "opacity-40 cursor-not-allowed"
+          }`}
         >
-          Pular ▶
+          {ready ? "▶ Iniciar Batalha" : "Preparando..."}
         </button>
-        <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer">
-          <input
-            type="checkbox"
-            defaultChecked={shouldSkipIntro()}
-            onChange={(e) => setSkipIntro(e.target.checked)}
-            className="accent-[color:var(--accent)]"
-          />
-          Não mostrar mais
-        </label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onDone}
+            className="btn-hud text-[10px] uppercase tracking-[0.3em] px-3 py-1.5 opacity-80"
+          >
+            Pular ▶
+          </button>
+          <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              defaultChecked={shouldSkipIntro()}
+              onChange={(e) => setSkipIntro(e.target.checked)}
+              className="accent-[color:var(--accent)]"
+            />
+            Não mostrar mais
+          </label>
+        </div>
       </div>
     </div>
   );
