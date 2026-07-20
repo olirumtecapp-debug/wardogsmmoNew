@@ -257,8 +257,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
-      <div className="relative flex-1 min-h-0">
-        <canvas ref={canvasRef} className="block w-full h-full" />
+      <div className="relative flex-1 min-h-0 flex items-center justify-center">
+        <canvas ref={canvasRef} className="block" />
+
 
         {s && (
           <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
