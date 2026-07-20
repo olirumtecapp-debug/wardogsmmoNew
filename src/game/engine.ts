@@ -243,8 +243,13 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         hits++;
         // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
         if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
-          const gain = dmg >= 31 ? 70 : dmg >= 16 ? 45 : 25;
+          let gain = dmg >= 31 ? 85 : dmg >= 16 ? 55 : 35;
+          if (dog.hp <= 0) gain += 15; // bônus por finalização
           shooter.rageCharge = Math.min(100, shooter.rageCharge + gain);
+        }
+        // Fúria de revanche: quem toma dano forte carrega um pouco também
+        if (state.rageEnabled && dog.team !== ownerTeam && !dog.rageActive && dmg >= 20) {
+          dog.rageCharge = Math.min(100, dog.rageCharge + 10);
         }
       }
     }
