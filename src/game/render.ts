@@ -5,6 +5,8 @@ import { characterSkin } from "./characters";
 import { getActiveScenario } from "./scenarios";
 import rangerSideAsset from "@/assets/wardogs-ranger-side.png.asset.json";
 import brutusSideAsset from "@/assets/wardogs-brutus-side.png.asset.json";
+import musaSideAsset from "@/assets/wardogs-musa-side.png.asset.json";
+import ozzySideAsset from "@/assets/wardogs-ozzy-side.png.asset.json";
 
 // Image asset cache — loaded once
 function loadImg(src: string): HTMLImageElement {
@@ -16,6 +18,9 @@ function loadImg(src: string): HTMLImageElement {
 // drawDog flips horizontally via ctx.scale(facing, 1)).
 const rangerImg = typeof window !== "undefined" ? loadImg(rangerSideAsset.url) : null;
 const brutusImg = typeof window !== "undefined" ? loadImg(brutusSideAsset.url) : null;
+const musaImg = typeof window !== "undefined" ? loadImg(musaSideAsset.url) : null;
+const ozzyImg = typeof window !== "undefined" ? loadImg(ozzySideAsset.url) : null;
+
 
 // Per-scenario background cache
 const scenarioBgCache: Record<string, HTMLImageElement> = {};
@@ -748,8 +753,13 @@ function drawDog(
   ctx.beginPath(); ctx.ellipse(0, 16, 24, 6, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 
-  // Photo-based skin (Classic pack) — use key-art portrait for RANGER/BRUTUS
-  const photoImg = name === "RANGER" ? rangerImg : name === "BRUTUS" ? brutusImg : null;
+  // Photo-based skin — use key-art side portrait for each character
+  const photoImg =
+    name === "RANGER" ? rangerImg :
+    name === "BRUTUS" ? brutusImg :
+    name === "MUSA" ? musaImg :
+    name === "OZZY" ? ozzyImg :
+    null;
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
     const injured = hp < 40;
     const critical = hp < 20;
