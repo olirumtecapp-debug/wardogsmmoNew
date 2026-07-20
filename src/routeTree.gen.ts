@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as OnlineRouteImport } from './routes/online'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LobbyCodeRouteImport } from './routes/lobby.$code'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnlineRoute = OnlineRouteImport.update({
+  id: '/online',
+  path: '/online',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,31 +29,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LobbyCodeRoute = LobbyCodeRouteImport.update({
+  id: '/lobby/$code',
+  path: '/lobby/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/lobby/$code': typeof LobbyCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sitemap.xml'
+  fullPaths: '/' | '/online' | '/sitemap.xml' | '/lobby/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sitemap.xml'
-  id: '__root__' | '/' | '/sitemap.xml'
+  to: '/' | '/online' | '/sitemap.xml' | '/lobby/$code'
+  id: '__root__' | '/' | '/online' | '/sitemap.xml' | '/lobby/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OnlineRoute: typeof OnlineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  LobbyCodeRoute: typeof LobbyCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/online': {
+      id: '/online'
+      path: '/online'
+      fullPath: '/online'
+      preLoaderRoute: typeof OnlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -65,12 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lobby/$code': {
+      id: '/lobby/$code'
+      path: '/lobby/$code'
+      fullPath: '/lobby/$code'
+      preLoaderRoute: typeof LobbyCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OnlineRoute: OnlineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  LobbyCodeRoute: LobbyCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
