@@ -26,8 +26,8 @@ type Stage =
 
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
-  const [showOnlineNotice, setShowOnlineNotice] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!showHowTo) return;
