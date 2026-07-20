@@ -1398,3 +1398,85 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   ctx.beginPath(); ctx.arc(x1, y1, 1.2, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
+
+// Angry-Birds-style predicted trajectory. Simulates using the same constants
+// as engine.ts (GRAVITY=500, wind coeff 40) so the arc matches the real shot.
+function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
+  const dog = state.dogs[state.currentPlayer];
+  const weapon = WEAPONS[state.weapon];
+  if (state.ammo[state.weapon] === 0) return;
+  const dir = dog.facing;
+  const color = weaponColor(state.weapon);
+
+  // Airstrike: mark the estimated impact zone instead of a ballistic arc.
+  if (weapon.id === "airstrike") {
+    const targetX = Math.max(60, Math.min(state.width - 60, dog.x + dir * (state.power * 3.5)));
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.75;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(targetX, 12);
+    ctx.lineTo(targetX, state.height - state.hudReserve - 4);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(targetX - 10, 18); ctx.lineTo(targetX + 10, 30);
+    ctx.moveTo(targetX + 10, 18); ctx.lineTo(targetX - 10, 30);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  const rad = (state.angle * Math.PI) / 180;
+  const v = state.power * weapon.speed * 0.6;
+  let x = dog.x + dir * 18;
+  let y = dog.y - 6;
+  let vx = Math.cos(rad) * v * dir;
+  let vy = -Math.sin(rad) * v;
+
+  const dt = 0.05;
+  const maxPoints = 26;
+  const windMul = dog.rageActive ? 0.5 : 1;
+  const maxY = state.height - state.hudReserve - 2;
+
+  ctx.save();
+  for (let i = 0; i < maxPoints; i++) {
+    // RPG boost matches engine: 260 accel along velocity for the first 1.4s
+    if (weapon.id === "rpg" && i * dt < 1.4) {
+      const sp = Math.hypot(vx, vy) || 1;
+      vx += (vx / sp) * 260 * dt;
+      vy += (vy / sp) * 260 * dt;
+    }
+    vy += 500 * weapon.gravityScale * dt;
+    if (weapon.affectedByWind) vx += state.wind * 40 * dt * windMul;
+    x += vx * dt;
+    y += vy * dt;
+
+    if (x < 0 || x > state.width || y > maxY) break;
+
+    // Skip drawing the first couple of samples so the arc doesn't overlap the dog.
+    if (i < 2) continue;
+
+    // Stop if we hit terrain
+    const xi = Math.floor(x), yi = Math.floor(y);
+    if (xi >= 0 && xi < state.width && yi >= 0 && yi < state.height &&
+        state.terrain[yi * state.width + xi] === 1) {
+      // Impact reticle
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.stroke();
+      break;
+    }
+
+    const t = i / maxPoints;
+    const alpha = 0.65 * (1 - t * 0.6);
+    const r = 2.4 - t * 1.2;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, y, Math.max(0.8, r), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
