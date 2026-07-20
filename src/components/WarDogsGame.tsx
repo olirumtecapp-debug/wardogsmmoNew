@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { createGame, fire, setWeapon, step } from "@/game/engine";
+import { createGame, fire, jumpDog, moveDog, MOVE_BUDGET, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -118,6 +118,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const aiTriggeredRef = useRef(false);
   const powerHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
   const angleHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
+  const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
   const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
@@ -178,6 +179,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
       }
       if (powerHoldRef.current) {
         s.power = Math.max(10, Math.min(100, s.power + powerHoldRef.current.dir * 55 * dt));
+      }
+      if (moveHoldRef.current && !(mode === "ai" && s.currentPlayer === 1)) {
+        moveDog(s, moveHoldRef.current.dir, dt);
       }
       step(s, dt);
       const ctx = canvas.getContext("2d")!;
