@@ -457,7 +457,7 @@ function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSki
       style={active ? { boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`, borderColor: color } : undefined}
     >
       {portrait ? (
-        <img src={portrait} alt="" className="w-6 h-6 rounded-md object-cover shrink-0" style={{ objectPosition: "center 20%", boxShadow: `0 0 6px ${color}` }} />
+        <img src={portrait} alt="" className="w-7 h-7 rounded-md object-contain object-bottom shrink-0 bg-black/30" style={{ boxShadow: `0 0 6px ${color}` }} />
       ) : (
         <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
       )}
