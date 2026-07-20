@@ -4,7 +4,7 @@ import { ensureAnonSession, randomNickname } from "@/lib/anonAuth";
 import { createMatch, joinMatchByCode } from "@/lib/matchApi";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
 import { SCENARIOS } from "@/game/scenarios";
-import { ArrowLeft, Users, KeyRound, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/online")({
   component: OnlineHome,
