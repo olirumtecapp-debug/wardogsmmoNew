@@ -149,7 +149,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       const w = Math.max(320, Math.floor(rect.width));
       const h = Math.max(280, Math.floor(rect.height));
       // Reserve bottom band for the overlaid HUD (scales with viewport)
-      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 130 : 118;
+      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 88 : 104;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
@@ -389,23 +389,22 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && (
             <div
-              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/55 to-transparent flex flex-col justify-end gap-1.5 sm:gap-2"
+              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <ArsenalPopup
-                open={arsenalOpen}
-                onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
-                current={s.weapon}
-                ammo={s.ammo}
-                hovered={hoveredWeapon}
-                setHovered={setHoveredWeapon}
-                disabled={isAiTurn || s.phase !== "aiming"}
-                onSelect={(id) => { setWeapon(s, id); setArsenalOpen(false); setHoveredWeapon(null); setTick(t => (t + 1) % 1000); }}
-              />
+              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+                <ArsenalPopup
+                  open={arsenalOpen}
+                  onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
+                  current={s.weapon}
+                  ammo={s.ammo}
+                  hovered={hoveredWeapon}
+                  setHovered={setHoveredWeapon}
+                  disabled={isAiTurn || s.phase !== "aiming"}
+                  onSelect={(id) => { setWeapon(s, id); setArsenalOpen(false); setHoveredWeapon(null); setTick(t => (t + 1) % 1000); }}
+                />
 
-
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap">
                 <MobilityBar
                   dog={s.dogs[s.currentPlayer]}
                   disabled={!hudVisible || isAiTurn}
@@ -414,7 +413,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
                   onJump={() => jumpDog(s)}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[180px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -460,6 +459,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               </div>
             </div>
           )}
+
 
           {s?.phase === "gameover" && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
@@ -623,9 +623,9 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
   const focusW = WEAPONS[focus];
 
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       {open && (
-        <div className="absolute left-0 right-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl">
+        <div className="absolute left-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl w-[280px] sm:w-[420px]">
           <div className="flex items-center justify-between mb-2">
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
             <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
@@ -685,13 +685,13 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
-        className={`btn-hud w-full flex items-center gap-2 px-2 py-1.5 ${open ? "is-selected" : ""}`}
+        className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1.5 min-w-[128px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
         style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
       >
         <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
         <span className="flex flex-col items-start min-w-0 flex-1">
-          <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arsenal</span>
-          <span className="stencil text-xs sm:text-sm truncate max-w-full" style={{ color: currentW.color }}>{currentW.name}</span>
+          <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arma</span>
+          <span className="stencil text-xs truncate max-w-full" style={{ color: currentW.color }}>{currentW.name.split(" ")[0]}</span>
         </span>
         <span className="text-[10px] tabular-nums shrink-0 opacity-80">
           {currentAmmo === -1 ? "∞" : `×${currentAmmo}`}
@@ -701,6 +701,7 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
     </div>
   );
 }
+
 
 
 export type { WeaponId };

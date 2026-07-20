@@ -4,11 +4,10 @@ import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
-import heroImg from "@/assets/wardogs-menu-bg.jpg";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 const logoImg = logoAsset.url;
-const keyHeroImg = keyHeroAsset.url;
+const bgImg = keyHeroAsset.url;
 
 import type { GameMode } from "@/game/types";
 
@@ -35,38 +34,42 @@ function Home() {
   return (
     <OrientationGate soft>
     <div className="relative min-h-screen overflow-hidden flex flex-col">
-      {/* Background layer */}
+      {/* Background layer — key art */}
       <div
         className="absolute inset-0 -z-30"
         style={{
-          backgroundImage: `url(${heroImg})`,
+          backgroundImage: `url(${bgImg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundColor: "#0b0f16",
-          filter: "brightness(0.45) saturate(0.9)",
         }}
         aria-hidden
       />
-      <div className="absolute inset-0 -z-20 opacity-50 mix-blend-screen pointer-events-none">
+      <div
+        className="absolute inset-0 -z-25"
+        style={{ background: "rgba(6,10,16,0.35)" }}
+        aria-hidden
+      />
+      <div className="absolute inset-0 -z-20 opacity-40 mix-blend-screen pointer-events-none">
         <MenuBackdrop />
       </div>
       <div
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, rgba(8,10,14,0.55) 0%, rgba(8,10,14,0.15) 30%, rgba(8,10,14,0.55) 75%, rgba(8,10,14,0.95) 100%)",
+            "linear-gradient(180deg, rgba(8,10,14,0.55) 0%, rgba(8,10,14,0.10) 35%, rgba(8,10,14,0.55) 75%, rgba(8,10,14,0.92) 100%)",
         }}
         aria-hidden
       />
       <div className="absolute inset-0 -z-10 hero-vignette pointer-events-none" aria-hidden />
 
-      {/* Header — logo canto superior, permanece */}
+      {/* Header — logo canto superior */}
       <header className="p-3 sm:p-5 flex items-center justify-between relative gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <img
             src={logoImg}
             alt="WarDogs"
-            className="h-8 sm:h-10 w-auto object-contain float-slow drop-shadow-[0_0_18px_rgba(255,138,26,0.4)] shrink-0"
+            className="h-10 sm:h-14 w-auto object-contain float-slow drop-shadow-[0_0_22px_rgba(255,138,26,0.55)] shrink-0"
           />
           <div className="min-w-0 hidden sm:block">
             <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em] truncate">
@@ -80,15 +83,8 @@ function Home() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center px-4 pb-6 gap-4 sm:gap-6 relative">
-        {/* Key art central — nunca cortada */}
-        <div className="w-full flex justify-center">
-          <img
-            src={keyHeroImg}
-            alt="WarDogs — Ranger & Brutus"
-            className="w-full max-w-5xl h-auto max-h-[42vh] sm:max-h-[52vh] lg:max-h-[58vh] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.75)] title-in-left"
-          />
-        </div>
+      <main className="flex-1 flex flex-col items-center justify-end px-4 pb-6 gap-4 sm:gap-6 relative">
+
 
         <div className="text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full panel text-[10px] uppercase tracking-[0.3em] badge-live">
