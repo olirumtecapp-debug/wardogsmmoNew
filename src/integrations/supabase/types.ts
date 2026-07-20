@@ -14,13 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      match_players: {
+        Row: {
+          char_id: string
+          connected: boolean
+          hp: number
+          id: string
+          joined_at: string
+          match_id: string
+          nickname: string
+          ready: boolean
+          slot: number
+          user_id: string
+        }
+        Insert: {
+          char_id?: string
+          connected?: boolean
+          hp?: number
+          id?: string
+          joined_at?: string
+          match_id: string
+          nickname: string
+          ready?: boolean
+          slot: number
+          user_id: string
+        }
+        Update: {
+          char_id?: string
+          connected?: boolean
+          hp?: number
+          id?: string
+          joined_at?: string
+          match_id?: string
+          nickname?: string
+          ready?: boolean
+          slot?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          code: string
+          created_at: string
+          difficulty: string
+          ended_at: string | null
+          host_id: string
+          id: string
+          max_players: number
+          scenario: string
+          seed: number
+          started_at: string | null
+          status: string
+          turn_slot: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          difficulty?: string
+          ended_at?: string | null
+          host_id: string
+          id?: string
+          max_players?: number
+          scenario?: string
+          seed: number
+          started_at?: string | null
+          status?: string
+          turn_slot?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          difficulty?: string
+          ended_at?: string | null
+          host_id?: string
+          id?: string
+          max_players?: number
+          scenario?: string
+          seed?: number
+          started_at?: string | null
+          status?: string
+          turn_slot?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_match_member: {
+        Args: { _match_id: string; _user_id: string }
+        Returns: boolean
+      }
+      join_match_by_code: {
+        Args: { _char_id?: string; _code: string; _nickname: string }
+        Returns: {
+          match_id: string
+          slot: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
