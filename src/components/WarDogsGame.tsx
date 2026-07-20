@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
 import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step } from "@/game/engine";
-import { render, markTerrainDirty } from "@/game/render";
+import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
@@ -17,6 +17,18 @@ const WEAPON_DESC: Record<WeaponId, string> = {
   frag: "Frag rápida com pavio curto (1s). Boa pra acertos próximos que não dão tempo de fugir.",
   cluster: "Munição cluster: no impacto libera 4 sub-bombas que espalham dano em área.",
   airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
+};
+
+// Short labels for the arsenal grid cells (avoid overflowing narrow columns on mobile).
+const WEAPON_SHORT: Record<WeaponId, string> = {
+  bazooka: "Bazuca",
+  grenade: "Granada",
+  rpg: "RPG",
+  bow: "Arco",
+  artillery: "Artilh.",
+  frag: "Frag",
+  cluster: "Cluster",
+  airstrike: "Aéreo",
 };
 
 
@@ -147,6 +159,13 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const [aimAssist, setAimAssistState] = useState<boolean>(() => {
+    try { return localStorage.getItem("wardogs.aimAssist") !== "0"; } catch { return true; }
+  });
+  useEffect(() => {
+    setAimAssist(aimAssist);
+    try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
+  }, [aimAssist]);
   const rageTipShownRef = useRef(false);
 
   useEffect(() => {
@@ -438,7 +457,17 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
 
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
-                <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setAimAssistState(v => !v)}
+                    className={`btn-hud text-[10px] px-2 py-1 ${aimAssist ? "is-selected" : "opacity-70"}`}
+                    aria-pressed={aimAssist}
+                    title="Mira assistida: mostra o arco previsto do tiro"
+                  >
+                    🎯 {aimAssist ? "Mira ON" : "Mira OFF"}
+                  </button>
+                  <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+                </div>
                 <WindGauge wind={s.wind} />
               </div>
             </div>
@@ -808,7 +837,7 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
             <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1 sm:gap-1.5">
             {WEAPON_ORDER.map(id => {
               const w = WEAPONS[id];
               const a = ammo[id];
@@ -825,12 +854,12 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
                   onBlur={() => setHovered(null)}
                   aria-pressed={active}
                   aria-label={`${w.name}${a === -1 ? "" : `, ${a} munições`}${empty ? ", sem munição" : ""}`}
-                  className={`btn-hud btn-hud-weapon flex-col items-center py-1.5 ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
+                  className={`btn-hud btn-hud-weapon flex-col items-center !px-1 py-1.5 min-w-0 overflow-hidden ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
                   style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : undefined}
                 >
                   <span aria-hidden><WeaponIcon id={id} className="w-6 h-6" /></span>
-                  <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center">
-                    {w.name.split(" ")[0]}
+                  <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center w-full truncate">
+                    {WEAPON_SHORT[id]}
                   </span>
                   <span className="text-[9px] opacity-70 tabular-nums leading-none">
                     {a === -1 ? "∞" : `×${a}`}
