@@ -3,7 +3,10 @@ import { WEAPONS, WEAPON_ORDER } from "./weapons";
 import { fire } from "./engine";
 import { getAIDifficulty } from "./scenarioContext";
 
-// Difficulty-aware AI. Recruit=random, Sergeant=simulation, General=deep search + weapon strategy.
+// Difficulty-aware AI.
+// Recruit  = mostly random, frequent big misses.
+// Sergeant = coarse simulation with meaningful jitter, sometimes picks a sub-optimal solution.
+// General  = fine search with small imperfections (never surgical) so the player can still win.
 export function aiTakeTurn(state: GameState) {
   if (state.phase !== "aiming" || state.winner !== null) return;
   const me = state.dogs[state.currentPlayer];
@@ -14,22 +17,29 @@ export function aiTakeTurn(state: GameState) {
 
   const diff = getAIDifficulty();
 
+  // ---------- RECRUIT ----------
   if (diff === "recruit") {
-    // Pick any weapon with ammo, mostly bazooka
-    const roll = Math.random();
-    const pool: WeaponId[] = roll < 0.6 ? ["bazooka"] : ["bazooka", "grenade", "bow"];
-    const chosen = pool.find(w => state.ammo[w] !== 0) ?? "bazooka";
-    state.weapon = chosen;
-    state.angle = 30 + Math.random() * 45;
-    state.power = 50 + Math.random() * 40;
+    const basic: WeaponId[] = ["bazooka", "grenade", "bow"];
+    const pool = basic.filter(w => state.ammo[w] !== 0);
+    state.weapon = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "bazooka";
+
+    // Big spread — no aiming logic at all
+    const wildMiss = Math.random() < 0.35;
+    state.angle = 15 + Math.random() * 65;
+    state.power = 30 + Math.random() * 70;
+    if (wildMiss) {
+      // Force a bad shot: extreme angle or low power
+      state.angle = Math.random() < 0.5 ? 15 + Math.random() * 15 : 70 + Math.random() * 15;
+      state.power = 30 + Math.random() * 30;
+    }
+
     setTimeout(() => { if (state.phase === "aiming") fire(state); }, 900);
     return;
   }
 
-  // Pick weapons to try
+  // ---------- SERGEANT & GENERAL: simulation-based ----------
   let candidates: WeaponId[];
   if (diff === "general") {
-    // Consider all weapons with ammo; strongly prefer high-damage / area effects when enemy hp low
     candidates = WEAPON_ORDER.filter(w => state.ammo[w] !== 0);
     if (enemy.hp < 40) {
       const strong: WeaponId[] = ["airstrike", "cluster", "artillery", "rpg"];
@@ -37,31 +47,50 @@ export function aiTakeTurn(state: GameState) {
       if (s.length) candidates = [...s, ...candidates.filter(w => !s.includes(w))];
     }
   } else {
-    // Sergeant: moderate weapon set
-    const pref: WeaponId[] = ["rpg", "bazooka", "grenade", "frag", "bow", "artillery"];
+    // Sergeant: moderate arsenal, no priority combos
+    const pref: WeaponId[] = ["bazooka", "grenade", "bow", "frag", "rpg"];
     candidates = pref.filter(w => state.ammo[w] !== 0);
     if (!candidates.length) candidates = ["bazooka"];
   }
 
-  const angleStep = diff === "general" ? 3 : 6;
-  const powerStep = diff === "general" ? 6 : 12;
+  const angleStep = diff === "general" ? 3 : 8;
+  const powerStep = diff === "general" ? 6 : 15;
   const angleMin = 15, angleMax = 82;
-  const powerMin = 30, powerMax = 100;
+  const powerMin = 30, powerMax = diff === "general" ? 95 : 100;
 
-  let best = { weapon: candidates[0], angle: 45, power: 60, dist: Infinity };
+  const maxWeapons = diff === "general" ? candidates.length : 2;
+  type Sol = { weapon: WeaponId; angle: number; power: number; dist: number };
+  const solutions: Sol[] = [];
 
-  for (const wId of candidates.slice(0, diff === "general" ? candidates.length : 3)) {
+  for (const wId of candidates.slice(0, maxWeapons)) {
     for (let angle = angleMin; angle <= angleMax; angle += angleStep) {
       for (let power = powerMin; power <= powerMax; power += powerStep) {
         const d = simulate(state, angle, power, wId);
-        if (d < best.dist) best = { weapon: wId, angle, power, dist: d };
+        solutions.push({ weapon: wId, angle, power, dist: d });
       }
     }
   }
 
+  solutions.sort((a, b) => a.dist - b.dist);
+
+  // Sergeant: 25% chance to pick the 2nd/3rd best instead of the optimum
+  let pickIdx = 0;
+  if (diff === "sergeant" && solutions.length > 3 && Math.random() < 0.25) {
+    pickIdx = 1 + Math.floor(Math.random() * 2);
+  }
+  const best = solutions[pickIdx] ?? { weapon: candidates[0], angle: 45, power: 60, dist: Infinity };
+
+  // Jitter — General has small imperfections; Sergeant is noticeably wobbly
+  let jitterAng = diff === "general" ? 4 : 10;
+  let jitterPow = diff === "general" ? 6 : 18;
+
+  // General: 15% chance of an "off" turn with doubled jitter
+  if (diff === "general" && Math.random() < 0.15) {
+    jitterAng *= 2;
+    jitterPow *= 2;
+  }
+
   state.weapon = best.weapon;
-  const jitterAng = diff === "general" ? 2 : 6;
-  const jitterPow = diff === "general" ? 3 : 10;
   state.angle = Math.max(10, Math.min(85, best.angle + (Math.random() - 0.5) * jitterAng));
   state.power = Math.max(20, Math.min(100, best.power + (Math.random() - 0.5) * jitterPow));
 
@@ -75,7 +104,6 @@ function simulate(state: GameState, angle: number, power: number, weaponId: Weap
   const me = state.dogs[state.currentPlayer];
   const enemy = state.dogs[1 - state.currentPlayer];
 
-  // Airstrike lands vertically from top at derived x
   if (w.id === "airstrike") {
     const targetX = me.x + me.facing * (power * 3.5);
     return Math.abs(targetX - enemy.x);
@@ -91,9 +119,10 @@ function simulate(state: GameState, angle: number, power: number, weaponId: Weap
   const gravity = 500 * w.gravityScale;
   const wind = state.wind;
   const width = state.width, height = state.height;
+  const diff = getAIDifficulty();
+
   for (let i = 0; i < 600; i++) {
     if (w.affectedByWind) vx += wind * 40 * dt;
-    // RPG thrust (simplified)
     if (w.id === "rpg" && i * dt < 1.4) {
       const sp = Math.hypot(vx, vy) || 1;
       vx += (vx / sp) * 260 * dt;
@@ -102,7 +131,15 @@ function simulate(state: GameState, angle: number, power: number, weaponId: Weap
     vy += gravity * dt;
     x += vx * dt; y += vy * dt;
     if (x < 0 || x > width || y > height) break;
-    if (isSolid(state, x, y)) return Math.hypot(x - enemy.x, y - (enemy.y - 8));
+    if (isSolid(state, x, y)) {
+      let dist = Math.hypot(x - enemy.x, y - (enemy.y - 8));
+      // Penalize self-hits (only General fully avoids them)
+      const selfDist = Math.hypot(x - me.x, y - me.y);
+      if (selfDist < 40) {
+        dist += diff === "general" ? 500 : 120;
+      }
+      return dist;
+    }
   }
   return Math.hypot(x - enemy.x, y - (enemy.y - 8));
 }
