@@ -299,6 +299,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
 
   const s = stateRef.current;
+  const canAim = s?.phase === "aiming" && s?.winner === null;
+  useEffect(() => { if (!canAim && arsenalOpen) setArsenalOpen(false); }, [canAim, arsenalOpen]);
   const teamA = teamSkin(0);
   const teamB = teamSkin(1);
   const currentSkin = s?.currentPlayer === 0 ? teamA : teamB;
