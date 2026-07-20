@@ -22,6 +22,7 @@ const WEAPON_DESC: Record<WeaponId, string> = {
 interface Props {
   mode: GameMode;
   onExit: () => void;
+  chars?: [CharacterId, CharacterId];
 }
 
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
