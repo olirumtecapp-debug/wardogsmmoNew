@@ -5,6 +5,10 @@ import { getActiveScenario } from "./scenarios";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
+export const MOVE_BUDGET = 120; // px per turn
+const MOVE_SPEED = 95; // px/s
+const STEP_UP = 14; // max ledge height (px) to walk over
+const JUMP_VY = -280;
 
 function mulberry32(seed: number) {
   let t = seed >>> 0;
@@ -71,8 +75,8 @@ function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number)
   const p1x = Math.floor(w * (0.10 + rng() * 0.10));
   const p2x = Math.floor(w * (0.80 + rng() * 0.10));
   return [
-    { x: p1x, y: surfaceY(terrain, w, h, p1x) - 18, vy: 0, hp: 100, team: 0, facing: 1, aliveTicks: 0, airborne: false },
-    { x: p2x, y: surfaceY(terrain, w, h, p2x) - 18, vy: 0, hp: 100, team: 1, facing: -1, aliveTicks: 0, airborne: false },
+    { x: p1x, y: surfaceY(terrain, w, h, p1x) - 18, vy: 0, hp: 100, team: 0, facing: 1, aliveTicks: 0, airborne: false, moveBudget: MOVE_BUDGET, hasJumped: false },
+    { x: p2x, y: surfaceY(terrain, w, h, p2x) - 18, vy: 0, hp: 100, team: 1, facing: -1, aliveTicks: 0, airborne: false, moveBudget: MOVE_BUDGET, hasJumped: false },
   ];
 }
 
