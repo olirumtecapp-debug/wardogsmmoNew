@@ -144,6 +144,10 @@ export function fire(state: GameState) {
   if (state.phase !== "aiming") return;
   const weapon = WEAPONS[state.weapon];
   if (state.ammo[state.weapon] === 0) return;
+  if (state.chaosWind) {
+    const sc = getActiveScenario();
+    state.wind = (Math.random() - 0.5) * 2 * Math.max(1, sc.windScale);
+  }
   if (state.ammo[state.weapon] > 0) state.ammo[state.weapon]--;
   state.phase = "firing";
   state.message = "Fogo!";
