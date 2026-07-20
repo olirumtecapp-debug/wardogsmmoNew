@@ -18,7 +18,6 @@ interface Props {
   scenarioLabel?: string;
   bgImage?: string;
   onDone: () => void;
-  autoMs?: number;
 }
 
 export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
