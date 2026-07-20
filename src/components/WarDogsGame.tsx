@@ -281,6 +281,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
+  }, [mode]);
+
+
 
   const s = stateRef.current;
   const teamA = teamSkin(0);
