@@ -257,6 +257,31 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
   }, [mode]);
 
+  // Keyboard: arrows to walk, space to jump, enter to fire
+  useEffect(() => {
+    const isAi = () => mode === "ai" && stateRef.current?.currentPlayer === 1;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const s = stateRef.current;
+      if (!s || isAi()) return;
+      if (e.repeat) return;
+      if (e.code === "ArrowLeft" || e.code === "KeyA") { e.preventDefault(); moveHoldRef.current = { dir: -1 }; }
+      else if (e.code === "ArrowRight" || e.code === "KeyD") { e.preventDefault(); moveHoldRef.current = { dir: 1 }; }
+      else if (e.code === "ArrowUp" || e.code === "KeyW") { e.preventDefault(); angleHoldRef.current = { dir: -1, last: 0 }; }
+      else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
+      else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
+      else if (e.code === "Enter") { e.preventDefault(); fire(s); }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD") moveHoldRef.current = null;
+      if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "KeyW" || e.code === "KeyS") angleHoldRef.current = null;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+
   const s = stateRef.current;
   const teamA = teamSkin(0);
   const teamB = teamSkin(1);
