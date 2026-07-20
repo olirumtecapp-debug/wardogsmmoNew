@@ -426,8 +426,30 @@ export function step(state: GameState, dt: number) {
     if (s.life <= 0) state.scorchMarks.splice(i, 1);
   }
 
+  // Match timer — decrement whenever the fight is ongoing
+  if (state.phase !== "gameover") {
+    state.matchTimer = Math.max(0, state.matchTimer - dt);
+  }
+
   // Win check
   if (state.phase !== "gameover") {
+    const alive0 = state.dogs[0].hp > 0;
+    const alive1 = state.dogs[1].hp > 0;
+    if (!alive0 || !alive1) {
+      state.phase = "gameover";
+      state.winner = alive0 ? 0 : alive1 ? 1 : null;
+      state.message = state.winner === null
+        ? "Empate!"
+        : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+    } else if (state.matchTimer <= 0) {
+      state.phase = "gameover";
+      const hp0 = state.dogs[0].hp, hp1 = state.dogs[1].hp;
+      state.winner = hp0 > hp1 ? 0 : hp1 > hp0 ? 1 : null;
+      state.message = state.winner === null
+        ? "Empate por tempo!"
+        : `Tempo esgotado — vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+    }
+  }
     const alive0 = state.dogs[0].hp > 0;
     const alive1 = state.dogs[1].hp > 0;
     if (!alive0 || !alive1) {
