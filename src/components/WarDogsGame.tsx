@@ -14,6 +14,17 @@ const PORTRAITS: Record<string, string> = {
   BRUTUS: brutusPortrait.url,
 };
 
+const WEAPON_DESC: Record<WeaponId, string> = {
+  bazooka: "Foguete clássico. Voa em arco e sofre o vento — a arma segura de todo turno.",
+  grenade: "Granada com pavio de 2.5s. Quica no terreno antes de explodir com raio generoso.",
+  rpg: "Foguete rápido de baixa gravidade. Ignora o vento — mira quase reta em alvos distantes.",
+  bow: "Flecha leve e precisa. Dano menor, mas trajetória mais tensa e certeira em curta distância.",
+  artillery: "Obus pesado com o maior raio de explosão. Cai forte, ideal pra destruir terreno.",
+  frag: "Frag rápida com pavio curto (1s). Boa pra acertos próximos que não dão tempo de fugir.",
+  cluster: "Munição cluster: no impacto libera 4 sub-bombas que espalham dano em área.",
+  airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
+};
+
 
 interface Props {
   mode: GameMode;
@@ -123,6 +134,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const [, setTick] = useState(0);
   const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [arsenalOpen, setArsenalOpen] = useState(false);
+  const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
   useEffect(() => {
@@ -136,7 +149,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       const w = Math.max(320, Math.floor(rect.width));
       const h = Math.max(280, Math.floor(rect.height));
       // Reserve bottom band for the overlaid HUD (scales with viewport)
-      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 180 : 160;
+      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 130 : 118;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
@@ -286,6 +299,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
 
   const s = stateRef.current;
+  const canAim = s?.phase === "aiming" && s?.winner === null;
+  useEffect(() => { if (!canAim && arsenalOpen) setArsenalOpen(false); }, [canAim, arsenalOpen]);
   const teamA = teamSkin(0);
   const teamB = teamSkin(1);
   const currentSkin = s?.currentPlayer === 0 ? teamA : teamB;
@@ -378,37 +393,17 @@ export function WarDogsGame({ mode, onExit }: Props) {
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div
-                role="toolbar"
-                aria-label="Seleção de arma"
-                className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center"
-                style={{ WebkitMaskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)", maskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)" }}
-              >
-                {WEAPON_ORDER.map(id => {
-                  const w = WEAPONS[id];
-                  const ammo = s.ammo[id];
-                  const disabled = ammo === 0;
-                  const active = s.weapon === id;
-                  return (
-                    <button
-                      key={id}
-                      ref={active ? (el => { if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }) : undefined}
-                      disabled={disabled || isAiTurn || s.phase !== "aiming"}
-                      onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
-                      aria-label={`${w.name}${ammo === -1 ? "" : `, ${ammo} munições`}${disabled ? ", sem munição" : ""}`}
-                      aria-pressed={active}
-                      title={w.name}
-                      className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
-                      style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
-                    >
-                      <span className="weapon-icon" aria-hidden><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
-                      <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
-                        {ammo === -1 ? "∞" : `×${ammo}`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <ArsenalPopup
+                open={arsenalOpen}
+                onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
+                current={s.weapon}
+                ammo={s.ammo}
+                hovered={hoveredWeapon}
+                setHovered={setHoveredWeapon}
+                disabled={isAiTurn || s.phase !== "aiming"}
+                onSelect={(id) => { setWeapon(s, id); setArsenalOpen(false); setHoveredWeapon(null); setTick(t => (t + 1) % 1000); }}
+              />
+
 
               <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap">
                 <MobilityBar
@@ -611,6 +606,101 @@ function MoveHoldButton({ children, onHold, onRelease, disabled, label }: {
   );
 }
 
+
+function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSelect, disabled }: {
+  open: boolean;
+  onToggle: () => void;
+  current: WeaponId;
+  ammo: Record<WeaponId, number>;
+  hovered: WeaponId | null;
+  setHovered: (id: WeaponId | null) => void;
+  onSelect: (id: WeaponId) => void;
+  disabled: boolean;
+}) {
+  const currentW = WEAPONS[current];
+  const currentAmmo = ammo[current];
+  const focus = hovered ?? current;
+  const focusW = WEAPONS[focus];
+
+  return (
+    <div className="relative">
+      {open && (
+        <div className="absolute left-0 right-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
+            <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
+          </div>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+            {WEAPON_ORDER.map(id => {
+              const w = WEAPONS[id];
+              const a = ammo[id];
+              const empty = a === 0;
+              const active = current === id;
+              return (
+                <button
+                  key={id}
+                  disabled={empty || disabled}
+                  onClick={() => onSelect(id)}
+                  onPointerEnter={() => setHovered(id)}
+                  onPointerLeave={() => setHovered(null)}
+                  onFocus={() => setHovered(id)}
+                  onBlur={() => setHovered(null)}
+                  aria-pressed={active}
+                  aria-label={`${w.name}${a === -1 ? "" : `, ${a} munições`}${empty ? ", sem munição" : ""}`}
+                  className={`btn-hud btn-hud-weapon flex-col items-center py-1.5 ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
+                  style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : undefined}
+                >
+                  <span aria-hidden><WeaponIcon id={id} className="w-6 h-6" /></span>
+                  <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center">
+                    {w.name.split(" ")[0]}
+                  </span>
+                  <span className="text-[9px] opacity-70 tabular-nums leading-none">
+                    {a === -1 ? "∞" : `×${a}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2 pt-2 border-t border-white/10 flex items-start gap-2 text-[10px]">
+            <div className="shrink-0" style={{ color: focusW.color }} aria-hidden>
+              <WeaponIcon id={focus} className="w-7 h-7" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="stencil text-xs" style={{ color: focusW.color }}>{focusW.name}</div>
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-muted-foreground mt-0.5">
+                <span>Dano <b className="text-foreground">{focusW.damage}</b></span>
+                <span>Raio <b className="text-foreground">{focusW.radius}</b></span>
+                <span>Tipo <b className="text-foreground">{focusW.kind === "ballistic" ? "Balístico" : focusW.kind === "cluster" ? "Cluster" : "Aéreo"}</b></span>
+                <span>Vento <b className="text-foreground">{focusW.affectedByWind ? "sim" : "não"}</b></span>
+                <span>Munição <b className="text-foreground">{ammo[focus] === -1 ? "∞" : ammo[focus]}</b></span>
+              </div>
+              <div className="mt-1 text-foreground/80 leading-snug">{WEAPON_DESC[focus]}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={`Arsenal — ${currentW.name}`}
+        disabled={disabled}
+        className={`btn-hud w-full flex items-center gap-2 px-2 py-1.5 ${open ? "is-selected" : ""}`}
+        style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
+      >
+        <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
+        <span className="flex flex-col items-start min-w-0 flex-1">
+          <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arsenal</span>
+          <span className="stencil text-xs sm:text-sm truncate max-w-full" style={{ color: currentW.color }}>{currentW.name}</span>
+        </span>
+        <span className="text-[10px] tabular-nums shrink-0 opacity-80">
+          {currentAmmo === -1 ? "∞" : `×${currentAmmo}`}
+        </span>
+        <span className="text-[10px] opacity-70 shrink-0" aria-hidden>{open ? "▾" : "▸"}</span>
+      </button>
+    </div>
+  );
+}
 
 
 export type { WeaponId };

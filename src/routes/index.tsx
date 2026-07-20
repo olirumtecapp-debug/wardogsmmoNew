@@ -6,7 +6,7 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
 import heroImg from "@/assets/wardogs-menu-bg.jpg";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
-import keyHeroAsset from "@/assets/wardogs-key-hero.png.asset.json";
+import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 const logoImg = logoAsset.url;
 const keyHeroImg = keyHeroAsset.url;
 
@@ -86,7 +86,7 @@ function Home() {
           <img
             src={keyHeroImg}
             alt="WarDogs — Ranger & Brutus"
-            className="w-auto max-w-full h-auto max-h-[38vh] sm:max-h-[46vh] lg:max-h-[54vh] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.75)] title-in-left"
+            className="w-full max-w-5xl h-auto max-h-[42vh] sm:max-h-[52vh] lg:max-h-[58vh] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.75)] title-in-left"
           />
         </div>
 
