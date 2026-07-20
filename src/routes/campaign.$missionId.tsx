@@ -161,6 +161,27 @@ function MissionPage() {
             </div>
           </div>
 
+          <div className="panel p-2.5">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Duração da missão</div>
+            <div className="grid grid-cols-4 gap-1">
+              {[
+                { v: 180, l: "3 min" },
+                { v: 300, l: "5 min" },
+                { v: 480, l: "8 min" },
+                { v: 0,   l: "∞" },
+              ].map(o => (
+                <button key={o.v} onClick={() => setDuration(o.v)}
+                  className={`btn-hud text-[11px] px-2 py-1.5 ${duration === o.v ? "is-selected" : ""}`}>
+                  {o.l}
+                </button>
+              ))}
+            </div>
+            <div className="text-[10px] text-muted-foreground mt-1">
+              Encha a barra ⚡ FÚRIA acertando tiros diretos para liberar um turno com +40% dano.
+            </div>
+          </div>
+
+
           <div className="flex gap-2">
             <Link to="/campaign" className="btn-hud flex-1 py-3 text-center text-[12px]">Cancelar</Link>
             <button
