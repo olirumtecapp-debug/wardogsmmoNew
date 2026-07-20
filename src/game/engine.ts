@@ -191,6 +191,7 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number) {
   destroyTerrain(state, x, y, radius);
   state.scorchMarks.push({ x, y, radius: radius * 1.05, life: 6, maxLife: 6 });
+  state.onExplosion?.(x, y, radius);
   let totalDamage = 0;
   let hits = 0;
   const stackOffsets = new Map<number, number>();
