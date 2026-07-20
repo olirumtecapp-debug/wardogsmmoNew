@@ -467,6 +467,40 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   </div>
                 </div>
 
+                {s.rageEnabled && (() => {
+                  const dog = s.dogs[s.currentPlayer];
+                  const ready = dog.rageCharge >= 100 && !dog.rageActive;
+                  const pct = Math.max(0, Math.min(100, dog.rageCharge));
+                  return (
+                    <div className="panel px-1.5 py-1 flex flex-col items-center gap-1 shrink-0 w-[68px]" title="Modo Fúria (F) — enche acertando tiros diretos">
+                      <button
+                        disabled={!ready || isAiTurn}
+                        onClick={() => activateRage(s)}
+                        className={`w-full py-1 rounded text-[10px] stencil tracking-widest border transition ${
+                          dog.rageActive
+                            ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/15 animate-pulse"
+                            : ready
+                              ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/10 hover:bg-[color:var(--destructive)]/20 animate-pulse"
+                              : "border-white/10 text-muted-foreground/70 opacity-60"
+                        } disabled:cursor-not-allowed`}
+                        aria-label="Ativar Modo Fúria"
+                      >
+                        {dog.rageActive ? "FÚRIA!" : "⚡ FÚRIA"}
+                      </button>
+                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-150"
+                          style={{
+                            width: `${pct}%`,
+                            background: "linear-gradient(90deg,#ff9138,#ff3838)",
+                            boxShadow: ready ? "0 0 8px rgba(255,56,56,0.7)" : undefined,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <button
                   disabled={isAiTurn || s.phase !== "aiming"}
                   onClick={() => fire(s)}
@@ -475,6 +509,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 >
                   FOGO
                 </button>
+
               </div>
             </div>
           )}
