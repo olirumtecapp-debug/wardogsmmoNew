@@ -323,7 +323,9 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
       else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
       else if (e.code === "Enter") { e.preventDefault(); fire(s); }
+      else if (e.code === "KeyF") { e.preventDefault(); activateRage(s); }
     };
+
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD") moveHoldRef.current = null;
       if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "KeyW" || e.code === "KeyS") angleHoldRef.current = null;
@@ -372,18 +374,29 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 </div>
                 <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
                 {s.phase === "aiming" && s.winner === null && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-2">
+                  <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-2 flex-wrap">
                     <span>Turno {isAiTurn ? "IA…" : `${Math.max(0, Math.ceil(s.turnTimer))}s`}</span>
-                    <span className="opacity-40">•</span>
-                    <span
-                      className="stencil"
-                      style={{ color: s.matchTimer <= 30 ? "var(--destructive)" : undefined }}
-                    >
-                      Partida {Math.floor(Math.max(0, s.matchTimer) / 60)}:{String(Math.floor(Math.max(0, s.matchTimer) % 60)).padStart(2, "0")}
-                    </span>
+                    {s.matchDuration > 0 && (
+                      <>
+                        <span className="opacity-40">•</span>
+                        <span
+                          className="stencil"
+                          style={{ color: s.matchTimer <= 30 ? "var(--destructive)" : undefined }}
+                        >
+                          Partida {Math.floor(Math.max(0, s.matchTimer) / 60)}:{String(Math.floor(Math.max(0, s.matchTimer) % 60)).padStart(2, "0")}
+                        </span>
+                      </>
+                    )}
+                    {s.matchDuration === 0 && (
+                      <>
+                        <span className="opacity-40">•</span>
+                        <span className="stencil opacity-70">∞</span>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
+
 
 
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
