@@ -5,6 +5,8 @@ import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { PreMatchBriefing } from "@/components/PreMatchBriefing";
+import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
+import { getActiveScenario } from "@/game/scenarios";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/")({
 type Stage =
   | { kind: "menu" }
   | { kind: "briefing"; mode: GameMode }
+  | { kind: "intro"; mode: GameMode; chars: [CharacterId, CharacterId]; matchDuration: number }
   | { kind: "playing"; mode: GameMode; chars: [CharacterId, CharacterId]; matchDuration: number };
 
 function Home() {
