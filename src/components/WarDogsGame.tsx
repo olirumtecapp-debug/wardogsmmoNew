@@ -706,7 +706,7 @@ function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; 
   );
 }
 
-function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: boolean }) {
+function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").Dog; active: boolean; reinforced?: boolean }) {
   const char = CHARACTERS[dog.charId];
   const color = char.skin.teamColor;
   const portrait = char.portraitUrl;
@@ -714,7 +714,7 @@ function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: 
   const pct = Math.max(0, Math.min(100, (hp / dog.maxHp) * 100));
   return (
     <div
-      className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
+      className={`panel px-2 py-1 flex items-center gap-1.5 transition-all relative ${active ? "" : "opacity-60 scale-95"}`}
       style={active ? { boxShadow: `0 0 0 1.5px ${color}, 0 0 16px ${color}66`, borderColor: color } : undefined}
     >
       {portrait ? (
@@ -726,6 +726,11 @@ function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: 
         <div className="stencil text-[9px] uppercase tracking-widest truncate">{char.name}</div>
         <div className="text-[8px] text-muted-foreground truncate">{char.breed}</div>
       </div>
+      {reinforced && (
+        <span className="absolute -top-1.5 -right-1 stencil text-[8px] tracking-widest px-1 py-[1px] rounded bg-[color:var(--destructive)] text-white shadow-[0_0_6px_rgba(255,56,56,0.7)] animate-pulse">
+          REFORÇO
+        </span>
+      )}
       <div className="w-16 h-1.5 bg-black/50 rounded-full overflow-hidden">
         <div className="h-full transition-all rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
