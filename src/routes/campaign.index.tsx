@@ -6,7 +6,7 @@ import { SCENARIOS } from "@/game/scenarios";
 import { OrientationGate } from "@/components/OrientationGate";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
 
-export const Route = createFileRoute("/campaign")({
+export const Route = createFileRoute("/campaign/")({
   head: () => ({
     meta: [
       { title: "Campanha — WarDogs" },
