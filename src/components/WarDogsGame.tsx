@@ -368,33 +368,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} />
               </div>
 
-              <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center max-w-full">
-                <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-                  {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
-                </div>
-                <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
-                {s.phase === "aiming" && s.winner === null && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-2 flex-wrap">
-                    <span>Turno {isAiTurn ? "IA…" : `${Math.max(0, Math.ceil(s.turnTimer))}s`}</span>
-                    {s.matchDuration > 0 && (
-                      <>
-                        <span className="opacity-40">•</span>
-                        <span
-                          className="stencil"
-                          style={{ color: s.matchTimer <= 30 ? "var(--destructive)" : undefined }}
-                        >
-                          Partida {Math.floor(Math.max(0, s.matchTimer) / 60)}:{String(Math.floor(Math.max(0, s.matchTimer) % 60)).padStart(2, "0")}
-                        </span>
-                      </>
-                    )}
-                    {s.matchDuration === 0 && (
-                      <>
-                        <span className="opacity-40">•</span>
-                        <span className="stencil opacity-70">∞</span>
-                      </>
-                    )}
+              <div className="flex flex-col items-center gap-1 justify-self-center min-w-0 max-w-full pointer-events-auto">
+                <MatchCountdown matchDuration={s.matchDuration} matchTimer={s.matchTimer} />
+                <div className="panel px-2 py-1.5 sm:px-3 text-center min-w-0 max-w-full">
+                  <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
+                    {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
                   </div>
-                )}
+                  <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
+                  {s.phase === "aiming" && s.winner === null && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      Turno {isAiTurn ? "IA…" : `${Math.max(0, Math.ceil(s.turnTimer))}s`}
+                    </div>
+                  )}
+                </div>
               </div>
 
 
@@ -536,6 +522,39 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   );
 }
 
+
+function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; matchTimer: number }) {
+  if (matchDuration === 0) {
+    return (
+      <div className="panel px-2.5 py-1 flex items-center gap-1.5 shadow-lg">
+        <span className="stencil text-[9px] text-muted-foreground uppercase tracking-[0.2em]">Partida</span>
+        <span className="stencil text-base leading-none opacity-80">∞</span>
+      </div>
+    );
+  }
+  const t = Math.max(0, matchTimer);
+  const mm = Math.floor(t / 60);
+  const ss = Math.floor(t % 60);
+  const expired = t <= 0;
+  const critical = t <= 30 && !expired;
+  const warn = !critical && t <= 60;
+  const color = expired || critical ? "var(--destructive)" : warn ? "var(--accent)" : "var(--team-green)";
+  return (
+    <div
+      className={`panel px-2.5 py-1 flex items-center gap-1.5 shadow-lg ${critical || expired ? "animate-pulse" : ""}`}
+      style={{ borderColor: color, boxShadow: `0 0 12px ${color}55` }}
+    >
+      <span className="stencil text-[9px] text-muted-foreground uppercase tracking-[0.2em]">Partida</span>
+      {expired ? (
+        <span className="stencil text-[11px] leading-none" style={{ color }}>TEMPO ESGOTADO</span>
+      ) : (
+        <span className="stencil text-base leading-none tabular-nums" style={{ color }}>
+          {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: boolean }) {
   const char = CHARACTERS[dog.charId];
