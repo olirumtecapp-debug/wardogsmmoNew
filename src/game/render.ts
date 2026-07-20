@@ -45,6 +45,11 @@ let lastDustSpawn = 0;
 
 export function markTerrainDirty() { terrainDirty = true; }
 
+// Aim-assist toggle (Angry-Birds-style trajectory arc). Controlled by the UI.
+let aimAssistEnabled = true;
+export function setAimAssist(v: boolean) { aimAssistEnabled = v; }
+export function getAimAssist() { return aimAssistEnabled; }
+
 function ensureTerrainCanvas(state: GameState) {
   if (!terrainCanvas || terrainCanvas.width !== state.width || terrainCanvas.height !== state.height) {
     terrainCanvas = document.createElement("canvas");
