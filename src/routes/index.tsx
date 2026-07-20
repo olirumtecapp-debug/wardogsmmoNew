@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 type Stage =
   | { kind: "menu" }
   | { kind: "briefing"; mode: GameMode }
-  | { kind: "playing"; mode: GameMode; chars: [CharacterId, CharacterId] };
+  | { kind: "playing"; mode: GameMode; chars: [CharacterId, CharacterId]; matchDuration: number };
 
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
@@ -40,7 +40,12 @@ function Home() {
     return (
       <OrientationGate>
         <div className="fixed inset-0">
-          <WarDogsGame mode={stage.mode} chars={stage.chars} onExit={() => setStage({ kind: "menu" })} />
+          <WarDogsGame
+            mode={stage.mode}
+            chars={stage.chars}
+            matchDuration={stage.matchDuration}
+            onExit={() => setStage({ kind: "menu" })}
+          />
         </div>
       </OrientationGate>
     );
@@ -51,12 +56,13 @@ function Home() {
       <OrientationGate soft>
         <PreMatchBriefing
           mode={stage.mode}
-          onStart={(chars) => setStage({ kind: "playing", mode: stage.mode, chars })}
+          onStart={(chars, matchDuration) => setStage({ kind: "playing", mode: stage.mode, chars, matchDuration })}
           onBack={() => setStage({ kind: "menu" })}
         />
       </OrientationGate>
     );
   }
+
 
   const pickMode = (mode: GameMode) => setStage({ kind: "briefing", mode });
 
