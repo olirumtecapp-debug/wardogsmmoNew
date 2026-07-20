@@ -1,18 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { createGame, fire, jumpDog, moveDog, MOVE_BUDGET, setWeapon, step } from "@/game/engine";
+import { createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
-import { teamSkin } from "@/game/skins";
+import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
 import { useScenario } from "@/game/scenarioContext";
-import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
-import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
-
-const PORTRAITS: Record<string, string> = {
-  RANGER: rangerPortrait.url,
-  BRUTUS: brutusPortrait.url,
-};
 
 const WEAPON_DESC: Record<WeaponId, string> = {
   bazooka: "Foguete clássico. Voa em arco e sofre o vento — a arma segura de todo turno.",
