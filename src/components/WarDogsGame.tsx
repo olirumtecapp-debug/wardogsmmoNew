@@ -197,20 +197,25 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
   useEffect(() => {
     const canvas = canvasRef.current!;
+    const toWorld = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const s = stateRef.current;
+      const sx = s ? s.width / Math.max(1, rect.width) : 1;
+      const sy = s ? s.height / Math.max(1, rect.height) : 1;
+      return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
+    };
     const onDown = (e: PointerEvent) => {
       const s = stateRef.current;
       if (!s || s.phase !== "aiming" || s.winner === null && mode === "ai" && s.currentPlayer === 1) return;
-      const rect = canvas.getBoundingClientRect();
+      const { x, y } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
-      dragRef.current = { startX: e.clientX - rect.left, startY: e.clientY - rect.top, dogX: dog.x, dogY: dog.y };
+      dragRef.current = { startX: x, startY: y, dogX: dog.x, dogY: dog.y };
     };
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
       const drag = dragRef.current;
       if (!s || !drag) return;
-      const rect = canvas.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
+      const { x: px, y: py } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
       const dx = (px - drag.startX) * -dog.facing;
       const dy = drag.startY - py;
@@ -226,9 +231,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       const drag = dragRef.current;
       dragRef.current = null;
       if (!s || !drag) return;
-      const rect = canvas.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
+      const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist > 20 && s.phase === "aiming" && s.winner === null) fire(s);
     };
@@ -242,6 +245,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointercancel", onUp);
     };
+
   }, [mode]);
 
   const s = stateRef.current;
