@@ -280,7 +280,7 @@ function DogDossier({ skin, role }: { skin: TeamSkin; role: string }) {
         style={{ background: `radial-gradient(circle at 30% 30%, ${accent}, #0e0e12)`, boxShadow: `0 0 18px ${color}55` }}
       >
         {PORTRAITS[skin.name] && (
-          <img src={PORTRAITS[skin.name]} alt={skin.name} className="w-full h-full object-cover" style={{ objectPosition: "center 25%" }} />
+          <img src={PORTRAITS[skin.name]} alt={skin.name} className="w-full h-full object-contain object-bottom p-0.5" />
         )}
       </div>
       <div className="flex-1 min-w-0">
