@@ -89,4 +89,6 @@ export interface GameState {
   mode: GameMode;
   seed: number;
   airstrikeMarker?: { x: number; life: number };
+  hudReserve: number;
 }
+
