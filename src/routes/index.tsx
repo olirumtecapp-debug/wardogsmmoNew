@@ -6,7 +6,7 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
 import heroImg from "@/assets/wardogs-menu-bg.jpg";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
-import keyHeroAsset from "@/assets/wardogs-key-hero.png.asset.json";
+import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 const logoImg = logoAsset.url;
 const keyHeroImg = keyHeroAsset.url;
 
