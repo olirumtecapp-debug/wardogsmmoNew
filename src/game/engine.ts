@@ -446,6 +446,8 @@ export function endTurn(state: GameState) {
   const dog = state.dogs[state.currentPlayer];
   const other = state.dogs[1 - state.currentPlayer];
   dog.facing = other.x > dog.x ? 1 : -1;
+  dog.moveBudget = MOVE_BUDGET;
+  dog.hasJumped = false;
   state.angle = 45;
   // Auto-pick next available weapon if current is empty
   if (state.ammo[state.weapon] === 0) {
@@ -453,6 +455,34 @@ export function endTurn(state: GameState) {
     if (next) state.weapon = next;
   }
   state.message = `Vez de ${state.currentPlayer === 0 ? "RANGER" : "BRUTUS"}`;
+}
+
+export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
+  if (state.phase !== "aiming" || state.winner !== null) return;
+  const dog = state.dogs[state.currentPlayer];
+  if (dog.hp <= 0 || dog.airborne || dog.moveBudget <= 0) return;
+  let dx = dir * MOVE_SPEED * dt;
+  if (Math.abs(dx) > dog.moveBudget) dx = dir * dog.moveBudget;
+  const newX = Math.max(10, Math.min(state.width - 10, dog.x + dx));
+  const currentSurface = surfaceY(state.terrain, state.width, state.height, dog.x);
+  const targetSurface = surfaceY(state.terrain, state.width, state.height, newX);
+  // Allow step-up up to STEP_UP; step-down always allowed (dog will fall)
+  if (currentSurface - targetSurface <= STEP_UP) {
+    dog.x = newX;
+    dog.y = targetSurface - 18;
+    dog.moveBudget -= Math.abs(dx);
+    dog.facing = dir;
+  }
+}
+
+export function jumpDog(state: GameState) {
+  if (state.phase !== "aiming" || state.winner !== null) return;
+  const dog = state.dogs[state.currentPlayer];
+  if (dog.hp <= 0 || dog.airborne || dog.hasJumped) return;
+  dog.vy = JUMP_VY;
+  dog.airborne = true;
+  dog.fallStartY = dog.y;
+  dog.hasJumped = true;
 }
 
 export function cycleWeapon(state: GameState, dir: 1 | -1) {
