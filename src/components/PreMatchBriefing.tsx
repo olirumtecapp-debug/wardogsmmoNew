@@ -244,7 +244,31 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
           </div>
         </div>
 
+        <div className="panel p-3">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Duração da partida</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {DURATION_OPTIONS.map(o => {
+              const active = duration === o.value;
+              return (
+                <button
+                  key={o.value}
+                  onClick={() => setDuration(o.value)}
+                  className={`btn-hud px-2 py-1.5 text-left ${active ? "is-selected" : ""}`}
+                  style={active ? { borderColor: "var(--accent)", boxShadow: "inset 0 0 0 1px var(--accent), 0 0 10px var(--accent)" } : undefined}
+                >
+                  <div className="stencil text-[12px] tracking-widest">{o.label}</div>
+                  <div className="text-[9px] text-muted-foreground leading-tight">{o.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1.5">
+            Quando o tempo zera, vence quem tiver mais HP.
+          </div>
+        </div>
+
         <div className="mt-auto flex flex-col sm:flex-row gap-2 pt-1">
+
           <button className="btn-hud flex-1 py-3 text-[12px]" onClick={onBack}>Cancelar</button>
           <button
             className="btn-hud is-selected flex-[2] py-3 stencil text-base tracking-widest"
