@@ -2,7 +2,6 @@ import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
 import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
 import { getActiveScenario } from "./scenarios";
-import bgIngameAsset from "@/assets/wardogs-bg-ingame.jpg.asset.json";
 import rangerPortraitAsset from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortraitAsset from "@/assets/wardogs-brutus.png.asset.json";
 
@@ -12,9 +11,16 @@ function loadImg(src: string): HTMLImageElement {
   img.src = src;
   return img;
 }
-const bgIngameImg = typeof window !== "undefined" ? loadImg(bgIngameAsset.url) : null;
 const rangerImg = typeof window !== "undefined" ? loadImg(rangerPortraitAsset.url) : null;
 const brutusImg = typeof window !== "undefined" ? loadImg(brutusPortraitAsset.url) : null;
+
+// Per-scenario background cache
+const scenarioBgCache: Record<string, HTMLImageElement> = {};
+function getScenarioBg(url: string): HTMLImageElement | null {
+  if (typeof window === "undefined") return null;
+  if (!scenarioBgCache[url]) scenarioBgCache[url] = loadImg(url);
+  return scenarioBgCache[url];
+}
 
 let terrainCanvas: HTMLCanvasElement | null = null;
 let terrainDirty = true;
