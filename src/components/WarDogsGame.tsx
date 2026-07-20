@@ -679,7 +679,7 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
       )}
       <button
         type="button"
-        onClick={() => (open ? onClose() : setHovered(null))}
+        onClick={onToggle}
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
