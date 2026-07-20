@@ -217,7 +217,12 @@ function modifierLabel(m: Mission): string {
   const parts: string[] = [];
   if (mods.enemyHpBonus) parts.push(`+${mods.enemyHpBonus} HP inimigo`);
   if (mods.windMultiplier && mods.windMultiplier !== 1) parts.push(`Vento ${mods.windMultiplier}×`);
+  if (mods.chaosWind) parts.push("Vento caótico");
   if (mods.allowedWeapons) parts.push(`Arsenal ${mods.allowedWeapons.length} armas`);
+  if (mods.disableAimAssist) parts.push("Sem mira assistida");
+  if (mods.hidePower) parts.push("Força oculta");
+  if (mods.turnTimeSeconds) parts.push(`Turno ${mods.turnTimeSeconds}s`);
+  if (mods.enemyRageCharged) parts.push("Fúria inimiga");
   return parts.join(" · ") || "Padrão";
 }
 
