@@ -203,13 +203,15 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   if (keyArtActive) {
     const iw = bgImg!.naturalWidth;
     const ih = bgImg!.naturalHeight;
-    // cover fit: fill entire canvas, cropping as needed
+    // cover fit with per-scenario focal anchor
     const scale = Math.max(w / iw, h / ih);
     const dw = iw * scale;
     const dh = ih * scale;
-    const px = Math.sin(now * 0.00008) * 10 + state.wind * 15;
-    const dx = (w - dw) / 2 + px;
-    const dy = (h - dh) * 0.5;
+    const fx = sc.bgFocus?.x ?? 0.5;
+    const fy = sc.bgFocus?.y ?? 0.5;
+    const px = Math.sin(now * 0.00008) * 8 + state.wind * 10;
+    const dx = (w - dw) * fx + px;
+    const dy = (h - dh) * fy;
     ctx.drawImage(bgImg!, dx, dy, dw, dh);
 
     // Scenario tint on top of background
