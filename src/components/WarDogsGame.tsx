@@ -164,13 +164,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const aimAssistLocked = !!missionConfig?.disableAimAssist;
+  const hidePower = !!missionConfig?.hidePower;
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
+    if (missionConfig?.disableAimAssist) return false;
     try { return localStorage.getItem("wardogs.aimAssist") !== "0"; } catch { return true; }
   });
   useEffect(() => {
-    setAimAssist(aimAssist);
-    try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
-  }, [aimAssist]);
+    const effective = aimAssistLocked ? false : aimAssist;
+    setAimAssist(effective);
+    if (!aimAssistLocked) {
+      try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
+    }
+  }, [aimAssist, aimAssistLocked]);
   const rageTipShownRef = useRef(false);
 
   useEffect(() => {
