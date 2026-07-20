@@ -160,6 +160,28 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars);
+      const cfg = missionConfigRef.current;
+      if (cfg) {
+        const st = stateRef.current;
+        if (cfg.enemyHpBonus && cfg.enemyHpBonus > 0) {
+          const d = st.dogs[1];
+          d.maxHp = d.maxHp + cfg.enemyHpBonus;
+          d.hp = d.maxHp;
+        }
+        if (cfg.allowedWeapons && cfg.allowedWeapons.length > 0) {
+          const allow = new Set<WeaponId>(cfg.allowedWeapons);
+          (Object.keys(st.ammo) as WeaponId[]).forEach(k => {
+            if (!allow.has(k)) st.ammo[k] = 0;
+          });
+          if (!allow.has(st.weapon)) {
+            const first = WEAPON_ORDER.find(w => allow.has(w));
+            if (first) st.weapon = first;
+          }
+        }
+        if (cfg.windMultiplier && cfg.windMultiplier !== 1) {
+          st.wind = Math.max(-1, Math.min(1, st.wind * cfg.windMultiplier));
+        }
+      }
       markTerrainDirty();
     };
 
