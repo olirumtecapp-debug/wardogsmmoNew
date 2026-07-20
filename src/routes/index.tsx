@@ -91,25 +91,14 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end justify-items-center gap-3 sm:gap-6 max-w-4xl mx-auto">
+          <div className="mt-4 flex justify-center">
             <img
-              src={PORTRAITS.RANGER}
-              alt="Ranger"
-              className="hidden md:block max-h-[38vh] lg:max-h-[44vh] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left justify-self-end"
-              style={{ animationDelay: "0ms", objectPosition: "bottom" }}
-            />
-            <img
-              src={logoImg}
-              alt="WarDogs"
-              className="w-[min(55vw,300px)] lg:w-[340px] h-auto object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
-            />
-            <img
-              src={PORTRAITS.BRUTUS}
-              alt="Brutus"
-              className="hidden md:block max-h-[38vh] lg:max-h-[44vh] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left justify-self-start"
-              style={{ animationDelay: "120ms", objectPosition: "bottom" }}
+              src={keyartImg}
+              alt="WarDogs — Ranger e Brutus"
+              className="w-[min(70vw,380px)] sm:w-[min(55vw,440px)] lg:w-[480px] h-auto object-contain drop-shadow-[0_18px_40px_rgba(0,0,0,0.75)] title-in-left"
             />
           </div>
+
 
 
           <p className="mt-5 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
