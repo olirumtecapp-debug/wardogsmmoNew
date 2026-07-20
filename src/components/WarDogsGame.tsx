@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
+
 
 
 const WEAPON_DESC: Record<WeaponId, string> = {
@@ -31,7 +32,10 @@ interface Props {
   chars?: [CharacterId, CharacterId];
   missionConfig?: MissionConfig;
   onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
+  matchDuration?: number; // segundos; 0 = sem limite
+  rageEnabled?: boolean;  // Modo Fúria (Campanha)
 }
+
 
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
   const cls = className ?? "w-7 h-7";
@@ -123,7 +127,7 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -159,7 +163,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars);
+      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars, matchDuration, !!rageEnabled);
       const cfg = missionConfigRef.current;
       if (cfg) {
         const st = stateRef.current;
