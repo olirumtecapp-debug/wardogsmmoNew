@@ -237,82 +237,99 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const hudVisible = s?.phase === "aiming" && s?.winner === null;
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-background touch-none select-none">
-      <canvas ref={canvasRef} className="block w-full h-full" />
+    <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
+      <div className="relative flex-1 min-h-0">
+        <canvas ref={canvasRef} className="block w-full h-full" />
 
-      {s && (
-        <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-2 sm:p-3 gap-2 pointer-events-none">
-          <div className="flex flex-col gap-1.5 pointer-events-auto">
-            <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
-            <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
-          </div>
-
-          <div className="panel px-3 py-1.5 pointer-events-auto text-center max-w-[45%]">
-            <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-              {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
+        {s && (
+          <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-2 sm:p-3 gap-2 pointer-events-none">
+            <div className="flex flex-col gap-1.5 pointer-events-auto">
+              <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
+              <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
             </div>
-            <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
-            {s.phase === "aiming" && s.winner === null && (
-              <div className="text-[10px] text-muted-foreground mt-0.5">
-                {isAiTurn ? "IA pensando..." : `${Math.max(0, Math.ceil(s.turnTimer))}s`}
+
+            <div className="panel px-3 py-1.5 pointer-events-auto text-center max-w-[45%]">
+              <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
+                {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
               </div>
-            )}
-          </div>
-
-          <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setSettingsOpen(v => !v)}
-                className={`btn-hud text-[10px] px-2 py-1 ${settingsOpen ? "is-selected" : ""}`}
-                title="Cenário / IA"
-              >
-                ⚙ {scenario.label}
-              </button>
-              <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
-            </div>
-            <WindGauge wind={s.wind} />
-            {settingsOpen && (
-              <div className="panel p-2.5 mt-1 animate-fade-in w-56 space-y-2">
-                <div>
-                  <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Cenário</div>
-                  <div className="flex flex-wrap gap-1">
-                    {scenarios.map(sc => (
-                      <button
-                        key={sc.id}
-                        onClick={() => setScenario(sc.id)}
-                        className={`btn-hud text-[10px] px-2 py-0.5 ${scenario.id === sc.id ? "is-selected" : ""}`}
-                      >{sc.label}</button>
-                    ))}
-                  </div>
+              <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
+              {s.phase === "aiming" && s.winner === null && (
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {isAiTurn ? "IA pensando..." : `${Math.max(0, Math.ceil(s.turnTimer))}s`}
                 </div>
-                {mode === "ai" && (
+              )}
+            </div>
+
+            <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setSettingsOpen(v => !v)}
+                  className={`btn-hud text-[10px] px-2 py-1 ${settingsOpen ? "is-selected" : ""}`}
+                  title="Cenário / IA"
+                >
+                  ⚙ {scenario.label}
+                </button>
+                <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+              </div>
+              <WindGauge wind={s.wind} />
+              {settingsOpen && (
+                <div className="panel p-2.5 mt-1 animate-fade-in w-56 space-y-2">
                   <div>
-                    <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Dificuldade</div>
-                    <div className="flex gap-1">
-                      {(["recruit","sergeant","general"] as const).map(d => (
+                    <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Cenário</div>
+                    <div className="flex flex-wrap gap-1">
+                      {scenarios.map(sc => (
                         <button
-                          key={d}
-                          onClick={() => setDifficulty(d)}
-                          className={`btn-hud text-[10px] px-2 py-0.5 ${difficulty === d ? "is-selected" : ""}`}
-                        >{d === "recruit" ? "Recruta" : d === "sergeant" ? "Sargento" : "General"}</button>
+                          key={sc.id}
+                          onClick={() => setScenario(sc.id)}
+                          className={`btn-hud text-[10px] px-2 py-0.5 ${scenario.id === sc.id ? "is-selected" : ""}`}
+                        >{sc.label}</button>
                       ))}
                     </div>
                   </div>
-                )}
-                <div className="text-[9px] text-muted-foreground pt-1 border-t border-white/10">
-                  Nova partida aplica cenário.
+                  {mode === "ai" && (
+                    <div>
+                      <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Dificuldade</div>
+                      <div className="flex gap-1">
+                        {(["recruit","sergeant","general"] as const).map(d => (
+                          <button
+                            key={d}
+                            onClick={() => setDifficulty(d)}
+                            className={`btn-hud text-[10px] px-2 py-0.5 ${difficulty === d ? "is-selected" : ""}`}
+                          >{d === "recruit" ? "Recruta" : d === "sergeant" ? "Sargento" : "General"}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="text-[9px] text-muted-foreground pt-1 border-t border-white/10">
+                    Nova partida aplica cenário.
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
+        {s?.phase === "gameover" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
+            <div className="panel p-6 sm:p-8 text-center max-w-sm">
+              <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
+              <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
+                {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
+              </h2>
+
+              <div className="flex gap-2 mt-6 justify-center">
+                <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
+                <button className="btn-hud" onClick={onExit}>Menu</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {s && s.phase !== "gameover" && (
-        <div className={`absolute bottom-0 left-0 right-0 p-2 sm:p-3 pointer-events-none ${hudVisible ? "hud-show" : "hud-hide"}`}>
+        <div className={`shrink-0 p-2 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent ${hudVisible ? "hud-show" : "hud-hide"}`}>
           <div className="max-w-3xl mx-auto flex flex-col gap-2">
-            <div className="panel px-2 py-1.5 pointer-events-auto flex gap-1.5 overflow-x-auto justify-center scrollbar-none">
+            <div className="panel px-2 py-1.5 flex gap-1.5 overflow-x-auto justify-center scrollbar-none">
               {WEAPON_ORDER.map(id => {
                 const w = WEAPONS[id];
                 const ammo = s.ammo[id];
@@ -336,9 +353,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
               })}
             </div>
 
-
             <div className="flex items-stretch gap-2">
-              <div className="panel px-2 py-1.5 flex-1 pointer-events-auto flex items-center gap-2">
+              <div className="panel px-2 py-1.5 flex-1 flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
                   <div className="flex flex-col items-center min-w-[42px]">
@@ -375,26 +391,10 @@ export function WarDogsGame({ mode, onExit }: Props) {
               <button
                 disabled={isAiTurn || s.phase !== "aiming"}
                 onClick={() => fire(s)}
-                className="fire-btn pointer-events-auto"
+                className="fire-btn"
               >
                 FOGO
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {s?.phase === "gameover" && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-          <div className="panel p-6 sm:p-8 text-center max-w-sm">
-            <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
-            <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
-              {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
-            </h2>
-
-            <div className="flex gap-2 mt-6 justify-center">
-              <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
-              <button className="btn-hud" onClick={onExit}>Menu</button>
             </div>
           </div>
         </div>
