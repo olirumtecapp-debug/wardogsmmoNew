@@ -477,10 +477,12 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
 }
 
 
-function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSkin; hp: number; active: boolean }) {
-  const color = skin.teamColor;
-  const name = skin.name;
-  const portrait = PORTRAITS[name];
+function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: boolean }) {
+  const char = CHARACTERS[dog.charId];
+  const color = char.skin.teamColor;
+  const portrait = char.portraitUrl;
+  const hp = dog.hp;
+  const pct = Math.max(0, Math.min(100, (hp / dog.maxHp) * 100));
   return (
     <div
       className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
@@ -491,9 +493,12 @@ function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSki
       ) : (
         <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
       )}
-      <div className="stencil text-[9px] uppercase tracking-widest">{name}</div>
+      <div className="flex flex-col leading-tight min-w-0">
+        <div className="stencil text-[9px] uppercase tracking-widest truncate">{char.name}</div>
+        <div className="text-[8px] text-muted-foreground truncate">{char.breed}</div>
+      </div>
       <div className="w-16 h-1.5 bg-black/50 rounded-full overflow-hidden">
-        <div className="h-full transition-all rounded-full" style={{ width: `${hp}%`, background: color }} />
+        <div className="h-full transition-all rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
       <div className="text-[10px] font-bold w-6 text-right tabular-nums">{hp}</div>
     </div>
