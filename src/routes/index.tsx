@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { HelpCircle, X } from "lucide-react";
 import { WarDogsGame } from "@/components/WarDogsGame";
