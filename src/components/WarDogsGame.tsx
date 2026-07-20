@@ -270,7 +270,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
           className="relative"
           style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}
         >
-          <canvas ref={canvasRef} className="block absolute inset-0" />
+          <canvas ref={canvasRef} className="block" />
 
           {s && (
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
