@@ -626,7 +626,7 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
         <div className="absolute left-0 right-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl">
           <div className="flex items-center justify-between mb-2">
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
-            <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onClose} aria-label="Fechar arsenal">✕</button>
+            <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
           </div>
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
             {WEAPON_ORDER.map(id => {
