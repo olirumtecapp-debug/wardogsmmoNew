@@ -456,7 +456,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
               <div className="flex flex-col gap-1.5 pointer-events-auto">
                 <MiniPlayer dog={s.dogs[0]} active={s.currentPlayer === 0} />
-                <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} />
+                <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} reinforced={(missionConfig?.enemyHpBonus ?? 0) >= 60} />
               </div>
 
               <div className="flex flex-col items-center gap-1 justify-self-center min-w-0 max-w-full pointer-events-auto">
