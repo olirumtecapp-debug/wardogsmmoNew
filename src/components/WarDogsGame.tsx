@@ -19,10 +19,18 @@ const WEAPON_DESC: Record<WeaponId, string> = {
 };
 
 
+interface MissionConfig {
+  enemyHpBonus?: number;
+  allowedWeapons?: WeaponId[];
+  windMultiplier?: number;
+}
+
 interface Props {
   mode: GameMode;
   onExit: () => void;
   chars?: [CharacterId, CharacterId];
+  missionConfig?: MissionConfig;
+  onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
 }
 
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
