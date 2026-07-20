@@ -17,9 +17,10 @@ function mulberry32(seed: number) {
   };
 }
 
-export function createGame(width: number, height: number, mode: GameMode, seed = Date.now()): GameState {
+export function createGame(width: number, height: number, mode: GameMode, seed = Date.now(), hudReserve = 150): GameState {
   const rng = mulberry32(seed);
-  const terrain = generateTerrain(width, height, rng);
+  const usableH = Math.max(200, height - hudReserve);
+  const terrain = generateTerrain(width, height, usableH, rng);
   const dogs = placeDogs(terrain, width, height, rng);
   const sc = getActiveScenario();
   return {
@@ -37,14 +38,15 @@ export function createGame(width: number, height: number, mode: GameMode, seed =
     turnTimer: MAX_TURN_TIME,
     mode,
     seed,
+    hudReserve,
   };
 }
 
-function generateTerrain(w: number, h: number, rng: () => number): Uint8Array {
+function generateTerrain(w: number, h: number, usableH: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
   const heights = new Float32Array(w);
-  const baseline = h * 0.55;
-  const amp = h * 0.22;
+  const baseline = usableH * 0.55;
+  const amp = usableH * 0.22;
   const octaves = [
     { freq: 0.002, amp: amp * 0.7, phase: rng() * Math.PI * 2 },
     { freq: 0.006, amp: amp * 0.25, phase: rng() * Math.PI * 2 },
@@ -54,14 +56,16 @@ function generateTerrain(w: number, h: number, rng: () => number): Uint8Array {
   for (let x = 0; x < w; x++) {
     let y = baseline;
     for (const o of octaves) y += Math.sin(x * o.freq + o.phase) * o.amp;
-    heights[x] = Math.max(60, Math.min(h - 20, y));
+    heights[x] = Math.max(60, Math.min(usableH - 12, y));
   }
   for (let x = 0; x < w; x++) {
     const top = Math.floor(heights[x]);
-    for (let y = top; y < h; y++) terrain[y * w + x] = 1;
+    const bottom = Math.min(h, usableH);
+    for (let y = top; y < bottom; y++) terrain[y * w + x] = 1;
   }
   return terrain;
 }
+
 
 function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number): [Dog, Dog] {
   const p1x = Math.floor(w * (0.10 + rng() * 0.10));
@@ -265,7 +269,7 @@ export function step(state: GameState, dt: number) {
       if (Math.abs((sy - 18) - dog.y) > 2) dog.y = sy - 18;
     }
 
-    if (dog.y > state.height + 40) dog.hp = 0;
+    if (dog.y > (state.height - state.hudReserve) + 40) dog.hp = 0;
     dog.x = Math.max(10, Math.min(state.width - 10, dog.x));
   }
 
