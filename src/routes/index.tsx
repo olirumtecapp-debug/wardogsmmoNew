@@ -6,8 +6,10 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { PreMatchBriefing } from "@/components/PreMatchBriefing";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
+import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
 const logoImg = logoAsset.url;
 const bgImg = keyHeroAsset.url;
+const keyArtImg = keyArtAsset.url;
 
 import type { GameMode } from "@/game/types";
 
