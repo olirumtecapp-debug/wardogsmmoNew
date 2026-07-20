@@ -457,7 +457,17 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
 
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
-                <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setAimAssistState(v => !v)}
+                    className={`btn-hud text-[10px] px-2 py-1 ${aimAssist ? "is-selected" : "opacity-70"}`}
+                    aria-pressed={aimAssist}
+                    title="Mira assistida: mostra o arco previsto do tiro"
+                  >
+                    🎯 {aimAssist ? "Mira ON" : "Mira OFF"}
+                  </button>
+                  <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+                </div>
                 <WindGauge wind={s.wind} />
               </div>
             </div>
