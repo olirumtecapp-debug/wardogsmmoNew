@@ -455,7 +455,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
           )}
 
 
-          {s?.phase === "gameover" && (
+          {s?.phase === "gameover" && !onGameOver && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
               <div className="panel p-6 sm:p-8 text-center max-w-sm">
                 <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
