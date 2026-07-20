@@ -387,20 +387,20 @@ export function WarDogsGame({ mode, onExit }: Props) {
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch gap-1.5 sm:gap-2">
-              <div className="panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2">
+              <div className={`panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                 <div className="flex items-center gap-1 shrink-0">
-                  <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
                   <div className="flex flex-col items-center min-w-[38px]">
                     <span className="stencil text-[9px] text-muted-foreground leading-none">ÂNG</span>
                     <span className="stencil text-base leading-tight" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
                   </div>
-                  <HoldButton onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
                 </div>
 
                 <div className="hud-divider" />
 
                 <div className="flex items-center gap-1 flex-1 min-w-0">
-                  <HoldButton onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
                   <div className="flex flex-col flex-1 min-w-0 gap-0.5">
                     <div className="flex justify-between items-baseline">
                       <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
@@ -417,9 +417,10 @@ export function WarDogsGame({ mode, onExit }: Props) {
                       />
                     </div>
                   </div>
-                  <HoldButton onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
+                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
                 </div>
               </div>
+
 
               <button
                 disabled={isAiTurn || s.phase !== "aiming"}
