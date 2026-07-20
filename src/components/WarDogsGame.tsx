@@ -332,7 +332,12 @@ export function WarDogsGame({ mode, onExit }: Props) {
           style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
         >
           <div className="max-w-3xl mx-auto flex flex-col gap-1.5 sm:gap-2">
-            <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center">
+            <div
+              role="toolbar"
+              aria-label="Seleção de arma"
+              className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center"
+              style={{ WebkitMaskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)", maskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)" }}
+            >
               {WEAPON_ORDER.map(id => {
                 const w = WEAPONS[id];
                 const ammo = s.ammo[id];
@@ -341,13 +346,16 @@ export function WarDogsGame({ mode, onExit }: Props) {
                 return (
                   <button
                     key={id}
+                    ref={active ? (el => { if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }) : undefined}
                     disabled={disabled || isAiTurn || s.phase !== "aiming"}
                     onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
+                    aria-label={`${w.name}${ammo === -1 ? "" : `, ${ammo} munições`}${disabled ? ", sem munição" : ""}`}
+                    aria-pressed={active}
                     title={w.name}
                     className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
                     style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
                   >
-                    <span className="weapon-icon"><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
+                    <span className="weapon-icon" aria-hidden><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
                     <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
                       {ammo === -1 ? "∞" : `×${ammo}`}
                     </span>
@@ -394,6 +402,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
               <button
                 disabled={isAiTurn || s.phase !== "aiming"}
                 onClick={() => fire(s)}
+                aria-label="Atirar"
                 className="fire-btn fire-btn-compact sm:!w-[4.75rem] sm:!h-[4.75rem] sm:!rounded-full sm:!text-[0.9rem]"
               >
                 FOGO
@@ -452,7 +461,8 @@ function HoldButton({ children, onHold, onRelease, dir }: { children: React.Reac
   const up = () => { setHeld(false); onRelease(); };
   return (
     <button
-      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[30px] ${held ? "hold-active" : ""}`}
+      aria-label={dir > 0 ? "Diminuir" : "Aumentar"}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-base leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""}`}
       onPointerDown={down}
       onPointerUp={up}
       onPointerLeave={up}
