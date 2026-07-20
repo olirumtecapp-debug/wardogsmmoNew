@@ -5,7 +5,7 @@ import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
-import { useScenario } from "@/game/scenarioContext";
+
 
 const WEAPON_DESC: Record<WeaponId, string> = {
   bazooka: "Foguete clássico. Voa em arco e sofre o vento — a arma segura de todo turno.",
@@ -126,8 +126,6 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
   const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
-  const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -333,50 +331,8 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
               </div>
 
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => setSettingsOpen(v => !v)}
-                    className={`btn-hud text-[10px] px-2 py-1 ${settingsOpen ? "is-selected" : ""}`}
-                    title="Cenário / IA"
-                  >
-                    ⚙ {scenario.label}
-                  </button>
-                  <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
-                </div>
+                <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
                 <WindGauge wind={s.wind} />
-                {settingsOpen && (
-                  <div className="panel p-2.5 mt-1 animate-fade-in w-56 space-y-2">
-                    <div>
-                      <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Cenário</div>
-                      <div className="flex flex-wrap gap-1">
-                        {scenarios.map(sc => (
-                          <button
-                            key={sc.id}
-                            onClick={() => setScenario(sc.id)}
-                            className={`btn-hud text-[10px] px-2 py-0.5 ${scenario.id === sc.id ? "is-selected" : ""}`}
-                          >{sc.label}</button>
-                        ))}
-                      </div>
-                    </div>
-                    {mode === "ai" && (
-                      <div>
-                        <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Dificuldade</div>
-                        <div className="flex gap-1">
-                          {(["recruit","sergeant","general"] as const).map(d => (
-                            <button
-                              key={d}
-                              onClick={() => setDifficulty(d)}
-                              className={`btn-hud text-[10px] px-2 py-0.5 ${difficulty === d ? "is-selected" : ""}`}
-                            >{d === "recruit" ? "Recruta" : d === "sergeant" ? "Sargento" : "General"}</button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="text-[9px] text-muted-foreground pt-1 border-t border-white/10">
-                      Nova partida aplica cenário.
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
