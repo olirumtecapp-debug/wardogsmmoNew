@@ -538,7 +538,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                     <div className="flex flex-col flex-1 min-w-0 gap-0.5">
                       <div className="flex justify-between items-baseline">
                         <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
-                        <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.power)}</span>
+                        <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{hidePower ? "??" : Math.round(s.power)}</span>
                       </div>
                       <div className="h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
                         <div
