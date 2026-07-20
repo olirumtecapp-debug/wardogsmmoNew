@@ -1,18 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { createGame, fire, jumpDog, moveDog, MOVE_BUDGET, setWeapon, step } from "@/game/engine";
+import { createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
-import { teamSkin } from "@/game/skins";
+import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
 import { useScenario } from "@/game/scenarioContext";
-import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
-import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
-
-const PORTRAITS: Record<string, string> = {
-  RANGER: rangerPortrait.url,
-  BRUTUS: brutusPortrait.url,
-};
 
 const WEAPON_DESC: Record<WeaponId, string> = {
   bazooka: "Foguete clássico. Voa em arco e sofre o vento — a arma segura de todo turno.",
@@ -29,6 +22,7 @@ const WEAPON_DESC: Record<WeaponId, string> = {
 interface Props {
   mode: GameMode;
   onExit: () => void;
+  chars?: [CharacterId, CharacterId];
 }
 
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
@@ -121,7 +115,7 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
 }
 
 
-export function WarDogsGame({ mode, onExit }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -154,7 +148,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stateRef.current = createGame(w, h, mode, undefined, hudReserve);
+      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars);
       markTerrainDirty();
     };
 
@@ -301,8 +295,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const s = stateRef.current;
   const canAim = s?.phase === "aiming" && s?.winner === null;
   useEffect(() => { if (!canAim && arsenalOpen) setArsenalOpen(false); }, [canAim, arsenalOpen]);
-  const teamA = teamSkin(0);
-  const teamB = teamSkin(1);
+  const teamA = characterSkin(chars[0]);
+  const teamB = characterSkin(chars[1]);
   const currentSkin = s?.currentPlayer === 0 ? teamA : teamB;
   const isAiTurn = mode === "ai" && s?.currentPlayer === 1;
   const hudVisible = s?.phase === "aiming" && s?.winner === null;
@@ -322,8 +316,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
           {s && (
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
               <div className="flex flex-col gap-1.5 pointer-events-auto">
-                <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
-                <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
+                <MiniPlayer dog={s.dogs[0]} active={s.currentPlayer === 0} />
+                <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} />
               </div>
 
               <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center max-w-full">
@@ -483,10 +477,12 @@ export function WarDogsGame({ mode, onExit }: Props) {
 }
 
 
-function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSkin; hp: number; active: boolean }) {
-  const color = skin.teamColor;
-  const name = skin.name;
-  const portrait = PORTRAITS[name];
+function MiniPlayer({ dog, active }: { dog: import("@/game/types").Dog; active: boolean }) {
+  const char = CHARACTERS[dog.charId];
+  const color = char.skin.teamColor;
+  const portrait = char.portraitUrl;
+  const hp = dog.hp;
+  const pct = Math.max(0, Math.min(100, (hp / dog.maxHp) * 100));
   return (
     <div
       className={`panel px-2 py-1 flex items-center gap-1.5 transition-all ${active ? "" : "opacity-60 scale-95"}`}
@@ -497,9 +493,12 @@ function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSki
       ) : (
         <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
       )}
-      <div className="stencil text-[9px] uppercase tracking-widest">{name}</div>
+      <div className="flex flex-col leading-tight min-w-0">
+        <div className="stencil text-[9px] uppercase tracking-widest truncate">{char.name}</div>
+        <div className="text-[8px] text-muted-foreground truncate">{char.breed}</div>
+      </div>
       <div className="w-16 h-1.5 bg-black/50 rounded-full overflow-hidden">
-        <div className="h-full transition-all rounded-full" style={{ width: `${hp}%`, background: color }} />
+        <div className="h-full transition-all rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
       <div className="text-[10px] font-bold w-6 text-right tabular-nums">{hp}</div>
     </div>
@@ -551,7 +550,7 @@ function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   onRelease: () => void;
   onJump: () => void;
 }) {
-  const pct = Math.max(0, Math.min(100, (dog.moveBudget / MOVE_BUDGET) * 100));
+  const pct = Math.max(0, Math.min(100, (dog.moveBudget / Math.max(1, dog.moveMax)) * 100));
   const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
   const canJump = !disabled && !dog.hasJumped && !dog.airborne;
   return (

@@ -12,12 +12,16 @@ const bgImg = keyHeroAsset.url;
 const keyArtImg = keyArtAsset.url;
 
 import type { GameMode } from "@/game/types";
+import type { CharacterId } from "@/game/characters";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
-type Stage = { kind: "menu" } | { kind: "briefing"; mode: GameMode } | { kind: "playing"; mode: GameMode };
+type Stage =
+  | { kind: "menu" }
+  | { kind: "briefing"; mode: GameMode }
+  | { kind: "playing"; mode: GameMode; chars: [CharacterId, CharacterId] };
 
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
@@ -27,7 +31,7 @@ function Home() {
     return (
       <OrientationGate>
         <div className="fixed inset-0">
-          <WarDogsGame mode={stage.mode} onExit={() => setStage({ kind: "menu" })} />
+          <WarDogsGame mode={stage.mode} chars={stage.chars} onExit={() => setStage({ kind: "menu" })} />
         </div>
       </OrientationGate>
     );
@@ -38,7 +42,7 @@ function Home() {
       <OrientationGate soft>
         <PreMatchBriefing
           mode={stage.mode}
-          onStart={() => setStage({ kind: "playing", mode: stage.mode })}
+          onStart={(chars) => setStage({ kind: "playing", mode: stage.mode, chars })}
           onBack={() => setStage({ kind: "menu" })}
         />
       </OrientationGate>
