@@ -391,8 +391,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowBlur = active ? (dog.rageActive ? 22 : 14) : 8;
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
     ctx.restore();
-    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
-    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
+    drawHpBar(ctx, dog.x, dog.y - 52, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
+    if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 64, now, skin.teamColor);
 
   }
   ctx.restore();
@@ -1322,13 +1322,13 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 
 function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, maxHp: number, color: string, dark: string) {
   const segCount = 10;
-  const segW = 4, segGap = 1;
+  const segW = 2.4, segGap = 0.8;
   const totalW = segCount * segW + (segCount - 1) * segGap;
-  const barH = 5;
+  const barH = 3;
   const startX = x - totalW / 2;
   ctx.save();
-  ctx.fillStyle = "rgba(0,0,0,0.55)";
-  roundRect(ctx, startX - 3, y - 2, totalW + 6, barH + 4, 3); ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  roundRect(ctx, startX - 2, y - 1.5, totalW + 4, barH + 3, 2); ctx.fill();
   const pct = Math.max(0, Math.min(1, hp / Math.max(1, maxHp)));
   const filled = Math.round(pct * segCount);
   const critical = pct < 0.3;
@@ -1348,11 +1348,11 @@ function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: numb
     }
   }
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 9px Chakra Petch, sans-serif";
+  ctx.font = "bold 7px Chakra Petch, sans-serif";
   ctx.textAlign = "center";
-  ctx.shadowColor = "rgba(0,0,0,0.8)";
-  ctx.shadowBlur = 3;
-  ctx.fillText(`${hp}`, x, y - 4);
+  ctx.shadowColor = "rgba(0,0,0,0.85)";
+  ctx.shadowBlur = 2;
+  ctx.fillText(`${hp}`, x, y - 3);
   ctx.textAlign = "start";
   ctx.restore();
 }
