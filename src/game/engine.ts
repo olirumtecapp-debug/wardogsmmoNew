@@ -9,6 +9,7 @@ const MAX_TURN_TIME = 30;
 const RAGE_TURN_BONUS = 10; // segundos extras no turno em Fúria
 const RAGE_DAMAGE_MULT = 1.4;
 const RAGE_WIND_MULT = 0.5;
+export const RAGE_READY_THRESHOLD = 60; // barra pronta para ativação
 export const MATCH_DURATION_DEFAULT = 300; // 5 minutos
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
@@ -242,8 +243,13 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         hits++;
         // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
         if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
-          const gain = dmg >= 31 ? 70 : dmg >= 16 ? 45 : 25;
+          let gain = dmg >= 31 ? 85 : dmg >= 16 ? 55 : 35;
+          if (dog.hp <= 0) gain += 15; // bônus por finalização
           shooter.rageCharge = Math.min(100, shooter.rageCharge + gain);
+        }
+        // Fúria de revanche: quem toma dano forte carrega um pouco também
+        if (state.rageEnabled && dog.team !== ownerTeam && !dog.rageActive && dmg >= 20) {
+          dog.rageCharge = Math.min(100, dog.rageCharge + 10);
         }
       }
     }
@@ -523,21 +529,36 @@ export function endTurn(state: GameState) {
     if (next) state.weapon = next;
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
+  // Consome Fúria enfileirada (pedida no turno anterior enquanto o tiro resolvia)
+  if (dog.rageQueued && dog.hp > 0 && dog.rageCharge >= RAGE_READY_THRESHOLD) {
+    dog.rageQueued = false;
+    activateRage(state);
+  } else {
+    dog.rageQueued = false;
+  }
 }
 
-export function activateRage(state: GameState) {
-  if (!state.rageEnabled) return;
-  if (state.phase !== "aiming" || state.winner !== null) return;
+export function activateRage(state: GameState): "activated" | "queued" | "low" | "unavailable" {
+  if (!state.rageEnabled || state.winner !== null) return "unavailable";
   const dog = state.dogs[state.currentPlayer];
-  if (dog.hp <= 0 || dog.rageActive || dog.rageCharge < 100) return;
+  if (dog.hp <= 0 || dog.rageActive) return "unavailable";
+  if (dog.rageCharge < RAGE_READY_THRESHOLD) return "low";
+  if (state.phase !== "aiming") {
+    dog.rageQueued = true;
+    state.floatingTexts.push({
+      id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
+      life: 1.4, maxLife: 1.4, value: "FÚRIA NO PRÓXIMO TURNO", color: "#ffb84a", size: 18,
+    });
+    return "queued";
+  }
   dog.rageActive = true;
-  dog.rageCharge = 100;
   state.turnTimer = Math.min(MAX_TURN_TIME + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
   state.message = "MODO FÚRIA ATIVADO";
   state.floatingTexts.push({
     id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
     life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
   });
+  return "activated";
 }
 
 

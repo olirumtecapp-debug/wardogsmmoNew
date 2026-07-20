@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { activateRage, createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -146,6 +146,8 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const rageTipShownRef = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -323,7 +325,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
       else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
       else if (e.code === "Enter") { e.preventDefault(); fire(s); }
-      else if (e.code === "KeyF") { e.preventDefault(); activateRage(s); }
+      else if (e.code === "KeyF") {
+        e.preventDefault();
+        const dog = s.dogs[s.currentPlayer];
+        const r = activateRage(s);
+        if (r === "low") {
+          s.floatingTexts.push({
+            id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+            life: 1.4, maxLife: 1.4,
+            value: `Fúria ${Math.floor(dog.rageCharge)}/${RAGE_READY_THRESHOLD}`,
+            color: "#ffb84a", size: 18,
+          });
+        }
+      }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -351,6 +365,44 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
   const hudReserve = s?.hudReserve ?? 148;
   const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+
+  const tryRage = () => {
+    if (!s) return;
+    const dog = s.dogs[s.currentPlayer];
+    const before = dog.rageActive;
+    const result = activateRage(s);
+    if (result === "low") {
+      s.floatingTexts.push({
+        id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+        life: 1.4, maxLife: 1.4,
+        value: `Fúria ${Math.floor(dog.rageCharge)}/${RAGE_READY_THRESHOLD}`,
+        color: "#ffb84a", size: 18,
+      });
+    } else if (result === "unavailable" && !before && dog.hp > 0) {
+      s.floatingTexts.push({
+        id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+        life: 1.2, maxLife: 1.2, value: "Fúria indisponível", color: "#b8b8b8", size: 16,
+      });
+    }
+  };
+
+  // Dica automática na 1ª vez que a barra ficar pronta (campanha)
+  useEffect(() => {
+    if (!s || !s.rageEnabled) return;
+    if (rageTipShownRef.current) return;
+    const dog = s.dogs[s.currentPlayer];
+    if (!dog || dog.rageActive || dog.rageCharge < RAGE_READY_THRESHOLD) return;
+    try {
+      if (localStorage.getItem("wardogs.rage.tipShown") === "1") {
+        rageTipShownRef.current = true;
+        return;
+      }
+      localStorage.setItem("wardogs.rage.tipShown", "1");
+    } catch {}
+    rageTipShownRef.current = true;
+    setRageHelpOpen(true);
+  });
+
 
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
@@ -455,34 +507,82 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
                 {s.rageEnabled && (() => {
                   const dog = s.dogs[s.currentPlayer];
-                  const ready = dog.rageCharge >= 100 && !dog.rageActive;
                   const pct = Math.max(0, Math.min(100, dog.rageCharge));
+                  const ready = pct >= RAGE_READY_THRESHOLD && !dog.rageActive;
+                  const queued = !!dog.rageQueued;
+                  const barColor = pct >= 100
+                    ? "linear-gradient(90deg,#ffdc4a,#ff3838)"
+                    : ready
+                      ? "linear-gradient(90deg,#ff9138,#ff3838)"
+                      : "linear-gradient(90deg,#7a4a1a,#ff9138)";
+                  const label = dog.rageActive
+                    ? "FÚRIA!"
+                    : queued
+                      ? "PRONTO"
+                      : ready
+                        ? "⚡ USAR"
+                        : `⚡ ${Math.floor(pct)}%`;
                   return (
-                    <div className="panel px-1.5 py-1 flex flex-col items-center gap-1 shrink-0 w-[68px]" title="Modo Fúria (F) — enche acertando tiros diretos">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[92px] relative">
+                      <div className="flex items-center gap-1 w-full">
+                        <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 flex-1">Fúria</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setRageHelpOpen(v => !v); }}
+                          className="w-4 h-4 rounded-full bg-white/10 hover:bg-white/20 text-[9px] leading-none flex items-center justify-center text-muted-foreground pointer-events-auto"
+                          aria-label="Como funciona a Fúria"
+                        >
+                          ?
+                        </button>
+                      </div>
                       <button
-                        disabled={!ready || isAiTurn}
-                        onClick={() => activateRage(s)}
-                        className={`w-full py-1 rounded text-[10px] stencil tracking-widest border transition ${
+                        disabled={isAiTurn || dog.rageActive || dog.hp <= 0}
+                        onClick={tryRage}
+                        className={`relative w-full py-1.5 rounded text-[11px] stencil tracking-widest border transition ${
                           dog.rageActive
-                            ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/15 animate-pulse"
+                            ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/20 animate-pulse"
                             : ready
-                              ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/10 hover:bg-[color:var(--destructive)]/20 animate-pulse"
-                              : "border-white/10 text-muted-foreground/70 opacity-60"
+                              ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/15 hover:bg-[color:var(--destructive)]/25 animate-pulse shadow-[0_0_10px_rgba(255,56,56,0.5)]"
+                              : queued
+                                ? "border-amber-400/70 text-amber-300 bg-amber-500/10"
+                                : "border-white/15 text-muted-foreground/80 bg-white/5 hover:bg-white/10"
                         } disabled:cursor-not-allowed`}
                         aria-label="Ativar Modo Fúria"
                       >
-                        {dog.rageActive ? "FÚRIA!" : "⚡ FÚRIA"}
+                        {label}
+                        <span className="absolute -top-1 -right-1 text-[7px] px-1 rounded bg-black/70 border border-white/10 text-muted-foreground">F</span>
                       </button>
-                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5">
+                      <div className="w-full h-2 rounded-full bg-black/50 overflow-hidden border border-white/5 relative">
                         <div
                           className="h-full rounded-full transition-[width] duration-150"
                           style={{
                             width: `${pct}%`,
-                            background: "linear-gradient(90deg,#ff9138,#ff3838)",
+                            background: barColor,
                             boxShadow: ready ? "0 0 8px rgba(255,56,56,0.7)" : undefined,
                           }}
                         />
+                        {/* marca do limiar de ativação */}
+                        <div
+                          className="absolute top-0 bottom-0 w-px bg-white/50"
+                          style={{ left: `${RAGE_READY_THRESHOLD}%` }}
+                        />
                       </div>
+                      {rageHelpOpen && (
+                        <div className="absolute bottom-full mb-2 right-0 w-64 panel p-3 text-left pointer-events-auto z-50 shadow-xl">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="stencil text-[color:var(--destructive)] text-sm">MODO FÚRIA</div>
+                            <button onClick={() => setRageHelpOpen(false)} className="text-muted-foreground text-xs px-1">✕</button>
+                          </div>
+                          <ul className="text-[11px] text-muted-foreground space-y-1 leading-snug">
+                            <li>• Acerte tiros diretos pra encher a barra vermelha.</li>
+                            <li>• A partir de <b className="text-white">{RAGE_READY_THRESHOLD}%</b> (marca branca) o botão fica pronto.</li>
+                            <li>• Aperte <b className="text-white">⚡ USAR</b> ou a tecla <b className="text-white">F</b> pra ativar.</li>
+                            <li>• Se apertar durante o tiro, ativa no <b className="text-white">próximo turno</b>.</li>
+                            <li>• Durante 1 turno: <b className="text-white">+40% dano</b>, <b className="text-white">+10s tempo</b>, vento reduzido.</li>
+                            <li>• Exclusivo do modo <b className="text-white">Campanha</b>.</li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
