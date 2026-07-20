@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { HelpCircle, X } from "lucide-react";
 import { WarDogsGame } from "@/components/WarDogsGame";
@@ -26,8 +26,8 @@ type Stage =
 
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
-  const [showOnlineNotice, setShowOnlineNotice] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!showHowTo) return;
@@ -123,16 +123,9 @@ function Home() {
         <div className="w-full max-w-2xl grid gap-2 grid-cols-3">
           <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={0} icon={<TargetIcon />} onClick={() => pickMode("ai")} />
           <ModeCard title="Hotseat" subtitle="2 jogadores" color="var(--accent)" delay={90} icon={<VersusIcon />} onClick={() => pickMode("hotseat")} />
-          <ModeCard title="Online" subtitle="Em breve" color="var(--team-red)" delay={180} icon={<GlobeIcon />} disabled onClick={() => setShowOnlineNotice(true)} />
+          <ModeCard title="Online" subtitle="Sala + código" color="var(--team-red)" delay={180} icon={<GlobeIcon />} onClick={() => navigate({ to: "/online" })} />
         </div>
 
-        {showOnlineNotice && (
-          <div className="w-full max-w-2xl panel p-3 text-xs text-left card-in">
-            <div className="stencil text-[10px] uppercase text-warn mb-1">Multiplayer online</div>
-            O modo online exige infraestrutura WebSocket persistente. O jogo base — física, terreno, IA e hotseat — já está funcionando.
-            <button className="btn-hud mt-2 text-[10px]" onClick={() => setShowOnlineNotice(false)}>Fechar</button>
-          </div>
-        )}
 
         {/* Botão discreto — Como Jogar */}
         <button

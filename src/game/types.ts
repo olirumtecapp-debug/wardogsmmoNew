@@ -99,5 +99,6 @@ export interface GameState {
   seed: number;
   airstrikeMarker?: { x: number; life: number };
   hudReserve: number;
+  onExplosion?: (x: number, y: number, radius: number) => void;
 }
 
