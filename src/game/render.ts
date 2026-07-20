@@ -1374,18 +1374,25 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   const y0 = dog.y - 10;
   const x1 = x0 + Math.cos(rad) * dir * len;
   const y1 = y0 - Math.sin(rad) * len;
-  const color = weaponColor(weapon as WeaponId);
+  const core = getActiveScenario().aimColor ?? "#ffdd33";
   ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
   ctx.setLineDash([5, 5]);
   ctx.lineDashOffset = -now * 0.03;
+  // Halo (dark outline) for contrast on light backgrounds
+  ctx.strokeStyle = "rgba(0,0,0,0.8)";
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  // Neon core
+  ctx.strokeStyle = core;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = core;
+  ctx.shadowBlur = 6;
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
   ctx.setLineDash([]);
-  // Reticle
-  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 0;
+  // Reticle: dark halo then neon core
+  ctx.strokeStyle = "rgba(0,0,0,0.8)";
+  ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(x1, y1, 6, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(x1 - 10, y1); ctx.lineTo(x1 - 4, y1);
@@ -1393,9 +1400,20 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   ctx.moveTo(x1, y1 - 10); ctx.lineTo(x1, y1 - 4);
   ctx.moveTo(x1, y1 + 4); ctx.lineTo(x1, y1 + 10);
   ctx.stroke();
-  // center dot
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(x1, y1, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = core;
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = core;
+  ctx.shadowBlur = 6;
+  ctx.beginPath(); ctx.arc(x1, y1, 6, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x1 - 10, y1); ctx.lineTo(x1 - 4, y1);
+  ctx.moveTo(x1 + 4, y1); ctx.lineTo(x1 + 10, y1);
+  ctx.moveTo(x1, y1 - 10); ctx.lineTo(x1, y1 - 4);
+  ctx.moveTo(x1, y1 + 4); ctx.lineTo(x1, y1 + 10);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.arc(x1, y1, 1.4, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
 
