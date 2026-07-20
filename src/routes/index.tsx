@@ -54,12 +54,30 @@ function Home() {
     );
   }
 
+  if (stage.kind === "intro") {
+    const sc = getActiveScenario();
+    return (
+      <ComicIntro
+        chars={stage.chars}
+        scenarioLabel={sc.label}
+        bgImage={sc.bgImage}
+        onDone={() => setStage({ kind: "playing", mode: stage.mode, chars: stage.chars, matchDuration: stage.matchDuration })}
+      />
+    );
+  }
+
   if (stage.kind === "briefing") {
     return (
       <OrientationGate soft>
         <PreMatchBriefing
           mode={stage.mode}
-          onStart={(chars, matchDuration) => setStage({ kind: "playing", mode: stage.mode, chars, matchDuration })}
+          onStart={(chars, matchDuration) => {
+            if (shouldSkipIntro()) {
+              setStage({ kind: "playing", mode: stage.mode, chars, matchDuration });
+            } else {
+              setStage({ kind: "intro", mode: stage.mode, chars, matchDuration });
+            }
+          }}
           onBack={() => setStage({ kind: "menu" })}
         />
       </OrientationGate>
