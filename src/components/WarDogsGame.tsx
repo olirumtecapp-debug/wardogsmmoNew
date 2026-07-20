@@ -234,6 +234,15 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       }
       if (s.currentPlayer === 0 || s.phase !== "aiming") aiTriggeredRef.current = false;
 
+      if (s.phase === "gameover" && !gameOverFiredRef.current) {
+        gameOverFiredRef.current = true;
+        const p = s.dogs[0];
+        onGameOverRef.current?.({
+          winner: s.winner,
+          playerHpPct: p.maxHp > 0 ? Math.max(0, p.hp / p.maxHp) : 0,
+        });
+      }
+
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
