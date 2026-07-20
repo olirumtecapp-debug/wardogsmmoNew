@@ -148,7 +148,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stateRef.current = createGame(w, h, mode, undefined, hudReserve);
+      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars);
       markTerrainDirty();
     };
 
