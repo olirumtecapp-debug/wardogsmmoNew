@@ -260,188 +260,192 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const isAiTurn = mode === "ai" && s?.currentPlayer === 1;
   const hudVisible = s?.phase === "aiming" && s?.winner === null;
 
+  const hudReserve = s?.hudReserve ?? 148;
+  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
-      <div className="relative flex-1 min-h-0 flex items-center justify-center">
-        <canvas ref={canvasRef} className="block" />
+      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
+        <div
+          className="relative"
+          style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}
+        >
+          <canvas ref={canvasRef} className="block absolute inset-0" />
 
-
-        {s && (
-          <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
-            <div className="flex flex-col gap-1.5 pointer-events-auto">
-              <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
-              <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
-            </div>
-
-            <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center max-w-full">
-              <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-                {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
+          {s && (
+            <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
+              <div className="flex flex-col gap-1.5 pointer-events-auto">
+                <MiniPlayer skin={teamA} hp={s.dogs[0].hp} active={s.currentPlayer === 0} />
+                <MiniPlayer skin={teamB} hp={s.dogs[1].hp} active={s.currentPlayer === 1} />
               </div>
-              <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
-              {s.phase === "aiming" && s.winner === null && (
-                <div className="text-[10px] text-muted-foreground mt-0.5">
-                  {isAiTurn ? "IA pensando..." : `${Math.max(0, Math.ceil(s.turnTimer))}s`}
+
+              <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center max-w-full">
+                <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
+                  {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentSkin.name}`}
                 </div>
-              )}
-            </div>
-
-            <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => setSettingsOpen(v => !v)}
-                  className={`btn-hud text-[10px] px-2 py-1 ${settingsOpen ? "is-selected" : ""}`}
-                  title="Cenário / IA"
-                >
-                  ⚙ {scenario.label}
-                </button>
-                <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
-              </div>
-              <WindGauge wind={s.wind} />
-              {settingsOpen && (
-                <div className="panel p-2.5 mt-1 animate-fade-in w-56 space-y-2">
-                  <div>
-                    <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Cenário</div>
-                    <div className="flex flex-wrap gap-1">
-                      {scenarios.map(sc => (
-                        <button
-                          key={sc.id}
-                          onClick={() => setScenario(sc.id)}
-                          className={`btn-hud text-[10px] px-2 py-0.5 ${scenario.id === sc.id ? "is-selected" : ""}`}
-                        >{sc.label}</button>
-                      ))}
-                    </div>
+                <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
+                {s.phase === "aiming" && s.winner === null && (
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {isAiTurn ? "IA pensando..." : `${Math.max(0, Math.ceil(s.turnTimer))}s`}
                   </div>
-                  {mode === "ai" && (
+                )}
+              </div>
+
+              <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setSettingsOpen(v => !v)}
+                    className={`btn-hud text-[10px] px-2 py-1 ${settingsOpen ? "is-selected" : ""}`}
+                    title="Cenário / IA"
+                  >
+                    ⚙ {scenario.label}
+                  </button>
+                  <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
+                </div>
+                <WindGauge wind={s.wind} />
+                {settingsOpen && (
+                  <div className="panel p-2.5 mt-1 animate-fade-in w-56 space-y-2">
                     <div>
-                      <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Dificuldade</div>
-                      <div className="flex gap-1">
-                        {(["recruit","sergeant","general"] as const).map(d => (
+                      <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Cenário</div>
+                      <div className="flex flex-wrap gap-1">
+                        {scenarios.map(sc => (
                           <button
-                            key={d}
-                            onClick={() => setDifficulty(d)}
-                            className={`btn-hud text-[10px] px-2 py-0.5 ${difficulty === d ? "is-selected" : ""}`}
-                          >{d === "recruit" ? "Recruta" : d === "sergeant" ? "Sargento" : "General"}</button>
+                            key={sc.id}
+                            onClick={() => setScenario(sc.id)}
+                            className={`btn-hud text-[10px] px-2 py-0.5 ${scenario.id === sc.id ? "is-selected" : ""}`}
+                          >{sc.label}</button>
                         ))}
                       </div>
                     </div>
-                  )}
-                  <div className="text-[9px] text-muted-foreground pt-1 border-t border-white/10">
-                    Nova partida aplica cenário.
+                    {mode === "ai" && (
+                      <div>
+                        <div className="stencil text-[9px] text-muted-foreground uppercase tracking-widest mb-1">Dificuldade</div>
+                        <div className="flex gap-1">
+                          {(["recruit","sergeant","general"] as const).map(d => (
+                            <button
+                              key={d}
+                              onClick={() => setDifficulty(d)}
+                              className={`btn-hud text-[10px] px-2 py-0.5 ${difficulty === d ? "is-selected" : ""}`}
+                            >{d === "recruit" ? "Recruta" : d === "sergeant" ? "Sargento" : "General"}</button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="text-[9px] text-muted-foreground pt-1 border-t border-white/10">
+                      Nova partida aplica cenário.
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {s?.phase === "gameover" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="panel p-6 sm:p-8 text-center max-w-sm">
-              <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
-              <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
-                {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
-              </h2>
-
-              <div className="flex gap-2 mt-6 justify-center">
-                <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
-                <button className="btn-hud" onClick={onExit}>Menu</button>
+                )}
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {s && s.phase !== "gameover" && (
-        <div
-          className="shrink-0 px-2 pb-2 pt-1 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent min-h-[168px] sm:min-h-[180px]"
-          aria-hidden={!hudVisible}
-          style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", opacity: hudVisible ? 1 : 0.85 }}
-        >
-
-          <div className="max-w-3xl mx-auto flex flex-col gap-1.5 sm:gap-2">
+          {s && s.phase !== "gameover" && hudCssPx > 0 && (
             <div
-              role="toolbar"
-              aria-label="Seleção de arma"
-              className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center"
-              style={{ WebkitMaskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)", maskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)" }}
+              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/55 to-transparent flex flex-col justify-end gap-1.5 sm:gap-2"
+              style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
+              aria-hidden={!hudVisible}
             >
-              {WEAPON_ORDER.map(id => {
-                const w = WEAPONS[id];
-                const ammo = s.ammo[id];
-                const disabled = ammo === 0;
-                const active = s.weapon === id;
-                return (
-                  <button
-                    key={id}
-                    ref={active ? (el => { if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }) : undefined}
-                    disabled={disabled || isAiTurn || s.phase !== "aiming"}
-                    onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
-                    aria-label={`${w.name}${ammo === -1 ? "" : `, ${ammo} munições`}${disabled ? ", sem munição" : ""}`}
-                    aria-pressed={active}
-                    title={w.name}
-                    className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
-                    style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
-                  >
-                    <span className="weapon-icon" aria-hidden><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
-                    <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
-                      {ammo === -1 ? "∞" : `×${ammo}`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch gap-1.5 sm:gap-2">
-              <div className={`panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
-                <div className="flex items-center gap-1 shrink-0">
-                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
-                  <div className="flex flex-col items-center min-w-[38px]">
-                    <span className="stencil text-[9px] text-muted-foreground leading-none">ÂNG</span>
-                    <span className="stencil text-base leading-tight" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
-                  </div>
-                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
-                </div>
-
-                <div className="hud-divider" />
-
-                <div className="flex items-center gap-1 flex-1 min-w-0">
-                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
-                  <div className="flex flex-col flex-1 min-w-0 gap-0.5">
-                    <div className="flex justify-between items-baseline">
-                      <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
-                      <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.power)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
-                      <div
-                        className="h-full transition-[width] duration-75 rounded-full"
-                        style={{
-                          width: `${s.power}%`,
-                          background: `linear-gradient(90deg, var(--team-green), var(--accent) 60%, var(--destructive))`,
-                          boxShadow: "0 0 8px rgba(255,180,80,0.5)",
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
-                </div>
+              <div
+                role="toolbar"
+                aria-label="Seleção de arma"
+                className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none sm:justify-center"
+                style={{ WebkitMaskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)", maskImage: "linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)" }}
+              >
+                {WEAPON_ORDER.map(id => {
+                  const w = WEAPONS[id];
+                  const ammo = s.ammo[id];
+                  const disabled = ammo === 0;
+                  const active = s.weapon === id;
+                  return (
+                    <button
+                      key={id}
+                      ref={active ? (el => { if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }) : undefined}
+                      disabled={disabled || isAiTurn || s.phase !== "aiming"}
+                      onClick={() => { setWeapon(s, id); setTick(t => (t + 1) % 1000); }}
+                      aria-label={`${w.name}${ammo === -1 ? "" : `, ${ammo} munições`}${disabled ? ", sem munição" : ""}`}
+                      aria-pressed={active}
+                      title={w.name}
+                      className={`btn-hud btn-hud-weapon ${active ? "is-selected" : ""} ${disabled ? "is-empty" : ""}`}
+                      style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 8px 22px -6px rgba(0,0,0,.6), 0 0 22px ${w.color}55` } : undefined}
+                    >
+                      <span className="weapon-icon" aria-hidden><WeaponIcon id={id} className="w-5 h-5 sm:w-6 sm:h-6" /></span>
+                      <span className="weapon-ammo text-[9px] opacity-80 tabular-nums">
+                        {ammo === -1 ? "∞" : `×${ammo}`}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
+              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2">
+                <div className={`panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
+                    <div className="flex flex-col items-center min-w-[38px]">
+                      <span className="stencil text-[9px] text-muted-foreground leading-none">ÂNG</span>
+                      <span className="stencil text-base leading-tight" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
+                    </div>
+                    <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>+</HoldButton>
+                  </div>
 
-              <button
-                disabled={isAiTurn || s.phase !== "aiming"}
-                onClick={() => fire(s)}
-                aria-label="Atirar"
-                className="fire-btn fire-btn-compact sm:!w-[4.75rem] sm:!h-[4.75rem] sm:!rounded-full sm:!text-[0.9rem]"
-              >
-                FOGO
-              </button>
+                  <div className="hud-divider" />
+
+                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                    <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
+                    <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+                      <div className="flex justify-between items-baseline">
+                        <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
+                        <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.power)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
+                        <div
+                          className="h-full transition-[width] duration-75 rounded-full"
+                          style={{
+                            width: `${s.power}%`,
+                            background: `linear-gradient(90deg, var(--team-green), var(--accent) 60%, var(--destructive))`,
+                            boxShadow: "0 0 8px rgba(255,180,80,0.5)",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { powerHoldRef.current = { dir, last: 0 }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
+                  </div>
+                </div>
+
+                <button
+                  disabled={isAiTurn || s.phase !== "aiming"}
+                  onClick={() => fire(s)}
+                  aria-label="Atirar"
+                  className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                >
+                  FOGO
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {s?.phase === "gameover" && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
+              <div className="panel p-6 sm:p-8 text-center max-w-sm">
+                <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
+                <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
+                  {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
+                </h2>
+
+                <div className="flex gap-2 mt-6 justify-center">
+                  <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
+                  <button className="btn-hud" onClick={onExit}>Menu</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
 
 function MiniPlayer({ skin, hp, active }: { skin: import("@/game/skins").TeamSkin; hp: number; active: boolean }) {
   const color = skin.teamColor;
