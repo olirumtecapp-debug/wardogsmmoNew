@@ -185,6 +185,24 @@ function ModeCard({
   );
 }
 
+function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground uppercase tracking-wider text-[10px]">{label}</span>
+      <span className="flex items-center gap-1">
+        {keys.map((k, i) => (
+          <kbd
+            key={i}
+            className="min-w-[22px] px-1.5 py-0.5 text-center bg-secondary/80 border border-border/60 rounded text-[10px] font-mono shadow-inner"
+          >
+            {k}
+          </kbd>
+        ))}
+      </span>
+    </div>
+  );
+}
+
 function TargetIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
