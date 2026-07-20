@@ -50,6 +50,8 @@ export function createGame(
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
     turnTimer: MAX_TURN_TIME,
+    matchTimer: MATCH_DURATION,
+    matchDuration: MATCH_DURATION,
     mode,
     seed,
     hudReserve,
