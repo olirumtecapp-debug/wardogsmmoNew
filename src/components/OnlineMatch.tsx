@@ -4,10 +4,11 @@ import { createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon,
 import { render, markTerrainDirty } from "@/game/render";
 import { WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
-import { setActiveScenario, type ScenarioId } from "@/game/scenarios";
+import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios";
 import { openMatchChannel, type MatchChannel, type NetEvent } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
 import { updateMatch, updateSelfPlayer, getStoredMatchDuration } from "@/lib/matchApi";
+import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import { Loader2 } from "lucide-react";
 
 interface Props {
@@ -27,6 +28,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const seenExplosionsRef = useRef<Set<string>>(new Set());
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
+  const [showIntro, setShowIntro] = useState(() => !shouldSkipIntro());
 
   // Fighters are always the first two slots for MVP.
   const fighters = players.filter(p => p.slot < 2).sort((a, b) => a.slot - b.slot);
@@ -240,6 +242,18 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         <div className="stencil text-warn">Precisa de 2 combatentes nos slots 1 e 2 para começar.</div>
         <button onClick={onExit} className="btn-hud">Voltar</button>
       </div>
+    );
+  }
+
+  if (showIntro) {
+    const sc = SCENARIOS.find(x => x.id === (match.scenario as ScenarioId));
+    return (
+      <ComicIntro
+        chars={chars}
+        scenarioLabel={sc?.label}
+        bgImage={sc?.bgImage}
+        onDone={() => setShowIntro(false)}
+      />
     );
   }
 

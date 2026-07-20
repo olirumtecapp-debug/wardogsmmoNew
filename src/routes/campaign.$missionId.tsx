@@ -15,6 +15,7 @@ import {
 import { setActiveScenario, SCENARIOS } from "@/game/scenarios";
 import { _setAIDifficulty } from "@/game/scenarioContext";
 import { CHARACTER_LIST, CHARACTERS, type CharacterId } from "@/game/characters";
+import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
 
 export const Route = createFileRoute("/campaign/$missionId")({
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/campaign/$missionId")({
   ),
 });
 
-type Stage = "briefing" | "playing" | "result";
+type Stage = "briefing" | "intro" | "playing" | "result";
 
 function MissionPage() {
   const { missionId } = Route.useParams();
@@ -90,6 +91,18 @@ function MissionPage() {
       </OrientationGate>
     );
   }
+
+  if (stage === "intro") {
+    return (
+      <ComicIntro
+        chars={[player, mission.enemy]}
+        scenarioLabel={scenario.label}
+        bgImage={scenario.bgImage}
+        onDone={() => setStage("playing")}
+      />
+    );
+  }
+
 
   if (stage === "result" && result) {
     return <ResultScreen mission={mission} result={result} onRetry={() => {
@@ -187,7 +200,7 @@ function MissionPage() {
             <button
               className="btn-hud is-selected flex-[2] py-3 stencil text-base tracking-widest"
               style={{ borderColor: "var(--accent)", boxShadow: "inset 0 0 0 1px var(--accent), 0 0 20px var(--accent)" }}
-              onClick={() => setStage("playing")}
+              onClick={() => setStage(shouldSkipIntro() ? "playing" : "intro")}
             >
               Iniciar Missão ▸
             </button>

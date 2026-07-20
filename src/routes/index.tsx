@@ -5,6 +5,8 @@ import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { PreMatchBriefing } from "@/components/PreMatchBriefing";
+import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
+import { getActiveScenario } from "@/game/scenarios";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/")({
 type Stage =
   | { kind: "menu" }
   | { kind: "briefing"; mode: GameMode }
+  | { kind: "intro"; mode: GameMode; chars: [CharacterId, CharacterId]; matchDuration: number }
   | { kind: "playing"; mode: GameMode; chars: [CharacterId, CharacterId]; matchDuration: number };
 
 function Home() {
@@ -51,12 +54,30 @@ function Home() {
     );
   }
 
+  if (stage.kind === "intro") {
+    const sc = getActiveScenario();
+    return (
+      <ComicIntro
+        chars={stage.chars}
+        scenarioLabel={sc.label}
+        bgImage={sc.bgImage}
+        onDone={() => setStage({ kind: "playing", mode: stage.mode, chars: stage.chars, matchDuration: stage.matchDuration })}
+      />
+    );
+  }
+
   if (stage.kind === "briefing") {
     return (
       <OrientationGate soft>
         <PreMatchBriefing
           mode={stage.mode}
-          onStart={(chars, matchDuration) => setStage({ kind: "playing", mode: stage.mode, chars, matchDuration })}
+          onStart={(chars, matchDuration) => {
+            if (shouldSkipIntro()) {
+              setStage({ kind: "playing", mode: stage.mode, chars, matchDuration });
+            } else {
+              setStage({ kind: "intro", mode: stage.mode, chars, matchDuration });
+            }
+          }}
           onBack={() => setStage({ kind: "menu" })}
         />
       </OrientationGate>
