@@ -28,6 +28,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const seenExplosionsRef = useRef<Set<string>>(new Set());
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
+  const [showIntro, setShowIntro] = useState(() => !shouldSkipIntro());
 
   // Fighters are always the first two slots for MVP.
   const fighters = players.filter(p => p.slot < 2).sort((a, b) => a.slot - b.slot);
