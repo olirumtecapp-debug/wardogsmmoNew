@@ -6,7 +6,8 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { useScenario } from "@/game/scenarioContext";
 import { teamSkin, type TeamSkin } from "@/game/skins";
 import heroImg from "@/assets/wardogs-menu-bg.jpg";
-import logoImg from "@/assets/wardogs-logo.png";
+import logoAsset from "@/assets/wardogs-logo.png.asset.json";
+const logoImg = logoAsset.url;
 import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 import emblem from "@/assets/emblem-paw.png";
@@ -97,23 +98,23 @@ function Home() {
             Arsenal ampliado: 8 armas · 4 cenários
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-4 sm:gap-8">
+          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end justify-items-center gap-3 sm:gap-6 max-w-4xl mx-auto">
             <img
               src={PORTRAITS.RANGER}
               alt="Ranger"
-              className="hidden md:block h-[280px] lg:h-[340px] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left"
-              style={{ animationDelay: "0ms" }}
+              className="hidden md:block max-h-[38vh] lg:max-h-[44vh] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left justify-self-end"
+              style={{ animationDelay: "0ms", objectPosition: "bottom" }}
             />
             <img
               src={logoImg}
               alt="WarDogs"
-              className="w-[min(70vw,360px)] lg:w-[420px] h-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
+              className="w-[min(55vw,300px)] lg:w-[340px] h-auto object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] title-in-left"
             />
             <img
               src={PORTRAITS.BRUTUS}
               alt="Brutus"
-              className="hidden md:block h-[280px] lg:h-[340px] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left"
-              style={{ animationDelay: "120ms", transform: "scaleX(-1)" }}
+              className="hidden md:block max-h-[38vh] lg:max-h-[44vh] w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.75)] title-in-left justify-self-start"
+              style={{ animationDelay: "120ms", objectPosition: "bottom" }}
             />
           </div>
 
