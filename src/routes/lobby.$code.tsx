@@ -160,7 +160,7 @@ function Lobby() {
         {scenario && (
           <div className="panel p-3 text-xs flex items-center justify-between">
             <div><span className="text-muted-foreground uppercase tracking-widest text-[10px]">Cenário: </span><span className="stencil">{scenario.label}</span></div>
-            <div className="text-muted-foreground">{scenario.tagline}</div>
+            <div className="text-muted-foreground">{scenario.description}</div>
           </div>
         )}
 
