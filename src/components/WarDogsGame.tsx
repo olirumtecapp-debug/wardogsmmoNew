@@ -550,7 +550,7 @@ function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   onRelease: () => void;
   onJump: () => void;
 }) {
-  const pct = Math.max(0, Math.min(100, (dog.moveBudget / MOVE_BUDGET) * 100));
+  const pct = Math.max(0, Math.min(100, (dog.moveBudget / Math.max(1, dog.moveMax)) * 100));
   const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
   const canJump = !disabled && !dog.hasJumped && !dog.airborne;
   return (
