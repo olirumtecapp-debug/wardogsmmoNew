@@ -2,10 +2,11 @@ import type { Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "
 import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
 import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
+import { CHARACTERS, type CharacterId } from "./characters";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
-export const MOVE_BUDGET = 120; // px per turn
+export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
 const STEP_UP = 14; // max ledge height (px) to walk over
 const JUMP_VY = -280;
@@ -21,12 +22,20 @@ function mulberry32(seed: number) {
   };
 }
 
-export function createGame(width: number, height: number, mode: GameMode, seed = Date.now(), hudReserve = 150): GameState {
+export function createGame(
+  width: number,
+  height: number,
+  mode: GameMode,
+  seed = Date.now(),
+  hudReserve = 150,
+  chars: [CharacterId, CharacterId] = ["ranger", "brutus"],
+): GameState {
   const rng = mulberry32(seed);
   const usableH = Math.max(200, height - hudReserve);
   const terrain = generateTerrain(width, height, usableH, rng);
-  const dogs = placeDogs(terrain, width, height, rng);
+  const dogs = placeDogs(terrain, width, height, rng, chars);
   const sc = getActiveScenario();
+  const c0 = CHARACTERS[chars[0]];
   return {
     width, height, terrain, dogs,
     projectiles: [], explosions: [],
@@ -38,7 +47,7 @@ export function createGame(width: number, height: number, mode: GameMode, seed =
     ammo: initialAmmo(),
     phase: "aiming",
     winner: null,
-    message: mode === "ai" ? "Sua vez — Ranger" : "Vez do Ranger",
+    message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
     turnTimer: MAX_TURN_TIME,
     mode,
     seed,
@@ -71,13 +80,21 @@ function generateTerrain(w: number, h: number, usableH: number, rng: () => numbe
 }
 
 
-function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number): [Dog, Dog] {
+function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number, chars: [CharacterId, CharacterId]): [Dog, Dog] {
   const p1x = Math.floor(w * (0.10 + rng() * 0.10));
   const p2x = Math.floor(w * (0.80 + rng() * 0.10));
-  return [
-    { x: p1x, y: surfaceY(terrain, w, h, p1x) - 18, vy: 0, hp: 100, team: 0, facing: 1, aliveTicks: 0, airborne: false, moveBudget: MOVE_BUDGET, hasJumped: false },
-    { x: p2x, y: surfaceY(terrain, w, h, p2x) - 18, vy: 0, hp: 100, team: 1, facing: -1, aliveTicks: 0, airborne: false, moveBudget: MOVE_BUDGET, hasJumped: false },
-  ];
+  const mk = (x: number, team: 0 | 1, facing: 1 | -1, charId: CharacterId): Dog => {
+    const c = CHARACTERS[charId];
+    return {
+      x, y: surfaceY(terrain, w, h, x) - 18, vy: 0,
+      hp: c.stats.hp, maxHp: c.stats.hp,
+      team, facing, aliveTicks: 0, airborne: false,
+      moveBudget: c.stats.mobility, moveMax: c.stats.mobility,
+      jumpScale: c.stats.jump, defense: c.stats.defense,
+      charId, hasJumped: false,
+    };
+  };
+  return [mk(p1x, 0, 1, chars[0]), mk(p2x, 1, -1, chars[1])];
 }
 
 export function surfaceY(terrain: Uint8Array, w: number, h: number, x: number): number {
@@ -183,7 +200,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < radius + 14) {
       const falloff = Math.max(0, 1 - dist / (radius + 14));
-      const dmg = Math.round(damage * falloff);
+      const dmg = Math.round(damage * falloff * dog.defense);
       dog.hp = Math.max(0, dog.hp - dmg);
       const push = falloff * 180;
       dog.vy = -Math.abs(push * 0.6) - 40;
@@ -251,7 +268,7 @@ export function step(state: GameState, dt: number) {
         dog.fallStartY = undefined;
         // Fall damage — no damage under 45px, then linear up to 60
         if (fallDist > 45) {
-          const dmg = Math.min(60, Math.round((fallDist - 45) * 0.4));
+          const dmg = Math.min(60, Math.round((fallDist - 45) * 0.4 * dog.defense));
           if (dmg > 0) {
             dog.hp = Math.max(0, dog.hp - dmg);
             state.floatingTexts.push({
@@ -414,7 +431,7 @@ export function step(state: GameState, dt: number) {
       state.winner = alive0 ? 0 : alive1 ? 1 : null;
       state.message = state.winner === null
         ? "Empate!"
-        : `Vitória de ${state.winner === 0 ? "RANGER" : "BRUTUS"}!`;
+        : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
     }
   }
 
@@ -446,7 +463,7 @@ export function endTurn(state: GameState) {
   const dog = state.dogs[state.currentPlayer];
   const other = state.dogs[1 - state.currentPlayer];
   dog.facing = other.x > dog.x ? 1 : -1;
-  dog.moveBudget = MOVE_BUDGET;
+  dog.moveBudget = dog.moveMax;
   dog.hasJumped = false;
   state.angle = 45;
   // Auto-pick next available weapon if current is empty
@@ -454,7 +471,7 @@ export function endTurn(state: GameState) {
     const next = WEAPON_ORDER.find(w => state.ammo[w] !== 0);
     if (next) state.weapon = next;
   }
-  state.message = `Vez de ${state.currentPlayer === 0 ? "RANGER" : "BRUTUS"}`;
+  state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
 }
 
 export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
@@ -479,7 +496,7 @@ export function jumpDog(state: GameState) {
   if (state.phase !== "aiming" || state.winner !== null) return;
   const dog = state.dogs[state.currentPlayer];
   if (dog.hp <= 0 || dog.airborne || dog.hasJumped) return;
-  dog.vy = JUMP_VY;
+  dog.vy = JUMP_VY * dog.jumpScale;
   dog.airborne = true;
   dog.fallStartY = dog.y;
   dog.hasJumped = true;

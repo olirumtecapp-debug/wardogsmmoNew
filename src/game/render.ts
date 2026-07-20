@@ -1,6 +1,7 @@
 import type { GameState, Explosion, WeaponId } from "./types";
 import { WEAPONS } from "./weapons";
-import { teamSkin, weaponColor, weaponAccent, type TeamSkin } from "./skins";
+import { weaponColor, weaponAccent, type TeamSkin } from "./skins";
+import { characterSkin } from "./characters";
 import { getActiveScenario } from "./scenarios";
 import rangerSideAsset from "@/assets/wardogs-ranger-side.png.asset.json";
 import brutusSideAsset from "@/assets/wardogs-brutus-side.png.asset.json";
@@ -349,8 +350,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.globalCompositeOperation = "source-over";
   for (let i = 0; i < state.dogs.length; i++) {
     const dog = state.dogs[i];
-    const idx = i as 0 | 1;
-    const skin = teamSkin(idx);
+    const skin = characterSkin(dog.charId);
     const active = state.phase === "aiming" && state.currentPlayer === i && state.winner === null;
     // Contact shadow under the dog for separation from background
     ctx.save();
@@ -366,7 +366,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowBlur = active ? 14 : 8;
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
     ctx.restore();
-    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, skin.teamColor, skin.teamDark);
+    drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
     if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
   }
   ctx.restore();
@@ -1289,18 +1289,18 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, color: string, dark: string) {
+function drawHpBar(ctx: CanvasRenderingContext2D, x: number, y: number, hp: number, maxHp: number, color: string, dark: string) {
   const segCount = 10;
   const segW = 4, segGap = 1;
   const totalW = segCount * segW + (segCount - 1) * segGap;
   const barH = 5;
   const startX = x - totalW / 2;
   ctx.save();
-  // backdrop
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   roundRect(ctx, startX - 3, y - 2, totalW + 6, barH + 4, 3); ctx.fill();
-  const filled = Math.round((hp / 100) * segCount);
-  const critical = hp < 30;
+  const pct = Math.max(0, Math.min(1, hp / Math.max(1, maxHp)));
+  const filled = Math.round(pct * segCount);
+  const critical = pct < 0.3;
   const pulse = critical ? 0.6 + 0.4 * Math.abs(Math.sin(performance.now() * 0.008)) : 1;
   for (let i = 0; i < segCount; i++) {
     const sx = startX + i * (segW + segGap);

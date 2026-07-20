@@ -1,3 +1,5 @@
+import type { CharacterId } from "./characters";
+
 export type WeaponId =
   | "bazooka"
   | "grenade"
@@ -28,12 +30,17 @@ export interface Dog {
   y: number;
   vy: number;
   hp: number;
+  maxHp: number;
   team: 0 | 1;
   facing: 1 | -1;
   aliveTicks: number;
   airborne?: boolean;
   fallStartY?: number;
   moveBudget: number;
+  moveMax: number;
+  jumpScale: number;
+  defense: number;
+  charId: CharacterId;
   hasJumped: boolean;
 }
 
