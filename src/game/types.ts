@@ -44,6 +44,7 @@ export interface Dog {
   hasJumped: boolean;
   rageCharge: number;   // 0..100 (Modo Fúria — apenas Campanha)
   rageActive: boolean;  // ativo durante 1 turno
+  rageQueued?: boolean; // ativação pedida fora da fase de mira; consome no início do próximo turno
 }
 
 
