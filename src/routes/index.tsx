@@ -119,22 +119,6 @@ function Home() {
           <ModeCard title="Hotseat" subtitle="2 jogadores" color="var(--accent)" delay={140} icon={<VersusIcon />} onClick={() => pickMode("hotseat")} />
           <ModeCard title="Online" subtitle="Sala + código" color="var(--team-red)" delay={210} icon={<GlobeIcon />} onClick={() => navigate({ to: "/online" })} />
         </div>
-        <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--team-green)] badge-live" />
-          Pelotão pronto
-        </div>
-      </header>
-
-      <main className="flex-1 flex flex-col items-center justify-between px-4 pb-3 gap-2 relative">
-        {/* Espaço reservado para a arte de fundo respirar */}
-        <div className="flex-1 min-h-0" aria-hidden />
-
-        {/* Modos — compactos */}
-        <div className="w-full max-w-2xl grid gap-2 grid-cols-3">
-          <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={0} icon={<TargetIcon />} onClick={() => pickMode("ai")} />
-          <ModeCard title="Hotseat" subtitle="2 jogadores" color="var(--accent)" delay={90} icon={<VersusIcon />} onClick={() => pickMode("hotseat")} />
-          <ModeCard title="Online" subtitle="Sala + código" color="var(--team-red)" delay={180} icon={<GlobeIcon />} onClick={() => navigate({ to: "/online" })} />
-        </div>
 
 
         {/* Botão discreto — Como Jogar */}
