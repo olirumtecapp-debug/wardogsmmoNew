@@ -19,10 +19,18 @@ const WEAPON_DESC: Record<WeaponId, string> = {
 };
 
 
+interface MissionConfig {
+  enemyHpBonus?: number;
+  allowedWeapons?: WeaponId[];
+  windMultiplier?: number;
+}
+
 interface Props {
   mode: GameMode;
   onExit: () => void;
   chars?: [CharacterId, CharacterId];
+  missionConfig?: MissionConfig;
+  onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
 }
 
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
@@ -115,7 +123,7 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -124,6 +132,11 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
   const powerHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
   const angleHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
   const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
+  const gameOverFiredRef = useRef(false);
+  const onGameOverRef = useRef(onGameOver);
+  const missionConfigRef = useRef(missionConfig);
+  useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
+  useEffect(() => { missionConfigRef.current = missionConfig; }, [missionConfig]);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
   const [arsenalOpen, setArsenalOpen] = useState(false);
@@ -147,6 +160,28 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars);
+      const cfg = missionConfigRef.current;
+      if (cfg) {
+        const st = stateRef.current;
+        if (cfg.enemyHpBonus && cfg.enemyHpBonus > 0) {
+          const d = st.dogs[1];
+          d.maxHp = d.maxHp + cfg.enemyHpBonus;
+          d.hp = d.maxHp;
+        }
+        if (cfg.allowedWeapons && cfg.allowedWeapons.length > 0) {
+          const allow = new Set<WeaponId>(cfg.allowedWeapons);
+          (Object.keys(st.ammo) as WeaponId[]).forEach(k => {
+            if (!allow.has(k)) st.ammo[k] = 0;
+          });
+          if (!allow.has(st.weapon)) {
+            const first = WEAPON_ORDER.find(w => allow.has(w));
+            if (first) st.weapon = first;
+          }
+        }
+        if (cfg.windMultiplier && cfg.windMultiplier !== 1) {
+          st.wind = Math.max(-1, Math.min(1, st.wind * cfg.windMultiplier));
+        }
+      }
       markTerrainDirty();
     };
 
@@ -198,6 +233,15 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
         setTimeout(() => aiTakeTurn(s), 600);
       }
       if (s.currentPlayer === 0 || s.phase !== "aiming") aiTriggeredRef.current = false;
+
+      if (s.phase === "gameover" && !gameOverFiredRef.current) {
+        gameOverFiredRef.current = true;
+        const p = s.dogs[0];
+        onGameOverRef.current?.({
+          winner: s.winner,
+          playerHpPct: p.maxHp > 0 ? Math.max(0, p.hp / p.maxHp) : 0,
+        });
+      }
 
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -411,7 +455,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"] }: Prop
           )}
 
 
-          {s?.phase === "gameover" && (
+          {s?.phase === "gameover" && !onGameOver && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
               <div className="panel p-6 sm:p-8 text-center max-w-sm">
                 <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>

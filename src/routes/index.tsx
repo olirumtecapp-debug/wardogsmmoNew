@@ -98,7 +98,7 @@ function Home() {
           />
           <div className="min-w-0 hidden sm:block">
             <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.3em] truncate">
-              Artilharia canina · 2 jogadores
+              Artilharia canina · Squad até 4 · Online, IA & Hotseat
             </div>
           </div>
         </div>
@@ -113,10 +113,11 @@ function Home() {
         <div className="flex-1 min-h-0" aria-hidden />
 
         {/* Modos — compactos */}
-        <div className="w-full max-w-2xl grid gap-2 grid-cols-3">
-          <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={0} icon={<TargetIcon />} onClick={() => pickMode("ai")} />
-          <ModeCard title="Hotseat" subtitle="2 jogadores" color="var(--accent)" delay={90} icon={<VersusIcon />} onClick={() => pickMode("hotseat")} />
-          <ModeCard title="Online" subtitle="Sala + código" color="var(--team-red)" delay={180} icon={<GlobeIcon />} onClick={() => navigate({ to: "/online" })} />
+        <div className="w-full max-w-3xl grid gap-2 grid-cols-2 sm:grid-cols-4">
+          <ModeCard title="Campanha" subtitle="Missões + estrelas" color="var(--warn)" delay={0} icon={<StarIcon />} onClick={() => navigate({ to: "/campaign" })} />
+          <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={70} icon={<TargetIcon />} onClick={() => pickMode("ai")} />
+          <ModeCard title="Hotseat" subtitle="2 jogadores" color="var(--accent)" delay={140} icon={<VersusIcon />} onClick={() => pickMode("hotseat")} />
+          <ModeCard title="Online" subtitle="Sala + código" color="var(--team-red)" delay={210} icon={<GlobeIcon />} onClick={() => navigate({ to: "/online" })} />
         </div>
 
 
@@ -254,6 +255,15 @@ function GlobeIcon() {
       <circle cx="18" cy="18" r="14" stroke="currentColor" strokeWidth="1.5" />
       <ellipse cx="18" cy="18" rx="6" ry="14" stroke="currentColor" strokeWidth="1.2" />
       <path d="M4 18h28" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+      <path d="M18 3 L22.2 13.2 L33 14.2 L24.6 21.6 L27.2 32 L18 26.4 L8.8 32 L11.4 21.6 L3 14.2 L13.8 13.2 Z"
+        fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
     </svg>
   );
 }
