@@ -151,7 +151,6 @@ function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {scenarios.map(sc => {
                 const active = sc.id === scenario.id;
-                const grad = `linear-gradient(160deg, ${sc.sky[1]} 0%, ${sc.sky[2]} 100%)`;
                 return (
                   <button
                     key={sc.id}
@@ -160,7 +159,15 @@ function Home() {
                     style={active ? { borderColor: sc.sky[2], boxShadow: `inset 0 0 0 1px ${sc.sky[2]}55, 0 0 18px ${sc.sky[2]}55` } : undefined}
                     title={sc.description}
                   >
-                    <span className="w-full h-8 rounded" style={{ background: grad, boxShadow: "inset 0 -6px 10px rgba(0,0,0,0.35)" }} />
+                    <span
+                      className="w-full h-10 rounded overflow-hidden"
+                      style={{
+                        backgroundImage: `url(${sc.bgImage})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        boxShadow: "inset 0 -8px 12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06)",
+                      }}
+                    />
                     <span className="stencil text-[10px] uppercase tracking-widest">{sc.label}</span>
                   </button>
                 );
