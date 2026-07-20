@@ -6,6 +6,7 @@ import { CHARACTERS, type CharacterId } from "./characters";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
+const MATCH_DURATION = 300; // 5 minutes
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
 const STEP_UP = 14; // max ledge height (px) to walk over
