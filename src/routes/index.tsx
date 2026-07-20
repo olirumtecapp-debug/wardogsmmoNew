@@ -102,20 +102,13 @@ function Home() {
             </div>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest shrink-0">
+        <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-widest shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--team-green)] badge-live" />
           Pelotão pronto
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-between px-4 pb-4 gap-3 relative">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full panel text-[10px] uppercase tracking-[0.3em] badge-live">
-            <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)]" />
-            Ranger &amp; Brutus · 8 armas · 4 cenários
-          </div>
-        </div>
-
+      <main className="flex-1 flex flex-col items-center justify-between px-4 pb-3 gap-2 relative">
         {/* Espaço reservado para a arte de fundo respirar */}
         <div className="flex-1 min-h-0" aria-hidden />
 
