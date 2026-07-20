@@ -21,27 +21,29 @@ interface Props {
   autoMs?: number;
 }
 
-export function ComicIntro({ chars, scenarioLabel, bgImage, onDone, autoMs = 4800 }: Props) {
+export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   const [a, b] = chars;
   const A = CHARACTERS[a];
   const B = CHARACTERS[b];
   const [dlg] = useState(() => pickDialogue(a, b));
   const [panel, setPanel] = useState(0); // 0,1,2
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPanel(1), 1100);
-    const t2 = setTimeout(() => setPanel(2), 2400);
-    const t3 = setTimeout(() => onDone(), autoMs);
+    const t1 = setTimeout(() => setPanel(1), 900);
+    const t2 = setTimeout(() => setPanel(2), 1900);
+    const t3 = setTimeout(() => setReady(true), 2600);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onDone, autoMs]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") onDone();
+      if (e.key === "Escape") onDone();
+      if ((e.key === "Enter" || e.key === " ") && ready) onDone();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onDone]);
+  }, [onDone, ready]);
 
   const bgStyle: React.CSSProperties = bgImage
     ? { backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }
