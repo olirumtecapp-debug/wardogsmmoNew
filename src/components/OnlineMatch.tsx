@@ -4,10 +4,11 @@ import { createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon,
 import { render, markTerrainDirty } from "@/game/render";
 import { WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
-import { setActiveScenario, type ScenarioId } from "@/game/scenarios";
+import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios";
 import { openMatchChannel, type MatchChannel, type NetEvent } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
 import { updateMatch, updateSelfPlayer, getStoredMatchDuration } from "@/lib/matchApi";
+import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import { Loader2 } from "lucide-react";
 
 interface Props {
