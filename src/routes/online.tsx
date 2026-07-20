@@ -25,6 +25,7 @@ function OnlineHome() {
   const [scenario, setScenario] = useState(SCENARIOS[0].id);
   const [difficulty] = useState("sergeant");
   const [maxPlayers, setMaxPlayers] = useState<2 | 3 | 4>(2);
+  const [matchDuration, setMatchDuration] = useState<number>(300);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,13 +35,14 @@ function OnlineHome() {
   const onCreate = async () => {
     setError(null); setBusy("create");
     try {
-      const m = await createMatch({ nickname, charId, scenario, difficulty, maxPlayers });
+      const m = await createMatch({ nickname, charId, scenario, difficulty, maxPlayers, matchDuration });
       navigate({ to: "/lobby/$code", params: { code: m.code } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao criar sala");
       setBusy(null);
     }
   };
+
 
   const onJoin = async () => {
     setError(null); setBusy("join");
@@ -132,6 +134,26 @@ function OnlineHome() {
                   Combate ao vivo hoje: 2 jogadores. 3–4 vagas ficam na sala como aguardando (próxima atualização).
                 </div>
               </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Duração da partida</div>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { v: 180, l: "3 min" },
+                    { v: 300, l: "5 min" },
+                    { v: 480, l: "8 min" },
+                    { v: 0,   l: "∞" },
+                  ].map(o => (
+                    <button key={o.v} onClick={() => setMatchDuration(o.v)}
+                      className={`btn-hud text-[11px] px-2 py-1.5 ${matchDuration === o.v ? "is-selected" : ""}`}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-1">
+                  No fim do tempo vence quem tiver mais HP.
+                </div>
+              </div>
+
               <button onClick={onCreate} disabled={busy !== null || !nickname}
                 className="btn-hud btn-primary w-full inline-flex items-center justify-center gap-2">
                 {busy === "create" ? <Loader2 size={14} className="animate-spin" /> : null}

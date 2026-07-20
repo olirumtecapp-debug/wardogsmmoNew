@@ -6,11 +6,15 @@ import { CHARACTERS, type CharacterId } from "./characters";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
-const MATCH_DURATION = 300; // 5 minutes
+const RAGE_TURN_BONUS = 10; // segundos extras no turno em Fúria
+const RAGE_DAMAGE_MULT = 1.4;
+const RAGE_WIND_MULT = 0.5;
+export const MATCH_DURATION_DEFAULT = 300; // 5 minutos
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
 const STEP_UP = 14; // max ledge height (px) to walk over
 const JUMP_VY = -280;
+
 
 function mulberry32(seed: number) {
   let t = seed >>> 0;
@@ -30,6 +34,8 @@ export function createGame(
   seed = Date.now(),
   hudReserve = 150,
   chars: [CharacterId, CharacterId] = ["ranger", "brutus"],
+  matchDuration: number = MATCH_DURATION_DEFAULT,
+  rageEnabled: boolean = false,
 ): GameState {
   const rng = mulberry32(seed);
   const usableH = Math.max(200, height - hudReserve);
@@ -37,6 +43,7 @@ export function createGame(
   const dogs = placeDogs(terrain, width, height, rng, chars);
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
+  const dur = Math.max(0, matchDuration);
   return {
     width, height, terrain, dogs,
     projectiles: [], explosions: [],
@@ -50,13 +57,15 @@ export function createGame(
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
     turnTimer: MAX_TURN_TIME,
-    matchTimer: MATCH_DURATION,
-    matchDuration: MATCH_DURATION,
+    matchTimer: dur,
+    matchDuration: dur,
     mode,
     seed,
     hudReserve,
+    rageEnabled,
   };
 }
+
 
 function generateTerrain(w: number, h: number, usableH: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
@@ -95,8 +104,10 @@ function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number,
       moveBudget: c.stats.mobility, moveMax: c.stats.mobility,
       jumpScale: c.stats.jump, defense: c.stats.defense,
       charId, hasJumped: false,
+      rageCharge: 0, rageActive: false,
     };
   };
+
   return [mk(p1x, 0, 1, chars[0]), mk(p2x, 1, -1, chars[1])];
 }
 
@@ -191,10 +202,13 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
   state.explosions.push({ x, y, radius, age: 0, maxAge: 0.45, particles });
 }
 
-export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number) {
+export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
   destroyTerrain(state, x, y, radius);
   state.scorchMarks.push({ x, y, radius: radius * 1.05, life: 6, maxLife: 6 });
   state.onExplosion?.(x, y, radius);
+  // Shooter (if any) for rage accumulation
+  const shooter = ownerTeam !== undefined ? state.dogs.find(d => d.team === ownerTeam) : undefined;
+  const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
   let totalDamage = 0;
   let hits = 0;
   const stackOffsets = new Map<number, number>();
@@ -204,7 +218,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < radius + 14) {
       const falloff = Math.max(0, 1 - dist / (radius + 14));
-      const dmg = Math.round(damage * falloff * dog.defense);
+      const dmg = Math.round(damage * dmgMult * falloff * dog.defense);
       dog.hp = Math.max(0, dog.hp - dmg);
       const push = falloff * 180;
       dog.vy = -Math.abs(push * 0.6) - 40;
@@ -223,7 +237,15 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         value: dmg > 0 ? `-${dmg}` : "0",
         color, size,
       });
-      if (dmg > 0) { totalDamage += dmg; hits++; }
+      if (dmg > 0) {
+        totalDamage += dmg;
+        hits++;
+        // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
+        if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
+          const gain = dmg >= 31 ? 70 : dmg >= 16 ? 45 : 25;
+          shooter.rageCharge = Math.min(100, shooter.rageCharge + gain);
+        }
+      }
     }
   }
   if (hits > 1) {
@@ -234,6 +256,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     });
   }
 }
+
 
 // Robust "supported" check: sample a window across the dog's feet
 function isSupported(state: GameState, dog: Dog): boolean {
@@ -317,7 +340,12 @@ export function step(state: GameState, dt: number) {
       p.vy += uy * 260 * dt;
     }
     p.vy += GRAVITY * w.gravityScale * dt;
-    if (w.affectedByWind) p.vx += state.wind * 40 * dt;
+    if (w.affectedByWind) {
+      const shooter = state.dogs.find(d => d.team === p.ownerTeam);
+      const windMul = shooter?.rageActive ? RAGE_WIND_MULT : 1;
+      p.vx += state.wind * 40 * dt * windMul;
+    }
+
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
@@ -370,7 +398,7 @@ export function step(state: GameState, dt: number) {
 
     if (exploded) {
       spawnExplosion(state, p.x, p.y, w.radius, w.color);
-      applyExplosionDamage(state, p.x, p.y, w.radius, w.damage);
+      applyExplosionDamage(state, p.x, p.y, w.radius, w.damage, p.ownerTeam);
 
       // Cluster bomb: on first-stage explosion, spawn 4 short-fuse sub-grenades
       if (w.id === "cluster" && !p.isSub) {
@@ -426,8 +454,8 @@ export function step(state: GameState, dt: number) {
     if (s.life <= 0) state.scorchMarks.splice(i, 1);
   }
 
-  // Match timer — decrement whenever the fight is ongoing
-  if (state.phase !== "gameover") {
+  // Match timer — decrement whenever the fight is ongoing (skip se sem limite)
+  if (state.phase !== "gameover" && state.matchDuration > 0) {
     state.matchTimer = Math.max(0, state.matchTimer - dt);
   }
 
@@ -441,7 +469,7 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate!"
         : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
-    } else if (state.matchTimer <= 0) {
+    } else if (state.matchDuration > 0 && state.matchTimer <= 0) {
       state.phase = "gameover";
       const hp0 = state.dogs[0].hp, hp1 = state.dogs[1].hp;
       state.winner = hp0 > hp1 ? 0 : hp1 > hp0 ? 1 : null;
@@ -450,6 +478,7 @@ export function step(state: GameState, dt: number) {
         : `Tempo esgotado — vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
     }
   }
+
 
   if (state.phase === "firing" && state.projectiles.length === 0) {
     state.phase = "resolving";
@@ -471,6 +500,12 @@ export function step(state: GameState, dt: number) {
 
 export function endTurn(state: GameState) {
   if (state.phase === "gameover") return;
+  // Encerra Fúria de quem estava jogando
+  const prev = state.dogs[state.currentPlayer];
+  if (prev.rageActive) {
+    prev.rageActive = false;
+    prev.rageCharge = 0;
+  }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
   state.phase = "aiming";
   state.turnTimer = MAX_TURN_TIME;
@@ -489,6 +524,22 @@ export function endTurn(state: GameState) {
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
 }
+
+export function activateRage(state: GameState) {
+  if (!state.rageEnabled) return;
+  if (state.phase !== "aiming" || state.winner !== null) return;
+  const dog = state.dogs[state.currentPlayer];
+  if (dog.hp <= 0 || dog.rageActive || dog.rageCharge < 100) return;
+  dog.rageActive = true;
+  dog.rageCharge = 100;
+  state.turnTimer = Math.min(MAX_TURN_TIME + RAGE_TURN_BONUS, state.turnTimer + RAGE_TURN_BONUS);
+  state.message = "MODO FÚRIA ATIVADO";
+  state.floatingTexts.push({
+    id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
+    life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
+  });
+}
+
 
 export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
   if (state.phase !== "aiming" || state.winner !== null) return;

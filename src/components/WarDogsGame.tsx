@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
+
 
 
 const WEAPON_DESC: Record<WeaponId, string> = {
@@ -31,7 +32,10 @@ interface Props {
   chars?: [CharacterId, CharacterId];
   missionConfig?: MissionConfig;
   onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
+  matchDuration?: number; // segundos; 0 = sem limite
+  rageEnabled?: boolean;  // Modo Fúria (Campanha)
 }
+
 
 function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
   const cls = className ?? "w-7 h-7";
@@ -123,7 +127,7 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -159,7 +163,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars);
+      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars, matchDuration, !!rageEnabled);
       const cfg = missionConfigRef.current;
       if (cfg) {
         const st = stateRef.current;
@@ -319,7 +323,9 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
       else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
       else if (e.code === "Enter") { e.preventDefault(); fire(s); }
+      else if (e.code === "KeyF") { e.preventDefault(); activateRage(s); }
     };
+
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD") moveHoldRef.current = null;
       if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "KeyW" || e.code === "KeyS") angleHoldRef.current = null;
@@ -368,18 +374,29 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 </div>
                 <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
                 {s.phase === "aiming" && s.winner === null && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-2">
+                  <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-center gap-2 flex-wrap">
                     <span>Turno {isAiTurn ? "IA…" : `${Math.max(0, Math.ceil(s.turnTimer))}s`}</span>
-                    <span className="opacity-40">•</span>
-                    <span
-                      className="stencil"
-                      style={{ color: s.matchTimer <= 30 ? "var(--destructive)" : undefined }}
-                    >
-                      Partida {Math.floor(Math.max(0, s.matchTimer) / 60)}:{String(Math.floor(Math.max(0, s.matchTimer) % 60)).padStart(2, "0")}
-                    </span>
+                    {s.matchDuration > 0 && (
+                      <>
+                        <span className="opacity-40">•</span>
+                        <span
+                          className="stencil"
+                          style={{ color: s.matchTimer <= 30 ? "var(--destructive)" : undefined }}
+                        >
+                          Partida {Math.floor(Math.max(0, s.matchTimer) / 60)}:{String(Math.floor(Math.max(0, s.matchTimer) % 60)).padStart(2, "0")}
+                        </span>
+                      </>
+                    )}
+                    {s.matchDuration === 0 && (
+                      <>
+                        <span className="opacity-40">•</span>
+                        <span className="stencil opacity-70">∞</span>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
+
 
 
               <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
@@ -450,6 +467,40 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   </div>
                 </div>
 
+                {s.rageEnabled && (() => {
+                  const dog = s.dogs[s.currentPlayer];
+                  const ready = dog.rageCharge >= 100 && !dog.rageActive;
+                  const pct = Math.max(0, Math.min(100, dog.rageCharge));
+                  return (
+                    <div className="panel px-1.5 py-1 flex flex-col items-center gap-1 shrink-0 w-[68px]" title="Modo Fúria (F) — enche acertando tiros diretos">
+                      <button
+                        disabled={!ready || isAiTurn}
+                        onClick={() => activateRage(s)}
+                        className={`w-full py-1 rounded text-[10px] stencil tracking-widest border transition ${
+                          dog.rageActive
+                            ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/15 animate-pulse"
+                            : ready
+                              ? "border-[color:var(--destructive)] text-[color:var(--destructive)] bg-[color:var(--destructive)]/10 hover:bg-[color:var(--destructive)]/20 animate-pulse"
+                              : "border-white/10 text-muted-foreground/70 opacity-60"
+                        } disabled:cursor-not-allowed`}
+                        aria-label="Ativar Modo Fúria"
+                      >
+                        {dog.rageActive ? "FÚRIA!" : "⚡ FÚRIA"}
+                      </button>
+                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-150"
+                          style={{
+                            width: `${pct}%`,
+                            background: "linear-gradient(90deg,#ff9138,#ff3838)",
+                            boxShadow: ready ? "0 0 8px rgba(255,56,56,0.7)" : undefined,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <button
                   disabled={isAiTurn || s.phase !== "aiming"}
                   onClick={() => fire(s)}
@@ -458,6 +509,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 >
                   FOGO
                 </button>
+
               </div>
             </div>
           )}

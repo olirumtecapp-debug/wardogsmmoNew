@@ -7,7 +7,7 @@ import { CHARACTERS, type CharacterId } from "@/game/characters";
 import { setActiveScenario, type ScenarioId } from "@/game/scenarios";
 import { openMatchChannel, type MatchChannel, type NetEvent } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
-import { updateMatch, updateSelfPlayer } from "@/lib/matchApi";
+import { updateMatch, updateSelfPlayer, getStoredMatchDuration } from "@/lib/matchApi";
 import { Loader2 } from "lucide-react";
 
 interface Props {
@@ -60,7 +60,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     canvas.height = h * dpr;
     const ctx = canvas.getContext("2d")!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars);
+    const storedDur = getStoredMatchDuration(match.code);
+    stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false);
+
     markTerrainDirty();
 
     const adapt = () => {

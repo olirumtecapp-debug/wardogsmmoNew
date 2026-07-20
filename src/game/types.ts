@@ -42,7 +42,10 @@ export interface Dog {
   defense: number;
   charId: CharacterId;
   hasJumped: boolean;
+  rageCharge: number;   // 0..100 (Modo Fúria — apenas Campanha)
+  rageActive: boolean;  // ativo durante 1 turno
 }
+
 
 export interface Projectile {
   x: number;
@@ -101,6 +104,8 @@ export interface GameState {
   seed: number;
   airstrikeMarker?: { x: number; life: number };
   hudReserve: number;
+  rageEnabled: boolean;      // Modo Fúria disponível (Campanha)
   onExplosion?: (x: number, y: number, radius: number) => void;
 }
+
 

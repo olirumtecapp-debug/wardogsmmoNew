@@ -365,14 +365,35 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.ellipse(dog.x, dog.y + 2, 18, 5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+    // Rage aura (Campanha) — anel vermelho pulsante ao redor do dog
+    if (dog.rageActive && dog.hp > 0) {
+      const pulse = 1 + Math.sin(now * 8) * 0.15;
+      ctx.save();
+      const grad = ctx.createRadialGradient(dog.x, dog.y, 6, dog.x, dog.y, 40 * pulse);
+      grad.addColorStop(0, "rgba(255,60,60,0.55)");
+      grad.addColorStop(0.6, "rgba(255,20,20,0.25)");
+      grad.addColorStop(1, "rgba(255,20,20,0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(dog.x, dog.y - 4, 40 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,80,80,0.85)";
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.arc(dog.x, dog.y - 4, 26 + Math.sin(now * 6) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     // Soft rim glow to lift the silhouette off the terrain
     ctx.save();
-    ctx.shadowColor = skin.teamColor;
-    ctx.shadowBlur = active ? 14 : 8;
+    ctx.shadowColor = dog.rageActive ? "#ff3838" : skin.teamColor;
+    ctx.shadowBlur = active ? (dog.rageActive ? 22 : 14) : 8;
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
     ctx.restore();
     drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
     if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
+
   }
   ctx.restore();
 
