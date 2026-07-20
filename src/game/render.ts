@@ -341,16 +341,33 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     }
   }
 
-  // Dogs
+  // Dogs — ensure no residual composite/alpha from previous passes dims them
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = "source-over";
   for (let i = 0; i < state.dogs.length; i++) {
     const dog = state.dogs[i];
     const idx = i as 0 | 1;
     const skin = teamSkin(idx);
     const active = state.phase === "aiming" && state.currentPlayer === i && state.winner === null;
+    // Contact shadow under the dog for separation from background
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.ellipse(dog.x, dog.y + 2, 18, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // Soft rim glow to lift the silhouette off the terrain
+    ctx.save();
+    ctx.shadowColor = skin.teamColor;
+    ctx.shadowBlur = active ? 14 : 8;
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
+    ctx.restore();
     drawHpBar(ctx, dog.x, dog.y - 46, dog.hp, skin.teamColor, skin.teamDark);
     if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 62, now, skin.teamColor);
   }
+  ctx.restore();
 
 
   // Aim indicator
