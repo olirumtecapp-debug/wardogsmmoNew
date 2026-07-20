@@ -27,6 +27,14 @@ type Stage =
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showOnlineNotice, setShowOnlineNotice] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
+
+  useEffect(() => {
+    if (!showHowTo) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowHowTo(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showHowTo]);
 
   if (stage.kind === "playing") {
     return (
