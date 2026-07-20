@@ -623,9 +623,9 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
   const focusW = WEAPONS[focus];
 
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       {open && (
-        <div className="absolute left-0 right-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl">
+        <div className="absolute left-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl w-[280px] sm:w-[420px]">
           <div className="flex items-center justify-between mb-2">
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
             <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
@@ -685,13 +685,13 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
-        className={`btn-hud w-full flex items-center gap-2 px-2 py-1.5 ${open ? "is-selected" : ""}`}
+        className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1.5 min-w-[128px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
         style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
       >
         <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
         <span className="flex flex-col items-start min-w-0 flex-1">
-          <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arsenal</span>
-          <span className="stencil text-xs sm:text-sm truncate max-w-full" style={{ color: currentW.color }}>{currentW.name}</span>
+          <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arma</span>
+          <span className="stencil text-xs truncate max-w-full" style={{ color: currentW.color }}>{currentW.name.split(" ")[0]}</span>
         </span>
         <span className="text-[10px] tabular-nums shrink-0 opacity-80">
           {currentAmmo === -1 ? "∞" : `×${currentAmmo}`}
@@ -701,6 +701,7 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
     </div>
   );
 }
+
 
 
 export type { WeaponId };
