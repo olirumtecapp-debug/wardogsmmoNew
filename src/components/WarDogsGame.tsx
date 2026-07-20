@@ -19,6 +19,18 @@ const WEAPON_DESC: Record<WeaponId, string> = {
   airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
 };
 
+// Short labels for the arsenal grid cells (avoid overflowing narrow columns on mobile).
+const WEAPON_SHORT: Record<WeaponId, string> = {
+  bazooka: "Bazuca",
+  grenade: "Granada",
+  rpg: "RPG",
+  bow: "Arco",
+  artillery: "Artilh.",
+  frag: "Frag",
+  cluster: "Cluster",
+  airstrike: "Aéreo",
+};
+
 
 interface MissionConfig {
   enemyHpBonus?: number;
