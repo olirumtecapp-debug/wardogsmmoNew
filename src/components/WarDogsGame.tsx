@@ -134,6 +134,8 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const [, setTick] = useState(0);
   const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [arsenalOpen, setArsenalOpen] = useState(false);
+  const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
   useEffect(() => {
