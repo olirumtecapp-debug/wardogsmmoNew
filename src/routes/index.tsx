@@ -3,7 +3,7 @@ import { useState } from "react";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
-import { useScenario } from "@/game/scenarioContext";
+import { PreMatchBriefing } from "@/components/PreMatchBriefing";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 const logoImg = logoAsset.url;
@@ -15,21 +15,35 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+type Stage = { kind: "menu" } | { kind: "briefing"; mode: GameMode } | { kind: "playing"; mode: GameMode };
 
 function Home() {
-  const [mode, setMode] = useState<GameMode | null>(null);
+  const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showOnlineNotice, setShowOnlineNotice] = useState(false);
-  const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
 
-  if (mode) {
+  if (stage.kind === "playing") {
     return (
       <OrientationGate>
         <div className="fixed inset-0">
-          <WarDogsGame mode={mode} onExit={() => setMode(null)} />
+          <WarDogsGame mode={stage.mode} onExit={() => setStage({ kind: "menu" })} />
         </div>
       </OrientationGate>
     );
   }
+
+  if (stage.kind === "briefing") {
+    return (
+      <OrientationGate soft>
+        <PreMatchBriefing
+          mode={stage.mode}
+          onStart={() => setStage({ kind: "playing", mode: stage.mode })}
+          onBack={() => setStage({ kind: "menu" })}
+        />
+      </OrientationGate>
+    );
+  }
+
+  const pickMode = (mode: GameMode) => setStage({ kind: "briefing", mode });
 
   return (
     <OrientationGate soft>
@@ -47,17 +61,17 @@ function Home() {
       />
       <div
         className="absolute inset-0 -z-25"
-        style={{ background: "rgba(6,10,16,0.35)" }}
+        style={{ background: "rgba(6,10,16,0.15)" }}
         aria-hidden
       />
-      <div className="absolute inset-0 -z-20 opacity-40 mix-blend-screen pointer-events-none">
+      <div className="absolute inset-0 -z-20 opacity-30 mix-blend-screen pointer-events-none">
         <MenuBackdrop />
       </div>
       <div
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, rgba(8,10,14,0.55) 0%, rgba(8,10,14,0.10) 35%, rgba(8,10,14,0.55) 75%, rgba(8,10,14,0.92) 100%)",
+            "linear-gradient(180deg, rgba(8,10,14,0.55) 0%, rgba(8,10,14,0.00) 30%, rgba(8,10,14,0.00) 70%, rgba(8,10,14,0.85) 100%)",
         }}
         aria-hidden
       />
@@ -83,9 +97,7 @@ function Home() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-end px-4 pb-6 gap-4 sm:gap-6 relative">
-
-
+      <main className="flex-1 flex flex-col items-center justify-end px-4 pb-6 gap-4 relative">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full panel text-[10px] uppercase tracking-[0.3em] badge-live">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--accent)]" />
@@ -93,99 +105,36 @@ function Home() {
           </div>
         </div>
 
-        {/* Modos */}
-        <div className="w-full max-w-3xl grid gap-3 sm:grid-cols-3">
-          <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={0} icon={<TargetIcon />} onClick={() => setMode("ai")} />
-          <ModeCard title="Hotseat" subtitle="2 jogadores, mesmo aparelho" color="var(--accent)" delay={90} icon={<VersusIcon />} onClick={() => setMode("hotseat")} />
+        {/* Modos — compactos */}
+        <div className="w-full max-w-2xl grid gap-2 grid-cols-3">
+          <ModeCard title="vs IA" subtitle="Contra o computador" color="var(--team-green)" delay={0} icon={<TargetIcon />} onClick={() => pickMode("ai")} />
+          <ModeCard title="Hotseat" subtitle="2 jogadores" color="var(--accent)" delay={90} icon={<VersusIcon />} onClick={() => pickMode("hotseat")} />
           <ModeCard title="Online" subtitle="Em breve" color="var(--team-red)" delay={180} icon={<GlobeIcon />} disabled onClick={() => setShowOnlineNotice(true)} />
         </div>
 
         {showOnlineNotice && (
-          <div className="w-full max-w-2xl panel p-4 text-sm text-left card-in">
-            <div className="stencil text-xs uppercase text-warn mb-1">Multiplayer online</div>
-            O modo online por código de sala exige infraestrutura WebSocket persistente.
-            O jogo base — física, terreno, IA e hotseat — já está funcionando.
-            <button className="btn-hud mt-3 text-xs" onClick={() => setShowOnlineNotice(false)}>Fechar</button>
+          <div className="w-full max-w-2xl panel p-3 text-xs text-left card-in">
+            <div className="stencil text-[10px] uppercase text-warn mb-1">Multiplayer online</div>
+            O modo online exige infraestrutura WebSocket persistente. O jogo base — física, terreno, IA e hotseat — já está funcionando.
+            <button className="btn-hud mt-2 text-[10px]" onClick={() => setShowOnlineNotice(false)}>Fechar</button>
           </div>
         )}
 
-        {/* Cenário + Dificuldade lado a lado */}
-        <div className="w-full max-w-4xl grid gap-3 sm:grid-cols-2">
-          <div className="panel px-4 py-3 card-in text-left">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="stencil text-sm uppercase tracking-widest" style={{ color: "var(--accent)" }}>Cenário</div>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{scenario.label}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {scenarios.map(sc => {
-                const active = sc.id === scenario.id;
-                return (
-                  <button
-                    key={sc.id}
-                    onClick={() => setScenario(sc.id)}
-                    className={`btn-hud p-2 flex flex-col items-center gap-1 ${active ? "is-selected" : ""}`}
-                    style={active ? { borderColor: sc.sky[2], boxShadow: `inset 0 0 0 1px ${sc.sky[2]}55, 0 0 18px ${sc.sky[2]}55` } : undefined}
-                    title={sc.description}
-                  >
-                    <span
-                      className="w-full h-9 rounded overflow-hidden"
-                      style={{
-                        backgroundImage: `url(${sc.bgImage})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        boxShadow: "inset 0 -8px 12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06)",
-                      }}
-                    />
-                    <span className="stencil text-[10px] uppercase tracking-widest">{sc.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+        {/* Atalhos — sempre visíveis */}
+        <div className="w-full max-w-2xl panel p-3 text-[11px] text-left space-y-1">
+          <div className="stencil text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Como jogar</div>
+          <div>
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded">← →</kbd> ângulo ·{" "}
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded">↑ ↓</kbd> força ·{" "}
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded">Espaço</kbd> atirar ·{" "}
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded">1–8</kbd> arma
           </div>
-
-          <div className="panel px-4 py-3 card-in text-left">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="stencil text-sm uppercase tracking-widest" style={{ color: "var(--team-red)" }}>Dificuldade da IA</div>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                {difficulty === "recruit" ? "Recruta" : difficulty === "sergeant" ? "Sargento" : "General"}
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {([
-                { id: "recruit" as const, label: "Recruta", desc: "Distraído" },
-                { id: "sergeant" as const, label: "Sargento", desc: "Equilibrado" },
-                { id: "general" as const, label: "General", desc: "Preciso" },
-              ]).map(d => {
-                const active = difficulty === d.id;
-                const color = d.id === "recruit" ? "var(--team-green)" : d.id === "sergeant" ? "var(--accent)" : "var(--team-red)";
-                return (
-                  <button
-                    key={d.id}
-                    onClick={() => setDifficulty(d.id)}
-                    className={`btn-hud p-2 flex flex-col items-start gap-1 ${active ? "is-selected" : ""}`}
-                    style={active ? { borderColor: color as string, boxShadow: `inset 0 0 0 1px ${color}, 0 0 14px ${color}` } : undefined}
-                  >
-                    <span className="stencil text-xs uppercase tracking-widest" style={{ color }}>{d.label}</span>
-                    <span className="text-[9px] text-muted-foreground leading-tight">{d.desc}</span>
-                  </button>
-                );
-              })}
-            </div>
+          <div>
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded">A / D</kbd> mover ·{" "}
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded">W</kbd> pulo
           </div>
+          <div className="text-muted-foreground">No celular: arraste a partir do cachorro pra mirar e solte pra atirar.</div>
         </div>
-
-        <details className="w-full max-w-2xl text-xs text-muted-foreground">
-          <summary className="cursor-pointer uppercase tracking-[0.25em] text-[10px] hover:text-foreground transition-colors">Atalhos ▸</summary>
-          <div className="mt-2 grid gap-1">
-            <div>
-              <kbd className="px-1.5 py-0.5 bg-secondary rounded">← →</kbd> ângulo ·{" "}
-              <kbd className="px-1.5 py-0.5 bg-secondary rounded">↑ ↓</kbd> força ·{" "}
-              <kbd className="px-1.5 py-0.5 bg-secondary rounded">Espaço</kbd> atirar ·{" "}
-              <kbd className="px-1.5 py-0.5 bg-secondary rounded">1–8</kbd> arma
-            </div>
-            <div>No celular: arraste a partir do cachorro pra mirar e solte pra atirar.</div>
-          </div>
-        </details>
       </main>
 
       <div className="stripe-warn h-2 opacity-70 shrink-0" aria-hidden />
@@ -206,31 +155,25 @@ function ModeCard({
   return (
     <button
       onClick={onClick}
-      className={`panel p-4 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl card-in ${disabled ? "opacity-60 hover:translate-y-0" : ""}`}
+      className={`panel p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl card-in ${disabled ? "opacity-60 hover:translate-y-0" : ""}`}
       style={{ borderColor: color, animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="stencil text-lg tracking-wider" style={{ color }}>{title}</div>
-          <div className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">{subtitle}</div>
+      <div className="flex items-center gap-2">
+        <div className="opacity-80 shrink-0" style={{ color }}>{icon}</div>
+        <div className="min-w-0">
+          <div className="stencil text-sm tracking-wider truncate" style={{ color }}>{title}</div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-widest truncate">{subtitle}</div>
         </div>
-        <div className="opacity-80" style={{ color }}>{icon}</div>
       </div>
-      {!disabled && (
-        <div className="mt-3 h-1 rounded-full overflow-hidden bg-black/40">
-          <div className="h-full w-1/3 rounded-full" style={{ background: color, boxShadow: `0 0 12px ${color}` }} />
-        </div>
-      )}
     </button>
   );
 }
 
 function TargetIcon() {
   return (
-    <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+    <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
       <circle cx="18" cy="18" r="14" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="18" cy="18" r="9" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
-      <circle cx="18" cy="18" r="4" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
       <circle cx="18" cy="18" r="1.4" fill="currentColor" />
       <path d="M18 2v6M18 28v6M2 18h6M28 18h6" stroke="currentColor" strokeWidth="1.4" />
     </svg>
@@ -239,14 +182,12 @@ function TargetIcon() {
 
 function VersusIcon() {
   return (
-    <svg width="36" height="32" viewBox="0 0 40 36" fill="none">
+    <svg width="24" height="22" viewBox="0 0 40 36" fill="none">
       <g fill="currentColor">
         <path d="M2 22c0-5 4-9 9-9 2 0 3 .5 4 1l2-3 1 3c1 1 2 2 2 4v4c0 3-2 5-5 5H7c-3 0-5-2-5-5z" opacity="0.85" />
-        <path d="M4 12l3-4 2 3z" />
       </g>
       <g fill="currentColor" transform="translate(40 0) scale(-1 1)">
         <path d="M2 22c0-5 4-9 9-9 2 0 3 .5 4 1l2-3 1 3c1 1 2 2 2 4v4c0 3-2 5-5 5H7c-3 0-5-2-5-5z" opacity="0.85" />
-        <path d="M4 12l3-4 2 3z" />
       </g>
       <text x="20" y="22" textAnchor="middle" fontFamily="Black Ops One, sans-serif" fontSize="9" fill="currentColor">VS</text>
     </svg>
@@ -255,10 +196,10 @@ function VersusIcon() {
 
 function GlobeIcon() {
   return (
-    <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+    <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
       <circle cx="18" cy="18" r="14" stroke="currentColor" strokeWidth="1.5" />
       <ellipse cx="18" cy="18" rx="6" ry="14" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M4 18h28M6 11h24M6 25h24" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M4 18h28" stroke="currentColor" strokeWidth="1.2" />
     </svg>
   );
 }
