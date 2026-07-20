@@ -323,7 +323,31 @@ export function step(state: GameState, dt: number) {
       if (Math.abs((sy - 18) - dog.y) > 2) dog.y = sy - 18;
     }
 
-    if (dog.y > (state.height - state.hudReserve) + 40) dog.hp = 0;
+    // Off-world rescue: teleport to nearest solid column with fall damage
+    if (dog.y > (state.height - state.hudReserve) + 20) {
+      let rescueX = dog.x;
+      let bestDist = Infinity;
+      for (let x = 20; x < state.width - 20; x += 6) {
+        const sy = surfaceY(state.terrain, state.width, state.height, x);
+        if (sy < state.height - state.hudReserve - 4) {
+          const d = Math.abs(x - dog.x);
+          if (d < bestDist) { bestDist = d; rescueX = x; }
+        }
+      }
+      const sy = surfaceY(state.terrain, state.width, state.height, rescueX);
+      dog.x = rescueX;
+      dog.y = sy - 18;
+      dog.vy = 0;
+      dog.airborne = false;
+      dog.fallStartY = undefined;
+      const dmg = Math.round(25 * dog.defense);
+      dog.hp = Math.max(1, dog.hp - dmg); // never lethal — protects against ground-collapse KO
+      state.floatingTexts.push({
+        id: Math.random(), x: dog.x, y: dog.y - 32, vx: 0, vy: -70,
+        life: 1.4, maxLife: 1.4, value: `-${dmg} RESGATE`,
+        color: "#ffb84a", size: 20,
+      });
+    }
     dog.x = Math.max(10, Math.min(state.width - 10, dog.x));
   }
 
