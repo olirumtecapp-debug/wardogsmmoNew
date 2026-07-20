@@ -35,7 +35,7 @@ export const Route = createFileRoute("/campaign/$missionId")({
   ),
 });
 
-type Stage = "briefing" | "playing" | "result";
+type Stage = "briefing" | "intro" | "playing" | "result";
 
 function MissionPage() {
   const { missionId } = Route.useParams();
