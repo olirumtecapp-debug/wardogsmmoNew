@@ -154,7 +154,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const s = stateRef.current;
     if (!s) return;
     if (ev.t === "snapshot" && !isHost) {
-      apply(s, ev.state);
+      apply(s, ev.state as Snapshot);
     } else if (ev.t === "explosion" && !isHost) {
       const key = fp(ev.x, ev.y, ev.r);
       if (!seenExplosionsRef.current.has(key)) {

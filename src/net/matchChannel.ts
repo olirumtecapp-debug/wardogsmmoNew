@@ -4,7 +4,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 // Broadcast payloads used during a match
 export type NetEvent =
   | { t: "input"; slot: number; action: InputAction }
-  | { t: "snapshot"; state: SnapshotState }
+  | { t: "snapshot"; state: unknown }
   | { t: "explosion"; x: number; y: number; r: number }
   | { t: "turn"; slot: number; wind: number }
   | { t: "chat"; slot: number; text: string };
@@ -16,18 +16,6 @@ export type InputAction =
   | { k: "move"; dir: -1 | 1; dt: number }
   | { k: "jump" }
   | { k: "fire" };
-
-export interface SnapshotState {
-  dogs: Array<{ x: number; y: number; hp: number; facing: 1 | -1; team: number }>;
-  currentPlayer: number;
-  wind: number;
-  angle: number;
-  power: number;
-  weapon: string;
-  phase: string;
-  message: string;
-  winner: number | null;
-}
 
 export interface MatchChannel {
   channel: RealtimeChannel;
