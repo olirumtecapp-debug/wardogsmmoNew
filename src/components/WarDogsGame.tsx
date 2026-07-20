@@ -14,6 +14,17 @@ const PORTRAITS: Record<string, string> = {
   BRUTUS: brutusPortrait.url,
 };
 
+const WEAPON_DESC: Record<WeaponId, string> = {
+  bazooka: "Foguete clássico. Voa em arco e sofre o vento — a arma segura de todo turno.",
+  grenade: "Granada com pavio de 2.5s. Quica no terreno antes de explodir com raio generoso.",
+  rpg: "Foguete rápido de baixa gravidade. Ignora o vento — mira quase reta em alvos distantes.",
+  bow: "Flecha leve e precisa. Dano menor, mas trajetória mais tensa e certeira em curta distância.",
+  artillery: "Obus pesado com o maior raio de explosão. Cai forte, ideal pra destruir terreno.",
+  frag: "Frag rápida com pavio curto (1s). Boa pra acertos próximos que não dão tempo de fugir.",
+  cluster: "Munição cluster: no impacto libera 4 sub-bombas que espalham dano em área.",
+  airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
+};
+
 
 interface Props {
   mode: GameMode;
