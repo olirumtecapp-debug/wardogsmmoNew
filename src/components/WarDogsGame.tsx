@@ -211,6 +211,14 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
         if (cfg.windMultiplier && cfg.windMultiplier !== 1) {
           st.wind = Math.max(-1, Math.min(1, st.wind * cfg.windMultiplier));
         }
+        if (cfg.turnTimeSeconds && cfg.turnTimeSeconds > 0) {
+          st.turnTimeLimit = cfg.turnTimeSeconds;
+          st.turnTimer = cfg.turnTimeSeconds;
+        }
+        if (cfg.chaosWind) st.chaosWind = true;
+        if (cfg.enemyRageCharged && st.rageEnabled) {
+          st.dogs[1].rageCharge = 100;
+        }
       }
       markTerrainDirty();
     };
