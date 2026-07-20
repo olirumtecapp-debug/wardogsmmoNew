@@ -141,12 +141,20 @@ function PickerModal({
   );
 }
 
+const DURATION_OPTIONS: { value: number; label: string; desc: string }[] = [
+  { value: 180, label: "3 min", desc: "Combate rápido" },
+  { value: 300, label: "5 min", desc: "Padrão equilibrado" },
+  { value: 480, label: "8 min", desc: "Duelo prolongado" },
+  { value: 0,   label: "Sem limite", desc: "Vale o último dog em pé" },
+];
+
 export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
   const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
   const [scenarioSel, setScenarioSel] = useState<ScenarioId>(scenario.id);
   const [diffSel, setDiffSel] = useState<Difficulty>(difficulty);
   const [p1, setP1] = useState<CharacterId>("ranger");
   const [p2, setP2] = useState<CharacterId>("brutus");
+  const [duration, setDuration] = useState<number>(300);
   const [picker, setPicker] = useState<PickerKey>(null);
 
   const currentScenario = scenarios.find(s => s.id === scenarioSel) ?? scenarios[0];
@@ -157,8 +165,9 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
   const handleStart = () => {
     setScenario(scenarioSel);
     if (mode === "ai") setDifficulty(diffSel);
-    onStart([p1, p2]);
+    onStart([p1, p2], duration);
   };
+
 
   const close = () => setPicker(null);
 
