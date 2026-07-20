@@ -348,9 +348,11 @@ export function WarDogsGame({ mode, onExit }: Props) {
 
       {s && s.phase !== "gameover" && (
         <div
-          className={`shrink-0 px-2 pb-2 pt-1 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent ${hudVisible ? "hud-show" : "hud-hide"}`}
-          style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+          className="shrink-0 px-2 pb-2 pt-1 sm:p-3 bg-gradient-to-t from-black/85 via-black/60 to-transparent min-h-[168px] sm:min-h-[180px]"
+          aria-hidden={!hudVisible}
+          style={{ paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", opacity: hudVisible ? 1 : 0.85 }}
         >
+
           <div className="max-w-3xl mx-auto flex flex-col gap-1.5 sm:gap-2">
             <div
               role="toolbar"
