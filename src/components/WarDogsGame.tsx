@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { createGame, fire, setWeapon, step } from "@/game/engine";
+import { createGame, fire, jumpDog, moveDog, MOVE_BUDGET, setWeapon, step } from "@/game/engine";
 import { render, markTerrainDirty } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -118,6 +118,7 @@ export function WarDogsGame({ mode, onExit }: Props) {
   const aiTriggeredRef = useRef(false);
   const powerHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
   const angleHoldRef = useRef<{ dir: 1 | -1; last: number } | null>(null);
+  const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
   const { scenario, setScenario, scenarios, difficulty, setDifficulty } = useScenario();
@@ -178,6 +179,9 @@ export function WarDogsGame({ mode, onExit }: Props) {
       }
       if (powerHoldRef.current) {
         s.power = Math.max(10, Math.min(100, s.power + powerHoldRef.current.dir * 55 * dt));
+      }
+      if (moveHoldRef.current && !(mode === "ai" && s.currentPlayer === 1)) {
+        moveDog(s, moveHoldRef.current.dir, dt);
       }
       step(s, dt);
       const ctx = canvas.getContext("2d")!;
@@ -252,6 +256,34 @@ export function WarDogsGame({ mode, onExit }: Props) {
     };
 
   }, [mode]);
+
+  // Keyboard: arrows to walk, space to jump, enter to fire
+  useEffect(() => {
+    const isAi = () => mode === "ai" && stateRef.current?.currentPlayer === 1;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const s = stateRef.current;
+      if (!s || isAi()) return;
+      if (e.repeat) return;
+      if (e.code === "ArrowLeft" || e.code === "KeyA") { e.preventDefault(); moveHoldRef.current = { dir: -1 }; }
+      else if (e.code === "ArrowRight" || e.code === "KeyD") { e.preventDefault(); moveHoldRef.current = { dir: 1 }; }
+      else if (e.code === "ArrowUp" || e.code === "KeyW") { e.preventDefault(); angleHoldRef.current = { dir: -1, last: 0 }; }
+      else if (e.code === "ArrowDown" || e.code === "KeyS") { e.preventDefault(); angleHoldRef.current = { dir: 1, last: 0 }; }
+      else if (e.code === "Space") { e.preventDefault(); jumpDog(s); }
+      else if (e.code === "Enter") { e.preventDefault(); fire(s); }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD") moveHoldRef.current = null;
+      if (e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "KeyW" || e.code === "KeyS") angleHoldRef.current = null;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [mode]);
+
+
 
   const s = stateRef.current;
   const teamA = teamSkin(0);
@@ -378,7 +410,16 @@ export function WarDogsGame({ mode, onExit }: Props) {
                 })}
               </div>
 
+              <MobilityBar
+                dog={s.dogs[s.currentPlayer]}
+                disabled={!hudVisible || isAiTurn}
+                onHold={(dir) => { moveHoldRef.current = { dir }; }}
+                onRelease={() => { moveHoldRef.current = null; }}
+                onJump={() => jumpDog(s)}
+              />
+
               <div className="flex flex-row items-stretch gap-1.5 sm:gap-2">
+
                 <div className={`panel px-2 py-1.5 flex-1 min-w-0 flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -507,6 +548,69 @@ function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: 
     </button>
   );
 }
+
+function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
+  dog: import("@/game/types").Dog;
+  disabled: boolean;
+  onHold: (dir: 1 | -1) => void;
+  onRelease: () => void;
+  onJump: () => void;
+}) {
+  const pct = Math.max(0, Math.min(100, (dog.moveBudget / MOVE_BUDGET) * 100));
+  const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
+  const canJump = !disabled && !dog.hasJumped && !dog.airborne;
+  return (
+    <div className={`panel px-2 py-1 flex items-center gap-2 ${disabled ? "opacity-70" : ""}`}>
+      <div className="flex items-center gap-1 shrink-0">
+        <MoveHoldButton disabled={!canMove} onHold={() => onHold(-1)} onRelease={onRelease} label="Andar esquerda">◀</MoveHoldButton>
+        <MoveHoldButton disabled={!canMove} onHold={() => onHold(1)} onRelease={onRelease} label="Andar direita">▶</MoveHoldButton>
+      </div>
+      <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+        <div className="flex justify-between items-baseline">
+          <span className="stencil text-[9px] text-muted-foreground leading-none">MOVIMENTO</span>
+          <span className="stencil text-[10px] leading-none tabular-nums" style={{ color: "var(--accent)" }}>{Math.round(pct)}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-black/40 overflow-hidden border border-white/5">
+          <div
+            className="h-full rounded-full transition-[width] duration-100"
+            style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--team-green), var(--accent))" }}
+          />
+        </div>
+      </div>
+      <button
+        disabled={!canJump}
+        onClick={onJump}
+        aria-label="Pular"
+        title={dog.hasJumped ? "Pulo já usado neste turno" : "Pular (Espaço)"}
+        className="btn-hud !px-2 !py-1 !text-[11px] leading-none min-h-[36px] disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+      >
+        ⇧ PULO
+      </button>
+    </div>
+  );
+}
+
+function MoveHoldButton({ children, onHold, onRelease, disabled, label }: {
+  children: React.ReactNode; onHold: () => void; onRelease: () => void; disabled?: boolean; label: string;
+}) {
+  const [held, setHeld] = useState(false);
+  const down = (e: React.PointerEvent) => { if (disabled) return; e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(); };
+  const up = () => { setHeld(false); onRelease(); };
+  return (
+    <button
+      aria-label={label}
+      disabled={disabled}
+      className={`btn-hud btn-hud-ghost !px-2 !py-1 !text-sm leading-none min-w-[36px] min-h-[36px] ${held ? "hold-active" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerLeave={up}
+      onPointerCancel={up}
+    >
+      {children}
+    </button>
+  );
+}
+
 
 
 export type { WeaponId };

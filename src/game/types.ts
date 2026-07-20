@@ -33,6 +33,8 @@ export interface Dog {
   aliveTicks: number;
   airborne?: boolean;
   fallStartY?: number;
+  moveBudget: number;
+  hasJumped: boolean;
 }
 
 export interface Projectile {
