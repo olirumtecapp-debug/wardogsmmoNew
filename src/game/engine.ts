@@ -202,10 +202,13 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
   state.explosions.push({ x, y, radius, age: 0, maxAge: 0.45, particles });
 }
 
-export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number) {
+export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
   destroyTerrain(state, x, y, radius);
   state.scorchMarks.push({ x, y, radius: radius * 1.05, life: 6, maxLife: 6 });
   state.onExplosion?.(x, y, radius);
+  // Shooter (if any) for rage accumulation
+  const shooter = ownerTeam !== undefined ? state.dogs.find(d => d.team === ownerTeam) : undefined;
+  const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
   let totalDamage = 0;
   let hits = 0;
   const stackOffsets = new Map<number, number>();
@@ -215,7 +218,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < radius + 14) {
       const falloff = Math.max(0, 1 - dist / (radius + 14));
-      const dmg = Math.round(damage * falloff * dog.defense);
+      const dmg = Math.round(damage * dmgMult * falloff * dog.defense);
       dog.hp = Math.max(0, dog.hp - dmg);
       const push = falloff * 180;
       dog.vy = -Math.abs(push * 0.6) - 40;
@@ -234,7 +237,15 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         value: dmg > 0 ? `-${dmg}` : "0",
         color, size,
       });
-      if (dmg > 0) { totalDamage += dmg; hits++; }
+      if (dmg > 0) {
+        totalDamage += dmg;
+        hits++;
+        // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
+        if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
+          const gain = dmg >= 31 ? 70 : dmg >= 16 ? 45 : 25;
+          shooter.rageCharge = Math.min(100, shooter.rageCharge + gain);
+        }
+      }
     }
   }
   if (hits > 1) {
@@ -245,6 +256,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     });
   }
 }
+
 
 // Robust "supported" check: sample a window across the dog's feet
 function isSupported(state: GameState, dog: Dog): boolean {
