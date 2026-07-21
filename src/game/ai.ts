@@ -1,6 +1,6 @@
 import type { GameState, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER } from "./weapons";
-import { activateRage, fire, RAGE_READY_THRESHOLD } from "./engine";
+import { activateRage, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD } from "./engine";
 import { getAIDifficulty } from "./scenarioContext";
 
 // Difficulty-aware AI.
@@ -21,6 +21,48 @@ export function aiTakeTurn(state: GameState) {
   }
 
   const diff = getAIDifficulty();
+
+  // ------- Reposicionamento tático (andar + pular) -------
+  // Todos os níveis podem se movimentar, mas com limites diferentes:
+  //  recruit  → move raro e curto, pulo ocasional
+  //  sergeant → move moderado quando muito longe/perto
+  //  general  → move calculado buscando distância ideal
+  const dx = enemy.x - me.x;
+  const absDx = Math.abs(dx);
+  const moveChance = diff === "recruit" ? 0.35 : diff === "sergeant" ? 0.6 : 0.75;
+  const jumpChance = diff === "recruit" ? 0.15 : diff === "sergeant" ? 0.25 : 0.35;
+
+  if (!me.airborne && me.moveBudget > 8 && Math.random() < moveChance) {
+    // Distância ideal por nível: mais curta = mais precisa
+    const idealMin = diff === "general" ? 220 : diff === "sergeant" ? 260 : 300;
+    const idealMax = diff === "general" ? 380 : diff === "sergeant" ? 440 : 520;
+    let dir: 1 | -1 = dx > 0 ? 1 : -1;
+    let want = 0;
+    if (absDx < idealMin) { dir = dx > 0 ? -1 : 1; want = idealMin - absDx; }
+    else if (absDx > idealMax) { dir = dx > 0 ? 1 : -1; want = absDx - idealMax; }
+    if (want > 12) {
+      // Limita gasto por turno: recruit ≤40%, sergeant ≤60%, general ≤80% do budget
+      const cap = me.moveBudget * (diff === "recruit" ? 0.4 : diff === "sergeant" ? 0.6 : 0.8);
+      const steps = Math.min(want, cap);
+      // aplica em vários frames curtos (~120 ms cada) para simular caminhada
+      const chunks = Math.max(1, Math.ceil(steps / 40));
+      let done = 0;
+      const walk = () => {
+        if (state.phase !== "aiming" || done >= chunks) return;
+        moveDog(state, dir, 0.12);
+        done++;
+        setTimeout(walk, 120);
+      };
+      walk();
+    }
+  }
+
+  // Pulo tático — só se ainda não pulou; ajuda em terreno irregular
+  if (!me.hasJumped && !me.airborne && Math.random() < jumpChance) {
+    setTimeout(() => { if (state.phase === "aiming") jumpDog(state); }, 400);
+  }
+
+
 
   // ---------- RECRUIT ----------
   if (diff === "recruit") {
