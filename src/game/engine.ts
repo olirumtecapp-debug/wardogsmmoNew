@@ -426,6 +426,7 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
     });
   }
   state.explosions.push({ x, y, radius, age: 0, maxAge: 0.45, particles });
+  if (radius >= 10) playSfx("explosion", Math.min(1.2, radius / 60));
 }
 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
