@@ -1048,6 +1048,7 @@ export function activateRage(state: GameState): "activated" | "queued" | "low" |
     id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
     life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
   });
+  playSfx("rage");
   return "activated";
 }
 
