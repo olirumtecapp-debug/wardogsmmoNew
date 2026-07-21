@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { HelpCircle, X, Maximize2 } from "lucide-react";
+import { HelpCircle, X, Maximize2, Volume2, VolumeX } from "lucide-react";
+import { audio, playSfx } from "@/game/audio";
+import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
