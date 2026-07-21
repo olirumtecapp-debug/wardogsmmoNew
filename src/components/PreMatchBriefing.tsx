@@ -176,7 +176,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
   return (
     <div className="fixed inset-0 overflow-auto bg-[#0b0f16]">
-      <div className="min-h-screen flex flex-col p-3 sm:p-4 gap-3 max-w-3xl mx-auto w-full">
+      <div className="min-h-dvh flex flex-col p-3 sm:p-4 gap-3 max-w-3xl mx-auto w-full">
         <header className="flex items-center justify-between gap-3 shrink-0">
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Briefing</div>

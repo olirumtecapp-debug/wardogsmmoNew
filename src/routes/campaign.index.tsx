@@ -41,7 +41,7 @@ function CampaignMap() {
 
   return (
     <OrientationGate soft>
-      <div className="relative min-h-screen overflow-auto flex flex-col">
+      <div className="relative min-h-dvh overflow-auto flex flex-col">
         <div
           className="fixed inset-0 -z-20"
           style={{

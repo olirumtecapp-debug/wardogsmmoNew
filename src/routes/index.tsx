@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { HelpCircle, X } from "lucide-react";
+import { HelpCircle, X, Maximize2 } from "lucide-react";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { PreMatchBriefing } from "@/components/PreMatchBriefing";
 import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import { getActiveScenario } from "@/game/scenarios";
+import { useFullscreen, requestFullscreenNow } from "@/hooks/useFullscreen";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
 import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
@@ -31,6 +32,7 @@ function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showHowTo, setShowHowTo] = useState(false);
   const navigate = useNavigate();
+  const { isFullscreen, isMobile, supported: fsSupported } = useFullscreen();
 
   useEffect(() => {
     if (!showHowTo) return;
@@ -85,11 +87,17 @@ function Home() {
   }
 
 
-  const pickMode = (mode: GameMode) => setStage({ kind: "briefing", mode });
+  const pickMode = (mode: GameMode) => {
+    // User gesture — safe to request fullscreen on Android/Chrome.
+    if (isMobile && fsSupported && !isFullscreen) {
+      void requestFullscreenNow();
+    }
+    setStage({ kind: "briefing", mode });
+  };
 
   return (
     <OrientationGate soft>
-    <div className="relative min-h-screen overflow-hidden flex flex-col">
+    <div className="relative min-h-dvh overflow-hidden flex flex-col safe-pad">
       {/* Background layer — key art */}
       <div
         className="fixed inset-0 -z-30"
@@ -148,14 +156,26 @@ function Home() {
         </div>
 
 
-        {/* Botão discreto — Como Jogar */}
-        <button
-          onClick={() => setShowHowTo(true)}
-          className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-        >
-          <HelpCircle size={14} />
-          Como jogar
-        </button>
+        {/* Botões discretos — Como Jogar + Tela Cheia */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowHowTo(true)}
+            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
+          >
+            <HelpCircle size={14} />
+            Como jogar
+          </button>
+          {isMobile && fsSupported && !isFullscreen && (
+            <button
+              onClick={() => void requestFullscreenNow()}
+              className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
+              aria-label="Tela cheia"
+            >
+              <Maximize2 size={14} />
+              Tela cheia
+            </button>
+          )}
+        </div>
       </main>
 
 

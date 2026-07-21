@@ -29,7 +29,7 @@ export const Route = createFileRoute("/campaign/$missionId")({
   }),
   component: MissionPage,
   notFoundComponent: () => (
-    <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+    <div className="min-h-dvh flex items-center justify-center text-muted-foreground">
       Missão não encontrada. <Link to="/campaign" className="btn-hud ml-2 text-xs px-2 py-1">Voltar</Link>
     </div>
   ),
@@ -44,7 +44,7 @@ function MissionPage() {
 
   if (!mission) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div className="min-h-dvh flex items-center justify-center text-muted-foreground">
         Missão não encontrada.
         <Link to="/campaign" className="btn-hud ml-2 text-xs px-2 py-1">Voltar</Link>
       </div>
@@ -114,7 +114,7 @@ function MissionPage() {
   // Briefing
   return (
     <OrientationGate soft>
-      <div className="relative min-h-screen overflow-auto">
+      <div className="relative min-h-dvh overflow-auto">
         <div
           className="fixed inset-0 -z-20"
           style={{
