@@ -816,10 +816,16 @@ export function step(state: GameState, dt: number) {
       p.vx += state.wind * 40 * dt * windMul;
     }
 
+    const prevAge = p.age - dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
     if (p.trail.length > 24) p.trail.shift();
+
+    // Whistle for rocket/mortar in flight (once, after 0.5s airborne)
+    if (prevAge < 0.5 && p.age >= 0.5 && (w.id === "bazooka" || w.id === "rpg" || w.id === "artillery" || w.id === "airstrike")) {
+      playSfx("whistle", 0.9);
+    }
 
     if (w.id === "rpg" && Math.random() < 0.9) {
       state.explosions.push({
