@@ -33,8 +33,34 @@ type Stage =
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showAudio, setShowAudio] = useState(false);
+  const [muted, setMuted] = useState(() => audio.getSettings().muted);
   const navigate = useNavigate();
   const { isFullscreen, isMobile, supported: fsSupported } = useFullscreen();
+
+  // Init audio on first pointer/keyboard interaction (browser autoplay policy).
+  useEffect(() => {
+    const kick = () => {
+      audio.ensure();
+      if (stage.kind === "menu") audio.playMusic("menu");
+    };
+    window.addEventListener("pointerdown", kick, { once: true });
+    window.addEventListener("keydown", kick, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", kick);
+      window.removeEventListener("keydown", kick);
+    };
+  }, [stage.kind]);
+
+  // Track mute state
+  useEffect(() => audio.subscribe((s) => setMuted(s.muted)), []);
+
+  // Menu music when returning to menu
+  useEffect(() => {
+    if (stage.kind === "menu") audio.playMusic("menu");
+    else if (stage.kind === "playing") audio.playMusic("combat");
+  }, [stage.kind]);
+
 
   useEffect(() => {
     if (!showHowTo) return;
