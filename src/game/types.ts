@@ -34,10 +34,9 @@ export interface Barricade {
   y: number;      // top-left
   w: number;
   h: number;
-  hp: number;
-  maxHp: number;
   kind: BarricadeKind;
 }
+
 
 export interface Dog {
   x: number;

@@ -85,10 +85,10 @@ export function createGame(
 function spawnBarricades(
   terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
 ): Barricade[] {
-  const kinds: { k: BarricadeKind; w: number; h: number; hp: number }[] = [
-    { k: "concrete", w: 40, h: 60, hp: 120 },
-    { k: "sandbag", w: 50, h: 24, hp: 60 },
-    { k: "container", w: 70, h: 40, hp: 90 },
+  const kinds: { k: BarricadeKind; w: number; h: number }[] = [
+    { k: "concrete", w: 40, h: 60 },
+    { k: "sandbag", w: 50, h: 24 },
+    { k: "container", w: 70, h: 40 },
   ];
   const out: Barricade[] = [];
   const count = 3 + Math.floor(rng() * 3); // 3..5
@@ -114,12 +114,12 @@ function spawnBarricades(
     if (overlap) continue;
     out.push({
       id: `b${out.length}_${Math.floor(rng() * 1e6)}`,
-      x, y, w: spec.w, h: spec.h,
-      hp: spec.hp, maxHp: spec.hp, kind: spec.k,
+      x, y, w: spec.w, h: spec.h, kind: spec.k,
     });
   }
   return out;
 }
+
 
 
 function generateTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
@@ -304,8 +304,10 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
   destroyTerrain(state, x, y, radius);
+  erodeBarricades(state, x, y, radius);
   state.scorchMarks.push({ x, y, radius: radius * 1.05, life: 6, maxLife: 6 });
   state.onExplosion?.(x, y, radius);
+
   // Shooter (if any) for rage accumulation
   const shooter = ownerTeam !== undefined ? state.dogs.find(d => d.team === ownerTeam) : undefined;
   const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
@@ -371,7 +373,6 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 // Barricade AABB helpers
 export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
     if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
   }
   return null;
@@ -379,7 +380,6 @@ export function barricadeAt(state: GameState, x: number, y: number): Barricade |
 
 function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
     if (x >= b.x - 1 && x <= b.x + b.w + 1 && y >= b.y - tol && y <= b.y + 2) return b;
   }
   return null;
@@ -399,13 +399,43 @@ function isSupported(state: GameState, dog: Dog): boolean {
 function surfaceOrBarricadeY(state: GameState, x: number): number {
   let sy = surfaceY(state.terrain, state.width, state.height, x);
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
     if (x >= b.x && x <= b.x + b.w) {
       if (b.y < sy) sy = b.y;
     }
   }
   return sy;
 }
+
+// Erode barricades hit by an explosion: shrink from the side facing the blast.
+function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
+  for (let i = state.barricades.length - 1; i >= 0; i--) {
+    const b = state.barricades[i];
+    const bcx = b.x + b.w / 2;
+    const bcy = b.y + b.h / 2;
+    const dx = cx - bcx;
+    const dy = cy - bcy;
+    // Skip if bounding box is far outside blast radius
+    if (Math.abs(dx) > r + b.w / 2 && Math.abs(dy) > r + b.h / 2) continue;
+    // Trim along the dominant axis toward the explosion center
+    if (Math.abs(dx) * b.h > Math.abs(dy) * b.w) {
+      const trim = Math.min(b.w, Math.max(4, Math.round(r * 0.9)));
+      if (dx > 0) {
+        b.w -= trim; // hit from right → shrink right side
+      } else {
+        b.x += trim; b.w -= trim; // hit from left → shrink left side
+      }
+    } else {
+      const trim = Math.min(b.h, Math.max(4, Math.round(r * 0.9)));
+      if (dy > 0) {
+        b.h -= trim; // hit from below → shrink bottom
+      } else {
+        b.y += trim; b.h -= trim; // hit from above → shrink top
+      }
+    }
+    if (b.w < 8 || b.h < 8) state.barricades.splice(i, 1);
+  }
+}
+
 
 // How many solid pixels exist in a short vertical window just below the dog's feet.
 function columnDepth(state: GameState, x: number, fromY: number, span = 24): number {
@@ -623,26 +653,18 @@ export function step(state: GameState, dt: number) {
       state.projectiles.splice(i, 1); continue;
     }
 
-    // Barricade hit — absorb damage, chip HP, then explode/bounce
+    // Barricade hit — behave exactly like terrain: bounce for grenade/frag, explode otherwise.
+    // Erosion of the barricade happens through the explosion (see erodeBarricades).
     const hitBarricade = !exploded ? barricadeAt(state, p.x, p.y) : null;
     if (hitBarricade) {
-      const absorb = hitBarricade.kind === "concrete" ? 0.5 : hitBarricade.kind === "container" ? 0.7 : 0.9;
-      hitBarricade.hp -= Math.max(6, Math.round(w.damage * absorb));
-      if (hitBarricade.hp <= 0) {
-        spawnExplosion(state, hitBarricade.x + hitBarricade.w / 2, hitBarricade.y + hitBarricade.h / 2, 30, "#a0a0a8");
-        state.floatingTexts.push({
-          id: Math.random(), x: hitBarricade.x + hitBarricade.w / 2, y: hitBarricade.y - 6,
-          vx: 0, vy: -60, life: 1.2, maxLife: 1.2, value: "DESTRUÍDA", color: "#ffb84a", size: 16,
-        });
-      }
       if (w.id === "grenade" || w.id === "frag") {
-        // bounce off face
         p.x -= p.vx * dt * 1.2; p.y -= p.vy * dt * 1.2;
         p.vx = -p.vx * 0.5; p.vy = -p.vy * 0.5;
       } else {
         exploded = true;
       }
     }
+
 
     if (!exploded && terrainAt(state, p.x, p.y)) {
       if (w.id === "grenade" || w.id === "frag") {
