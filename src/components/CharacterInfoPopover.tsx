@@ -17,7 +17,7 @@ const STAT_META: { key: "hp" | "mob" | "jump" | "def"; icon: string; label: stri
 ];
 
 const POPOVER_W = 224; // 14rem
-const GUTTER = 8;
+const GUTTER = 12;
 
 export function CharacterInfoPopover({ charId, children, placement = "top" }: Props) {
   const c = CHARACTERS[charId];
@@ -25,6 +25,7 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
   const color = c.skin.teamColor;
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ left: number; top: number } | null>(null);
+  const [measured, setMeasured] = useState(false);
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const popRef = useRef<HTMLDivElement | null>(null);
   const lpTimer = useRef<number | null>(null);
@@ -37,28 +38,46 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const w = Math.min(POPOVER_W, vw - GUTTER * 2);
-    const h = popRef.current?.offsetHeight ?? 180;
+    const clientW = document.documentElement.clientWidth || window.innerWidth;
+    const clientH = document.documentElement.clientHeight || window.innerHeight;
+    const maxW = Math.min(POPOVER_W, clientW - GUTTER * 2);
+    const popRect = popRef.current?.getBoundingClientRect();
+    const w = popRect?.width ? Math.min(popRect.width, maxW) : maxW;
+    const h = popRect?.height ?? 180;
     const spaceTop = r.top;
-    const spaceBottom = vh - r.bottom;
-    const flipToBottom = placement === "top" ? spaceTop < h + GUTTER && spaceBottom > spaceTop : spaceBottom >= h + GUTTER || spaceBottom > spaceTop;
-    const top = flipToBottom ? Math.min(vh - h - GUTTER, r.bottom + 6) : Math.max(GUTTER, r.top - h - 6);
+    const spaceBottom = clientH - r.bottom;
+    const flipToBottom = placement === "top"
+      ? spaceTop < h + GUTTER && spaceBottom > spaceTop
+      : spaceBottom >= h + GUTTER || spaceBottom > spaceTop;
+    const top = flipToBottom
+      ? Math.min(clientH - h - GUTTER, r.bottom + 6)
+      : Math.max(GUTTER, r.top - h - 6);
     const centerX = r.left + r.width / 2 - w / 2;
-    const left = Math.max(GUTTER, Math.min(centerX, vw - w - GUTTER));
+    const left = Math.max(GUTTER, Math.min(centerX, clientW - w - GUTTER));
     setCoords({ left, top });
+    if (popRect) setMeasured(true);
   };
 
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setMeasured(false);
+      return;
+    }
     compute();
+    const raf = requestAnimationFrame(() => compute());
     const onScroll = () => compute();
     window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", onScroll);
+    let ro: ResizeObserver | null = null;
+    if (popRef.current && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => compute());
+      ro.observe(popRef.current);
+    }
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onScroll);
+      ro?.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -78,7 +97,11 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
     window.setTimeout(() => setOpen(false), 2200);
   };
 
-  const width = Math.min(POPOVER_W, typeof window !== "undefined" ? window.innerWidth - GUTTER * 2 : POPOVER_W);
+  const clientW = typeof document !== "undefined"
+    ? (document.documentElement.clientWidth || window.innerWidth)
+    : POPOVER_W + GUTTER * 2;
+  const width = Math.min(POPOVER_W, clientW - GUTTER * 2);
+
 
   return (
     <div
@@ -95,8 +118,9 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
         <div
           ref={popRef}
           className="pointer-events-none fixed z-[100]"
-          style={{ left: coords.left, top: coords.top, width }}
+          style={{ left: coords.left, top: coords.top, width, visibility: measured ? "visible" : "hidden" }}
         >
+
           <div
             className="panel p-2 text-left shadow-xl card-in overflow-hidden"
             style={{ borderColor: color, boxShadow: `0 6px 20px rgba(0,0,0,0.6), 0 0 0 1px ${color}88` }}
