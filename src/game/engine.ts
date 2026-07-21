@@ -227,6 +227,17 @@ export function fire(state: GameState) {
   if (state.phase !== "aiming") return;
   const weapon = WEAPONS[state.weapon];
   if (state.ammo[state.weapon] === 0) return;
+
+  // Teleport is a utility weapon — requires a valid target picked beforehand.
+  if (weapon.id === "teleport") {
+    const t = state.teleportAiming;
+    if (!t || !t.valid) return;
+    if (state.ammo[state.weapon] > 0) state.ammo[state.weapon]--;
+    executeTeleport(state, t.x, t.y);
+    state.teleportAiming = null;
+    return;
+  }
+
   if (state.chaosWind) {
     const sc = getActiveScenario();
     state.wind = (Math.random() - 0.5) * 2 * Math.max(1, sc.windScale);
