@@ -327,7 +327,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
       {picker === "p1" && (
         <PickerModal title="Escolher Jogador 1" onClose={close}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {CHARACTER_LIST.map(c => (
               <CharCard key={`p1-${c.id}`} charId={c.id} active={p1 === c.id} onSelect={() => { setP1(c.id); close(); }} />
             ))}
@@ -337,7 +337,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
       {picker === "p2" && (
         <PickerModal title={mode === "ai" ? "Escolher IA" : "Escolher Jogador 2"} onClose={close}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {CHARACTER_LIST.map(c => (
               <CharCard key={`p2-${c.id}`} charId={c.id} active={p2 === c.id} onSelect={() => { setP2(c.id); close(); }} />
             ))}
