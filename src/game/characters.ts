@@ -30,7 +30,11 @@ export interface Character {
   breed: string;
   tagline: string;
   portraitUrl: string;
+  comicPortraitUrl: string;
   stats: CharacterStats;
+  skin: TeamSkin;
+  tier: CharacterTier;
+}
   skin: TeamSkin;
   tier: CharacterTier;
 }
