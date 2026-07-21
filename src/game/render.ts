@@ -1614,26 +1614,51 @@ function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
 
 
 function drawTeleportAim(ctx: CanvasRenderingContext2D, state: GameState, now: number) {
+  // Only draw teleport UI while the teleport weapon is actively selected and
+  // the current player is aiming — avoids stale visuals on other turns.
+  if (state.weapon !== "teleport" || state.phase !== "aiming") return;
+  const dog = state.dogs[state.currentPlayer];
+  if (!dog || dog.hp <= 0) return;
+  const maxR = Math.min(320, state.width * 0.5);
+
+  // Max-range disk around the dog (always visible while aiming teleport).
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#38f0ff";
+  ctx.beginPath(); ctx.arc(dog.x, dog.y - 6, maxR, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.55;
+  ctx.setLineDash([4, 4]);
+  ctx.lineDashOffset = -now * 30;
+  ctx.strokeStyle = "#7ff0ff";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(dog.x, dog.y - 6, maxR, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
   const t = state.teleportAiming;
   if (!t) return;
   const color = t.valid ? "#38f0ff" : "#ff5a5a";
-  const dog = state.dogs[state.currentPlayer];
   ctx.save();
   ctx.strokeStyle = color;
   ctx.setLineDash([6, 4]);
   ctx.lineWidth = 1.5;
-  ctx.globalAlpha = 0.7;
+  ctx.globalAlpha = 0.75;
   ctx.beginPath();
   ctx.moveTo(dog.x, dog.y - 10);
   ctx.lineTo(t.x, t.y);
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
-  const pulse = 14 + Math.sin(now * 6) * 3;
+  // Portal-like pulsing target
+  const pulse = 16 + Math.sin(now * 6) * 3;
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(t.x, t.y, pulse, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(t.x - 20, t.y); ctx.lineTo(t.x + 20, t.y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(t.x, t.y - 20); ctx.lineTo(t.x, t.y + 20); ctx.stroke();
+  ctx.globalAlpha = 0.45;
+  ctx.beginPath(); ctx.arc(t.x, t.y, pulse * 0.55, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.moveTo(t.x - 22, t.y); ctx.lineTo(t.x + 22, t.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(t.x, t.y - 22); ctx.lineTo(t.x, t.y + 22); ctx.stroke();
   ctx.restore();
 }
+
