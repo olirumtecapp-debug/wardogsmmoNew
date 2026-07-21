@@ -410,6 +410,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   }
   ctx.restore();
 
+  // Teleport aiming reticle
+  drawTeleportAim(ctx, state, now);
+
 
   // Aim indicator
   if (state.phase === "aiming" && state.winner === null) {
