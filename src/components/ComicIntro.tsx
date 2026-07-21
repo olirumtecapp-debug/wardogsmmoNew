@@ -180,7 +180,7 @@ function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean;
         <div
           className="stencil font-black leading-none"
           style={{
-            fontSize: "clamp(72px, 18vw, 180px)",
+            fontSize: "clamp(40px, 12vw, 160px)",
             color: "#fff",
             textShadow: `4px 4px 0 #000, 8px 8px 0 ${colorA}, -4px -4px 0 ${colorB}`,
             letterSpacing: "0.05em",
