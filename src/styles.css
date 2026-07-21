@@ -37,6 +37,8 @@
   --color-warn: var(--warn);
   --font-stencil: "Black Ops One", system-ui, sans-serif;
   --font-body: "Chakra Petch", "Rajdhani", system-ui, sans-serif;
+  --font-comic: "Comic Neue", "Comic Sans MS", system-ui, sans-serif;
+  --font-comic-title: "Bangers", "Black Ops One", system-ui, sans-serif;
 }
 
 :root {
