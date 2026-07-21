@@ -1561,54 +1561,73 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
 
 // ============ Barricades & Teleport ============
 
+function drawBarricadePattern(ctx: CanvasRenderingContext2D, kind: string, w: number, h: number) {
+  if (kind === "concrete") {
+    ctx.fillStyle = "#6b6b74";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#83838d";
+    ctx.fillRect(0, 0, w, 4);
+    ctx.strokeStyle = "#2a2a2f";
+    ctx.lineWidth = 1;
+    for (let yy = 10; yy < h; yy += 10) {
+      ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w, yy); ctx.stroke();
+    }
+  } else if (kind === "sandbag") {
+    ctx.fillStyle = "#8a6f3f";
+    const rows = 3;
+    const rh = h / rows;
+    for (let r = 0; r < rows; r++) {
+      const off = (r % 2) * 8;
+      for (let x = -4 + off; x < w; x += 16) {
+        ctx.beginPath();
+        ctx.ellipse(x + 8, rh * r + rh / 2, 9, rh / 2 - 1, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.strokeRect(0, 0, w, h);
+  } else {
+    // container
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#c93a2a");
+    g.addColorStop(1, "#7a1c12");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#3a0a05";
+    ctx.lineWidth = 2;
+    for (let x = 6; x < w; x += 8) {
+      ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x, h - 2); ctx.stroke();
+    }
+    ctx.strokeRect(0, 0, w, h);
+  }
+}
+
+function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
+  if (b._canvas && !b._dirty) return;
+  const c = b._canvas ?? document.createElement("canvas");
+  c.width = b.w0; c.height = b.h0;
+  const cx = c.getContext("2d");
+  if (!cx) return;
+  cx.clearRect(0, 0, c.width, c.height);
+  drawBarricadePattern(cx, b.kind, b.w0, b.h0);
+  // Punch holes where mask=0 by zeroing the alpha channel.
+  const img = cx.getImageData(0, 0, c.width, c.height);
+  const data = img.data;
+  const mask = b.mask;
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i]) data[i * 4 + 3] = 0;
+  }
+  cx.putImageData(img, 0, 0);
+  b._canvas = c;
+  b._dirty = false;
+}
+
 function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const b of state.barricades) {
     if (b.w < 4 || b.h < 4) continue;
-    ctx.save();
-    // Clip drawing to the current (possibly eroded) rectangle so patterns
-    // don't spill outside as the barricade shrinks.
-    ctx.beginPath();
-    ctx.rect(b.x, b.y, b.w, b.h);
-    ctx.clip();
-    if (b.kind === "concrete") {
-      ctx.fillStyle = "#6b6b74";
-      ctx.fillRect(b.x, b.y, b.w, b.h);
-      ctx.fillStyle = "#83838d";
-      ctx.fillRect(b.x, b.y, b.w, 4);
-      ctx.strokeStyle = "#2a2a2f";
-      ctx.lineWidth = 1;
-      for (let yy = b.y + 10; yy < b.y + b.h; yy += 10) {
-        ctx.beginPath(); ctx.moveTo(b.x, yy); ctx.lineTo(b.x + b.w, yy); ctx.stroke();
-      }
-    } else if (b.kind === "sandbag") {
-      ctx.fillStyle = "#8a6f3f";
-      const rows = 3;
-      const rh = b.h / rows;
-      for (let r = 0; r < rows; r++) {
-        const off = (r % 2) * 8;
-        for (let x = b.x - 4 + off; x < b.x + b.w; x += 16) {
-          ctx.beginPath();
-          ctx.ellipse(x + 8, b.y + rh * r + rh / 2, 9, rh / 2 - 1, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.strokeRect(b.x, b.y, b.w, b.h);
-    } else {
-      // container
-      const g = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
-      g.addColorStop(0, "#c93a2a");
-      g.addColorStop(1, "#7a1c12");
-      ctx.fillStyle = g;
-      ctx.fillRect(b.x, b.y, b.w, b.h);
-      ctx.strokeStyle = "#3a0a05";
-      ctx.lineWidth = 2;
-      for (let x = b.x + 6; x < b.x + b.w; x += 8) {
-        ctx.beginPath(); ctx.moveTo(x, b.y + 2); ctx.lineTo(x, b.y + b.h - 2); ctx.stroke();
-      }
-      ctx.strokeRect(b.x, b.y, b.w, b.h);
-    }
-    ctx.restore();
+    ensureBarricadeCanvas(b);
+    if (!b._canvas) continue;
+    ctx.drawImage(b._canvas, b.x0, b.y0);
   }
 }
 
