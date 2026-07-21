@@ -30,11 +30,21 @@ export type BarricadeKind = "concrete" | "sandbag" | "container";
 
 export interface Barricade {
   id: string;
-  x: number;      // top-left
-  y: number;      // top-left
+  // Effective bounding box (shrinks as the barricade erodes).
+  x: number;
+  y: number;
   w: number;
   h: number;
+  // Original bounding box + destruction mask (1 byte per original pixel; 1=solid, 0=destroyed).
+  x0: number;
+  y0: number;
+  w0: number;
+  h0: number;
+  mask: Uint8Array;
   kind: BarricadeKind;
+  // Runtime-only render cache (not serialized).
+  _canvas?: HTMLCanvasElement;
+  _dirty?: boolean;
 }
 
 
