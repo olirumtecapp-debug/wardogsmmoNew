@@ -36,6 +36,8 @@ export interface Dog {
   aliveTicks: number;
   airborne?: boolean;
   fallStartY?: number;
+  rescueCooldown?: number;
+  unsupportedTicks?: number;
   moveBudget: number;
   moveMax: number;
   jumpScale: number;
