@@ -324,6 +324,43 @@ function isSupported(state: GameState, dog: Dog): boolean {
   return false;
 }
 
+// How many solid pixels exist in a short vertical window just below the dog's feet.
+function columnDepth(state: GameState, x: number, fromY: number, span = 24): number {
+  let count = 0;
+  for (let dy = 0; dy < span; dy++) {
+    if (terrainAt(state, x, fromY + dy)) count++;
+  }
+  return count;
+}
+
+// True when the dog has essentially no ground under it across a small horizontal window.
+function noGroundBeneath(state: GameState, dog: Dog): boolean {
+  let solid = 0;
+  for (let dx = -6; dx <= 6; dx += 2) {
+    solid += columnDepth(state, dog.x + dx, dog.y + 19, 20);
+  }
+  return solid < 6;
+}
+
+// Find a safe rescue column: solid depth >= 12px, headroom >= 30px, far from the current x.
+function findRescueColumn(state: GameState, dog: Dog): number {
+  let best = dog.x;
+  let bestScore = -Infinity;
+  for (let x = 24; x < state.width - 24; x += 6) {
+    const sy = surfaceY(state.terrain, state.width, state.height, x);
+    if (sy >= state.terrainBottom - 4) continue;
+    const depth = columnDepth(state, x, sy, 24);
+    if (depth < 12) continue;
+    if (sy < 40) continue; // headroom
+    const dist = Math.abs(x - dog.x);
+    if (dist < 40) continue;
+    // Prefer nearer safe columns but require the min distance above.
+    const score = -dist + depth * 0.5;
+    if (score > bestScore) { bestScore = score; best = x; }
+  }
+  return best;
+}
+
 export function step(state: GameState, dt: number) {
   const scGravity = getActiveScenario().gravityScale;
   if (state.matchStartGrace && state.matchStartGrace > 0) {
@@ -335,78 +372,120 @@ export function step(state: GameState, dt: number) {
   for (const dog of state.dogs) {
     if (dog.hp <= 0) continue;
     dog.aliveTicks++;
+    if (dog.rescueCooldown && dog.rescueCooldown > 0) {
+      dog.rescueCooldown = Math.max(0, dog.rescueCooldown - dt);
+    }
 
-    const supported = isSupported(state, dog);
-    if (!supported) {
-      if (!dog.airborne) {
-        dog.airborne = true;
-        dog.fallStartY = dog.y;
-      }
-      dog.vy += GRAVITY * scGravity * dt;
-      dog.y += dog.vy * dt;
+    let rescuedThisFrame = false;
 
-      // land check
-      if (isSupported(state, dog)) {
-        const startY = dog.fallStartY ?? dog.y;
-        const fallDist = dog.y - startY;
-        // snap to surface
-        const sy = surfaceY(state.terrain, state.width, state.height, dog.x);
+    // Proactive rescue: no viable ground beneath — teleport before oscillation starts.
+    if (!state.matchStartGrace && !dog.rescueCooldown && noGroundBeneath(state, dog)) {
+      const rescueX = findRescueColumn(state, dog);
+      if (rescueX !== dog.x) {
+        const sy = surfaceY(state.terrain, state.width, state.height, rescueX);
+        dog.x = rescueX;
         dog.y = sy - 18;
         dog.vy = 0;
         dog.airborne = false;
         dog.fallStartY = undefined;
-        // Fall damage — no damage under 45px, then linear up to 60
-        if (fallDist > 45) {
-          const dmg = Math.min(60, Math.round((fallDist - 45) * 0.4 * dog.defense));
-          if (dmg > 0) {
-            dog.hp = Math.max(0, dog.hp - dmg);
-            state.floatingTexts.push({
-              id: Math.random(), x: dog.x, y: dog.y - 32,
-              vx: 0, vy: -70, life: 1.2, maxLife: 1.2,
-              value: `-${dmg} QUEDA`,
-              color: dmg >= 30 ? "#ff5238" : "#ffd93a",
-              size: dmg >= 30 ? 24 : 20,
-            });
-          }
-        }
+        dog.unsupportedTicks = 0;
+        dog.hasJumped = false;
+        dog.moveBudget = Math.max(dog.moveBudget, Math.round(dog.moveMax * 0.5));
+        dog.rescueCooldown = 1.2;
+        const dmg = Math.round(10 * dog.defense);
+        dog.hp = Math.max(1, dog.hp - dmg);
+        state.floatingTexts.push({
+          id: Math.random(), x: dog.x, y: dog.y - 32, vx: 0, vy: -70,
+          life: 1.4, maxLife: 1.4, value: `RESGATE -${dmg} HP`,
+          color: "#ffb84a", size: 18,
+        });
+        rescuedThisFrame = true;
       }
-    } else {
-      // resting — snap to surface, kill vy
-      dog.vy = 0;
-      dog.airborne = false;
-      dog.fallStartY = undefined;
-      const sy = surfaceY(state.terrain, state.width, state.height, dog.x);
-      if (Math.abs((sy - 18) - dog.y) > 2) dog.y = sy - 18;
     }
 
-    // Off-world rescue: teleport to nearest solid column with fall damage
-    const rescueThreshold = state.terrainBottom + 20;
-    if (!state.matchStartGrace && dog.y > rescueThreshold) {
-      let rescueX = dog.x;
-      let bestDist = Infinity;
-      for (let x = 20; x < state.width - 20; x += 6) {
-        const sy = surfaceY(state.terrain, state.width, state.height, x);
-        if (sy < state.terrainBottom - 4) {
-          const d = Math.abs(x - dog.x);
-          if (d < bestDist) { bestDist = d; rescueX = x; }
-        }
+    if (!rescuedThisFrame) {
+      const supported = isSupported(state, dog);
+      // Debounce: require 2 consecutive unsupported frames before entering airborne,
+      // preventing single-pixel oscillation on jagged crater edges.
+      if (!supported) {
+        dog.unsupportedTicks = (dog.unsupportedTicks ?? 0) + 1;
+      } else {
+        dog.unsupportedTicks = 0;
       }
-      const sy = surfaceY(state.terrain, state.width, state.height, rescueX);
-      dog.x = rescueX;
-      dog.y = sy - 18;
-      dog.vy = 0;
-      dog.airborne = false;
-      dog.fallStartY = undefined;
-      const dmg = Math.round(10 * dog.defense);
-      dog.hp = Math.max(1, dog.hp - dmg); // never lethal — protects against ground-collapse KO
-      state.floatingTexts.push({
-        id: Math.random(), x: dog.x, y: dog.y - 32, vx: 0, vy: -70,
-        life: 1.4, maxLife: 1.4, value: `RESGATE -${dmg} HP`,
-        color: "#ffb84a", size: 18,
-      });
+
+      const treatAirborne = (dog.unsupportedTicks ?? 0) >= 2 || (dog.airborne && !supported);
+
+      if (treatAirborne) {
+        if (!dog.airborne) {
+          dog.airborne = true;
+          dog.fallStartY = dog.y;
+        }
+        dog.vy += GRAVITY * scGravity * dt;
+        dog.y += dog.vy * dt;
+
+        // land check — only pouso real se coluna tem base sólida
+        if (isSupported(state, dog) && dog.vy >= 0) {
+          const beneath = columnDepth(state, dog.x, dog.y + 19, 12);
+          if (beneath >= 4) {
+            const startY = dog.fallStartY ?? dog.y;
+            const fallDist = dog.y - startY;
+            const sy = surfaceY(state.terrain, state.width, state.height, dog.x);
+            dog.y = sy - 18;
+            dog.vy = 0;
+            dog.airborne = false;
+            dog.fallStartY = undefined;
+            dog.unsupportedTicks = 0;
+            if (fallDist > 45) {
+              const dmg = Math.min(60, Math.round((fallDist - 45) * 0.4 * dog.defense));
+              if (dmg > 0) {
+                dog.hp = Math.max(0, dog.hp - dmg);
+                state.floatingTexts.push({
+                  id: Math.random(), x: dog.x, y: dog.y - 32,
+                  vx: 0, vy: -70, life: 1.2, maxLife: 1.2,
+                  value: `-${dmg} QUEDA`,
+                  color: dmg >= 30 ? "#ff5238" : "#ffd93a",
+                  size: dmg >= 30 ? 24 : 20,
+                });
+              }
+            }
+          }
+        }
+      } else if (supported) {
+        // resting — snap to surface, kill vy
+        dog.vy = 0;
+        dog.airborne = false;
+        dog.fallStartY = undefined;
+        const sy = surfaceY(state.terrain, state.width, state.height, dog.x);
+        if (Math.abs((sy - 18) - dog.y) > 2) dog.y = sy - 18;
+      }
+
+      // Off-world rescue (fell through everything)
+      const rescueThreshold = state.terrainBottom + 20;
+      if (!state.matchStartGrace && !dog.rescueCooldown && dog.y > rescueThreshold) {
+        const rescueX = findRescueColumn(state, dog);
+        const sy = surfaceY(state.terrain, state.width, state.height, rescueX);
+        dog.x = rescueX;
+        dog.y = sy - 18;
+        dog.vy = 0;
+        dog.airborne = false;
+        dog.fallStartY = undefined;
+        dog.unsupportedTicks = 0;
+        dog.hasJumped = false;
+        dog.moveBudget = Math.max(dog.moveBudget, Math.round(dog.moveMax * 0.5));
+        dog.rescueCooldown = 1.2;
+        const dmg = Math.round(10 * dog.defense);
+        dog.hp = Math.max(1, dog.hp - dmg);
+        state.floatingTexts.push({
+          id: Math.random(), x: dog.x, y: dog.y - 32, vx: 0, vy: -70,
+          life: 1.4, maxLife: 1.4, value: `RESGATE -${dmg} HP`,
+          color: "#ffb84a", size: 18,
+        });
+      }
     }
+
     dog.x = Math.max(10, Math.min(state.width - 10, dog.x));
   }
+
 
   // Airstrike marker fade
   if (state.airstrikeMarker) {
