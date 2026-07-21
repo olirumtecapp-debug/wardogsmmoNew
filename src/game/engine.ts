@@ -686,3 +686,45 @@ export function setWeapon(state: GameState, id: WeaponId) {
   if (state.ammo[id] === 0) return;
   state.weapon = id;
 }
+
+export const SPECIAL_READY_THRESHOLD = 100;
+
+/**
+ * Bombardeio Canino — ataque especial automático.
+ * Ao carregar 100%, spawn 8 projéteis do tipo airstrike caindo em cima do inimigo.
+ * Retorna "activated" | "low" | "unavailable".
+ */
+export function triggerCanineBarrage(state: GameState): "activated" | "low" | "unavailable" {
+  if (state.winner !== null || state.phase !== "aiming") return "unavailable";
+  const dog = state.dogs[state.currentPlayer];
+  if (!dog || dog.hp <= 0) return "unavailable";
+  if (dog.specialCharge < SPECIAL_READY_THRESHOLD) return "low";
+  const enemy = state.dogs[1 - state.currentPlayer];
+  if (!enemy) return "unavailable";
+  dog.specialCharge = 0;
+  state.phase = "firing";
+  state.message = "BOMBARDEIO CANINO!";
+  state.floatingTexts.push({
+    id: Math.random(), x: state.width / 2, y: 40, vx: 0, vy: 0,
+    life: 2.2, maxLife: 2.2, value: "⚡ BOMBARDEIO CANINO",
+    color: "#ffdc4a", size: 32,
+  });
+  const targetX = enemy.x;
+  state.airstrikeMarker = { x: targetX, life: 2.4 };
+  const spawnBomb = (k: number) => {
+    state.projectiles.push({
+      x: targetX + (k - 3.5) * 30 + (Math.random() - 0.5) * 20,
+      y: 20,
+      vx: (Math.random() - 0.5) * 30,
+      vy: 260,
+      weapon: "airstrike",
+      age: 0,
+      ownerTeam: state.currentPlayer,
+      trail: [],
+    });
+  };
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => spawnBomb(i), i * 180);
+  }
+  return "activated";
+}
