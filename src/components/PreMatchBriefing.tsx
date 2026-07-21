@@ -3,6 +3,7 @@ import { useScenario, type Difficulty } from "@/game/scenarioContext";
 import type { GameMode } from "@/game/types";
 import type { ScenarioId } from "@/game/scenarios";
 import { CHARACTER_LIST, CHARACTERS, characterBars, type CharacterId } from "@/game/characters";
+import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
 
 interface Props {
   mode: GameMode;
