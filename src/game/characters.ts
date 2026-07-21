@@ -118,6 +118,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Bulldog",
     tagline: "Tanque — encaixa dano, se move menos.",
     portraitUrl: brutusPortrait.url,
+    comicPortraitUrl: brutusSide.url,
     stats: { hp: 130, mobility: 80, jump: 0.8, defense: 0.75 },
     skin: BRUTUS,
     tier: "standard",
