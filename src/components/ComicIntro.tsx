@@ -63,7 +63,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             rotate={-1.2}
             bgStyle={bgStyle}
             side="left"
-            portrait={A.portraitUrl}
+            portrait={A.comicPortraitUrl ?? A.portraitUrl}
             name={A.name}
             color={A.skin.teamColor}
             text={dlg.challenge}
@@ -75,7 +75,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             rotate={1.4}
             bgStyle={bgStyle}
             side="right"
-            portrait={B.portraitUrl}
+            portrait={B.comicPortraitUrl ?? B.portraitUrl}
             name={B.name}
             color={B.skin.teamColor}
             text={dlg.reply}
