@@ -1563,9 +1563,13 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
 
 function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
+    if (b.w < 4 || b.h < 4) continue;
     ctx.save();
-    const hpT = Math.max(0, b.hp / b.maxHp);
+    // Clip drawing to the current (possibly eroded) rectangle so patterns
+    // don't spill outside as the barricade shrinks.
+    ctx.beginPath();
+    ctx.rect(b.x, b.y, b.w, b.h);
+    ctx.clip();
     if (b.kind === "concrete") {
       ctx.fillStyle = "#6b6b74";
       ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -1604,26 +1608,10 @@ function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
       }
       ctx.strokeRect(b.x, b.y, b.w, b.h);
     }
-    // damage cracks
-    if (hpT < 0.6) {
-      ctx.strokeStyle = `rgba(0,0,0,${0.4 + (1 - hpT) * 0.4})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(b.x + b.w * 0.2, b.y + 2);
-      ctx.lineTo(b.x + b.w * 0.35, b.y + b.h * 0.6);
-      ctx.lineTo(b.x + b.w * 0.55, b.y + b.h * 0.4);
-      ctx.lineTo(b.x + b.w * 0.75, b.y + b.h - 2);
-      ctx.stroke();
-    }
-    // HP pip
-    const pipW = b.w * hpT;
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.fillRect(b.x, b.y - 5, b.w, 3);
-    ctx.fillStyle = hpT > 0.5 ? "#7ff08a" : hpT > 0.25 ? "#f0d54a" : "#ff5a5a";
-    ctx.fillRect(b.x, b.y - 5, pipW, 3);
     ctx.restore();
   }
 }
+
 
 function drawTeleportAim(ctx: CanvasRenderingContext2D, state: GameState, now: number) {
   const t = state.teleportAiming;
