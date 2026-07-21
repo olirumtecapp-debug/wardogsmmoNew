@@ -59,16 +59,16 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
       {children}
       {open && (
         <div
-          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 z-40 w-56 ${
+          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 z-50 w-[min(14rem,calc(100vw-1rem))] ${
             placement === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
           }`}
         >
           <div
-            className="panel p-2 text-left shadow-xl card-in"
+            className="panel p-2 text-left shadow-xl card-in overflow-hidden"
             style={{ borderColor: color, boxShadow: `0 6px 20px rgba(0,0,0,0.6), 0 0 0 1px ${color}88` }}
           >
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="stencil text-[11px] uppercase tracking-widest truncate" style={{ color }}>
+            <div className="flex items-center gap-1.5 mb-1 min-w-0">
+              <span className="stencil text-[11px] uppercase tracking-widest truncate min-w-0" style={{ color }}>
                 {c.name}
               </span>
               {c.tier === "elite" && (
@@ -80,16 +80,16 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
                 </span>
               )}
             </div>
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">{c.breed}</div>
-            <div className="text-[10px] text-foreground/80 leading-tight mb-1.5">{c.tagline}</div>
+            <div className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1 truncate">{c.breed}</div>
+            <div className="text-[10px] text-foreground/80 leading-tight mb-1.5 break-words line-clamp-3">{c.tagline}</div>
             <div className="space-y-0.5">
               {STAT_META.map(s => {
                 const pct = Math.round(bars[s.key] * 100);
                 return (
-                  <div key={s.key} className="flex items-center gap-1.5 text-[9px]">
-                    <span className="w-3 text-center" style={{ color }}>{s.icon}</span>
-                    <span className="w-14 uppercase tracking-widest text-muted-foreground">{s.label}</span>
-                    <div className="flex-1 h-1 rounded-full bg-black/50 overflow-hidden">
+                  <div key={s.key} className="flex items-center gap-1.5 text-[9px] min-w-0">
+                    <span className="w-3 text-center shrink-0" style={{ color }}>{s.icon}</span>
+                    <span className="w-14 uppercase tracking-widest text-muted-foreground shrink-0 truncate">{s.label}</span>
+                    <div className="flex-1 min-w-0 h-1 rounded-full bg-black/50 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
                     </div>
                   </div>
