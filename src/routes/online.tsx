@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ensureAnonSession, randomNickname } from "@/lib/anonAuth";
 import { createMatch, joinMatchByCode } from "@/lib/matchApi";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
+import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
 import { SCENARIOS } from "@/game/scenarios";
 import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
 
@@ -83,27 +84,28 @@ function OnlineHome() {
                   const selected = charId === id;
                   const isElite = c.tier === "elite";
                   return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setCharId(id)}
-                      className={`relative rounded-lg border p-1.5 flex flex-col items-center gap-1 transition-all duration-200 ${
-                        selected
-                          ? "border-primary ring-2 ring-primary/60 bg-primary/10 scale-[1.03] shadow-lg"
-                          : "border-border/60 bg-secondary/40 opacity-80 hover:opacity-100 hover:border-border"
-                      }`}
-                    >
-                      {selected && (
-                        <CheckCircle2 size={14} className="absolute top-0.5 right-0.5 text-primary drop-shadow" />
-                      )}
-                      {isElite && (
-                        <span className="absolute top-0.5 left-0.5 text-[7px] font-bold px-1 rounded bg-primary/90 text-primary-foreground tracking-widest">E</span>
-                      )}
-                      <div className="w-full aspect-square rounded-md overflow-hidden bg-black/30 flex items-center justify-center">
-                        <img src={c.portraitUrl} alt={c.name} className={`w-full h-full object-contain ${selected ? "" : "grayscale-[30%]"}`} />
-                      </div>
-                      <div className={`stencil text-[10px] uppercase tracking-wider truncate max-w-full ${selected ? "text-primary" : "text-foreground"}`}>{c.name}</div>
-                    </button>
+                    <CharacterInfoPopover key={id} charId={id}>
+                      <button
+                        type="button"
+                        onClick={() => setCharId(id)}
+                        className={`relative w-full rounded-lg border p-1.5 flex flex-col items-center gap-1 transition-all duration-200 ${
+                          selected
+                            ? "border-primary ring-2 ring-primary/60 bg-primary/10 scale-[1.03] shadow-lg"
+                            : "border-border/60 bg-secondary/40 opacity-80 hover:opacity-100 hover:border-border"
+                        }`}
+                      >
+                        {selected && (
+                          <CheckCircle2 size={14} className="absolute top-0.5 right-0.5 text-primary drop-shadow" />
+                        )}
+                        {isElite && (
+                          <span className="absolute top-0.5 left-0.5 text-[7px] font-bold px-1 rounded bg-primary/90 text-primary-foreground tracking-widest">E</span>
+                        )}
+                        <div className="w-full aspect-square rounded-md overflow-hidden bg-black/30 flex items-center justify-center">
+                          <img src={c.portraitUrl} alt={c.name} className={`w-full h-full object-contain ${selected ? "" : "grayscale-[30%]"}`} />
+                        </div>
+                        <div className={`stencil text-[10px] uppercase tracking-wider truncate max-w-full ${selected ? "text-primary" : "text-foreground"}`}>{c.name}</div>
+                      </button>
+                    </CharacterInfoPopover>
                   );
                 })}
               </div>
