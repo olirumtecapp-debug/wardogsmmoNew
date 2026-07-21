@@ -345,12 +345,13 @@ export function step(state: GameState, dt: number) {
     }
 
     // Off-world rescue: teleport to nearest solid column with fall damage
-    if (dog.y > (state.height - state.hudReserve) + 20) {
+    const rescueThreshold = state.terrainBottom + 20;
+    if (!state.matchStartGrace && dog.y > rescueThreshold) {
       let rescueX = dog.x;
       let bestDist = Infinity;
       for (let x = 20; x < state.width - 20; x += 6) {
         const sy = surfaceY(state.terrain, state.width, state.height, x);
-        if (sy < state.height - state.hudReserve - 4) {
+        if (sy < state.terrainBottom - 4) {
           const d = Math.abs(x - dog.x);
           if (d < bestDist) { bestDist = d; rescueX = x; }
         }
