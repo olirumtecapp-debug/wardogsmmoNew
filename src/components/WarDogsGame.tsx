@@ -803,6 +803,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
           )}
         </div>
       </div>
+      {showAudio && <AudioSettingsPanel onClose={() => setShowAudio(false)} />}
     </div>
   );
 }
