@@ -20,7 +20,7 @@ export const Route = createFileRoute("/lobby/$code")({
   }),
 });
 
-const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy"];
+const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy", "negao", "miu"];
 
 function Lobby() {
   const { code } = Route.useParams();

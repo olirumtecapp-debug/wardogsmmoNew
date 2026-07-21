@@ -4,8 +4,12 @@ import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
 import musaPortrait from "@/assets/wardogs-musa.png.asset.json";
 import ozzyPortrait from "@/assets/wardogs-ozzy.png.asset.json";
+import negaoPortrait from "@/assets/wardogs-negao.png.asset.json";
+import miuPortrait from "@/assets/wardogs-miu.png.asset.json";
 
-export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy";
+export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
+
+export type CharacterTier = "standard" | "elite";
 
 export interface CharacterStats {
   hp: number;         // pontos de vida iniciais e máximos
@@ -22,6 +26,7 @@ export interface Character {
   portraitUrl: string;
   stats: CharacterStats;
   skin: TeamSkin;
+  tier: CharacterTier;
 }
 
 // Musa (Boxer) — bruta, boa defesa, dano decente
@@ -53,6 +58,40 @@ const OZZY_SKIN: TeamSkin = {
   badgeGlyph: "▲",
 };
 
+// Negão (Cane Corso) — tanque elite, blindagem pesada
+const NEGAO_SKIN: TeamSkin = {
+  ...BRUTUS,
+  name: "NEGÃO",
+  silhouette: "stocky",
+  teamColor: "#a855f7",
+  teamDark: "#5b21b6",
+  bodyLight: "#4a4a52",
+  bodyBase: "#1a1a1e",
+  bodyDark: "#050507",
+  helmetBase: "#141418",
+  helmetTop: "#2a2a30",
+  eyeIris: "#ffcc33",
+  teamNum: "05",
+  badgeGlyph: "☠",
+};
+
+// Miu (Street Cat) — assassina elite, ágil e felina
+const MIU_SKIN: TeamSkin = {
+  ...RANGER,
+  name: "MIU",
+  silhouette: "pointy",
+  teamColor: "#f472b6",
+  teamDark: "#9d174d",
+  bodyLight: "#6a6a72",
+  bodyBase: "#2a2a30",
+  bodyDark: "#0a0a10",
+  helmetBase: "#1a1a20",
+  helmetTop: "#3a3a44",
+  eyeIris: "#7ff0ff",
+  teamNum: "06",
+  badgeGlyph: "✦",
+};
+
 export const CHARACTERS: Record<CharacterId, Character> = {
   ranger: {
     id: "ranger",
@@ -62,6 +101,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     portraitUrl: rangerPortrait.url,
     stats: { hp: 100, mobility: 120, jump: 1.0, defense: 1.0 },
     skin: RANGER,
+    tier: "standard",
   },
   brutus: {
     id: "brutus",
@@ -71,6 +111,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     portraitUrl: brutusPortrait.url,
     stats: { hp: 130, mobility: 80, jump: 0.8, defense: 0.75 },
     skin: BRUTUS,
+    tier: "standard",
   },
   musa: {
     id: "musa",
@@ -80,6 +121,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     portraitUrl: musaPortrait.url,
     stats: { hp: 115, mobility: 105, jump: 1.05, defense: 0.9 },
     skin: MUSA_SKIN,
+    tier: "standard",
   },
   ozzy: {
     id: "ozzy",
@@ -89,6 +131,27 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     portraitUrl: ozzyPortrait.url,
     stats: { hp: 85, mobility: 150, jump: 1.35, defense: 1.2 },
     skin: OZZY_SKIN,
+    tier: "standard",
+  },
+  negao: {
+    id: "negao",
+    name: "Negão",
+    breed: "Cane Corso · Elite",
+    tagline: "Tanque de elite — blindagem pesada e mordida esmagadora.",
+    portraitUrl: negaoPortrait.url,
+    stats: { hp: 150, mobility: 90, jump: 0.9, defense: 0.7 },
+    skin: NEGAO_SKIN,
+    tier: "elite",
+  },
+  miu: {
+    id: "miu",
+    name: "Miu",
+    breed: "Street Cat · Elite",
+    tagline: "Assassina felina — rápida, alta e imprevisível.",
+    portraitUrl: miuPortrait.url,
+    stats: { hp: 95, mobility: 170, jump: 1.5, defense: 1.0 },
+    skin: MIU_SKIN,
+    tier: "elite",
   },
 };
 
@@ -97,6 +160,8 @@ export const CHARACTER_LIST: Character[] = [
   CHARACTERS.brutus,
   CHARACTERS.musa,
   CHARACTERS.ozzy,
+  CHARACTERS.negao,
+  CHARACTERS.miu,
 ];
 
 export function characterSkin(id: CharacterId): TeamSkin {
@@ -107,9 +172,9 @@ export function characterSkin(id: CharacterId): TeamSkin {
 export function characterBars(id: CharacterId) {
   const s = CHARACTERS[id].stats;
   return {
-    hp: Math.min(1, s.hp / 140),
-    mob: Math.min(1, s.mobility / 160),
-    jump: Math.min(1, s.jump / 1.4),
+    hp: Math.min(1, s.hp / 160),
+    mob: Math.min(1, s.mobility / 180),
+    jump: Math.min(1, s.jump / 1.6),
     def: Math.min(1, (1.3 - s.defense) / 0.9), // menor defense = barra mais cheia
   };
 }

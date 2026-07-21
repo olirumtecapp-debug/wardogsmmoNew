@@ -22,7 +22,18 @@ const CHALLENGES: Record<CharacterId, string[]> = {
     "Rápido demais pra sua bomba.",
     "Traz o osso, filhote — se conseguir.",
   ],
+  negao: [
+    "Reza, filhote. Hoje eu tô com fome.",
+    "Vou te enterrar com honras. Ou sem.",
+    "Cane Corso não late. Cane Corso encerra.",
+  ],
+  miu: [
+    "Nove vidas. Você tem uma. Faz as contas.",
+    "Purr… foi a última coisa que ele ouviu.",
+    "Miau. Agora corre.",
+  ],
 };
+
 
 const REPLIES: Record<CharacterId, string[]> = {
   ranger: [
@@ -45,7 +56,18 @@ const REPLIES: Record<CharacterId, string[]> = {
     "Corre, filhote. Só vai atrasar.",
     "Meu tiro te encontra no ar.",
   ],
+  negao: [
+    "Ronca à vontade. Vou calar na primeira.",
+    "Traz reforço. Vai precisar.",
+    "Fica quieto que dói menos.",
+  ],
+  miu: [
+    "Fofo. Agora explode.",
+    "Bonitinho o discurso. Ridículo o tiro.",
+    "Fecha o olho. Melhor assim.",
+  ],
 };
+
 
 // Determinístico por par + índice de mistura, com uma pitada aleatória.
 export function pickDialogue(a: CharacterId, b: CharacterId): { challenge: string; reply: string } {
