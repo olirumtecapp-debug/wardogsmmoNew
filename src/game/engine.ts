@@ -802,15 +802,16 @@ export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
   let dx = dir * MOVE_SPEED * dt;
   if (Math.abs(dx) > dog.moveBudget) dx = dir * dog.moveBudget;
   const newX = Math.max(10, Math.min(state.width - 10, dog.x + dx));
-  const currentSurface = surfaceY(state.terrain, state.width, state.height, dog.x);
-  const targetSurface = surfaceY(state.terrain, state.width, state.height, newX);
-  // Allow step-up up to STEP_UP; step-down always allowed (dog will fall)
-  if (currentSurface - targetSurface <= STEP_UP) {
-    dog.x = newX;
-    dog.y = targetSurface - 18;
-    dog.moveBudget -= Math.abs(dx);
-    dog.facing = dir;
-  }
+  const currentSurface = surfaceOrBarricadeY(state, dog.x);
+  const targetSurface = surfaceOrBarricadeY(state, newX);
+  // Block if we'd enter the side of a tall barricade (step-up too big)
+  if (currentSurface - targetSurface > STEP_UP) return;
+  // Block if the new position would clip through a barricade body
+  if (barricadeAt(state, newX, targetSurface - 10) || barricadeAt(state, newX, targetSurface + 10)) return;
+  dog.x = newX;
+  dog.y = targetSurface - 18;
+  dog.moveBudget -= Math.abs(dx);
+  dog.facing = dir;
 }
 
 export function jumpDog(state: GameState) {
