@@ -912,3 +912,58 @@ export function triggerCanineBarrage(state: GameState): "activated" | "low" | "u
   }
   return "activated";
 }
+
+// ============ Teleport ============
+
+export const TELEPORT_MAX_RANGE = 320;
+export const TELEPORT_HP_COST = 5;
+
+export function isValidTeleportTarget(state: GameState, tx: number, ty: number): boolean {
+  const dog = state.dogs[state.currentPlayer];
+  if (!dog || dog.hp <= 0) return false;
+  if (tx < 24 || tx > state.width - 24) return false;
+  const dist = Math.hypot(tx - dog.x, ty - dog.y);
+  const maxR = Math.min(TELEPORT_MAX_RANGE, state.width * 0.5);
+  if (dist > maxR) return false;
+  // ground column beneath target must be solid
+  const sy = surfaceOrBarricadeY(state, tx);
+  if (sy >= state.terrainBottom - 4) return false;
+  if (sy < 40) return false;
+  // Reject if the drop point is inside a barricade body
+  if (barricadeAt(state, tx, sy + 4)) return false;
+  return true;
+}
+
+export function setTeleportTarget(state: GameState, tx: number, ty: number) {
+  if (state.weapon !== "teleport" || state.phase !== "aiming") return;
+  const valid = isValidTeleportTarget(state, tx, ty);
+  state.teleportAiming = { x: tx, y: ty, valid };
+}
+
+export function clearTeleportTarget(state: GameState) {
+  state.teleportAiming = null;
+}
+
+function executeTeleport(state: GameState, tx: number, _ty: number) {
+  const dog = state.dogs[state.currentPlayer];
+  const sy = surfaceOrBarricadeY(state, tx);
+  // dissipation FX at origin
+  spawnExplosion(state, dog.x, dog.y - 8, 18, "#38f0ff");
+  dog.x = tx;
+  dog.y = sy - 18;
+  dog.vy = 0;
+  dog.airborne = false;
+  dog.fallStartY = undefined;
+  dog.unsupportedTicks = 0;
+  dog.hp = Math.max(1, dog.hp - TELEPORT_HP_COST);
+  // materialization FX at destination
+  spawnExplosion(state, dog.x, dog.y - 8, 18, "#38f0ff");
+  state.floatingTexts.push({
+    id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
+    life: 1.5, maxLife: 1.5, value: `TELEPORTE -${TELEPORT_HP_COST} HP`,
+    color: "#7ff0ff", size: 20,
+  });
+  state.phase = "resolving";
+  state.message = "Reposicionado!";
+}
+
