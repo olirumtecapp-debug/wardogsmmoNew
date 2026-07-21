@@ -12,7 +12,7 @@ import musaSide from "@/assets/wardogs-musa-side.png.asset.json";
 import ozzySide from "@/assets/wardogs-ozzy-side.png.asset.json";
 import negaoSide from "@/assets/wardogs-negao-side.png.asset.json";
 import miuSide from "@/assets/wardogs-miu-side.png.asset.json";
-import corsoFront from "@/assets/corso-front.png.asset.json";
+import corsoFront from "@/assets/corso-front-v2.png.asset.json";
 import miuFront from "@/assets/miu-front-v3.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
