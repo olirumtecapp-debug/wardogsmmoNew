@@ -42,7 +42,15 @@ export function createGame(
   const rng = mulberry32(seed);
   const usableH = Math.max(200, height - hudReserve - topReserve);
   const terrain = generateTerrain(width, height, usableH, topReserve, rng);
+  const terrainBottom = Math.min(height, usableH + topReserve);
   const dogs = placeDogs(terrain, width, height, rng, chars);
+  // Snap seguro: garante que nenhum cão nasça abaixo do terreno visível
+  for (const d of dogs) {
+    const sy = surfaceY(terrain, width, height, d.x);
+    d.y = Math.min(sy - 18, terrainBottom - 20);
+    d.vy = 0;
+    d.airborne = false;
+  }
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
   const dur = Math.max(0, matchDuration);
@@ -66,6 +74,8 @@ export function createGame(
     seed,
     hudReserve,
     topReserve,
+    terrainBottom,
+    matchStartGrace: 0.8,
     rageEnabled,
   };
 }
@@ -281,6 +291,10 @@ function isSupported(state: GameState, dog: Dog): boolean {
 
 export function step(state: GameState, dt: number) {
   const scGravity = getActiveScenario().gravityScale;
+  if (state.matchStartGrace && state.matchStartGrace > 0) {
+    state.matchStartGrace = Math.max(0, state.matchStartGrace - dt);
+  }
+
 
   // Dogs — gravity + fall damage
   for (const dog of state.dogs) {
@@ -331,12 +345,13 @@ export function step(state: GameState, dt: number) {
     }
 
     // Off-world rescue: teleport to nearest solid column with fall damage
-    if (dog.y > (state.height - state.hudReserve) + 20) {
+    const rescueThreshold = state.terrainBottom + 20;
+    if (!state.matchStartGrace && dog.y > rescueThreshold) {
       let rescueX = dog.x;
       let bestDist = Infinity;
       for (let x = 20; x < state.width - 20; x += 6) {
         const sy = surfaceY(state.terrain, state.width, state.height, x);
-        if (sy < state.height - state.hudReserve - 4) {
+        if (sy < state.terrainBottom - 4) {
           const d = Math.abs(x - dog.x);
           if (d < bestDist) { bestDist = d; rescueX = x; }
         }
