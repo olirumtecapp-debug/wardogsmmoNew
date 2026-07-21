@@ -3,6 +3,7 @@ import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
 import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
 import { CHARACTERS, type CharacterId } from "./characters";
+import { playSfx } from "./audio";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
@@ -408,6 +409,7 @@ export function fire(state: GameState) {
     weapon: state.weapon, age: 0, ownerTeam: state.currentPlayer, trail: [],
   };
   state.projectiles.push(p);
+  playSfx("fire");
 }
 
 
@@ -425,6 +427,7 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
     });
   }
   state.explosions.push({ x, y, radius, age: 0, maxAge: 0.45, particles });
+  if (radius >= 10) playSfx("explosion", Math.min(1.2, radius / 60));
 }
 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
@@ -960,6 +963,7 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate!"
         : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+      playSfx(state.winner === null ? "defeat" : "victory");
     } else if (state.matchDuration > 0 && state.matchTimer <= 0) {
       state.phase = "gameover";
       const hp0 = state.dogs[0].hp, hp1 = state.dogs[1].hp;
@@ -967,6 +971,7 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate por tempo!"
         : `Tempo esgotado — vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+      playSfx(state.winner === null ? "defeat" : "victory");
     }
   }
 
@@ -1015,6 +1020,7 @@ export function endTurn(state: GameState) {
     if (next) state.weapon = next;
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
+  playSfx("bark");
   // Consome Fúria enfileirada (pedida no turno anterior enquanto o tiro resolvia)
   if (dog.rageQueued && dog.hp > 0 && dog.rageCharge >= RAGE_READY_THRESHOLD) {
     dog.rageQueued = false;
@@ -1045,6 +1051,7 @@ export function activateRage(state: GameState): "activated" | "queued" | "low" |
     id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
     life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
   });
+  playSfx("rage");
   return "activated";
 }
 
@@ -1076,6 +1083,7 @@ export function jumpDog(state: GameState) {
   dog.airborne = true;
   dog.fallStartY = dog.y;
   dog.hasJumped = true;
+  playSfx("jump");
 }
 
 export function cycleWeapon(state: GameState, dir: 1 | -1) {
@@ -1133,6 +1141,7 @@ export function triggerCanineBarrage(state: GameState): "activated" | "low" | "u
   for (let i = 0; i < 8; i++) {
     setTimeout(() => spawnBomb(i), i * 180);
   }
+  playSfx("barrage");
   return "activated";
 }
 
@@ -1190,6 +1199,7 @@ function executeTeleport(state: GameState, tx: number, _ty: number) {
   const sy = surfaceOrBarricadeY(state, tx);
   // dissipation FX at origin
   spawnExplosion(state, dog.x, dog.y - 8, 18, "#38f0ff");
+  playSfx("teleport");
   dog.x = tx;
   dog.y = sy - 18;
   dog.vy = 0;

@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { HelpCircle, X, Maximize2 } from "lucide-react";
+import { HelpCircle, X, Maximize2, Volume2, VolumeX } from "lucide-react";
+import { audio, playSfx } from "@/game/audio";
+import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { WarDogsGame } from "@/components/WarDogsGame";
 import { OrientationGate } from "@/components/OrientationGate";
 import { MenuBackdrop } from "@/components/MenuBackdrop";
@@ -31,8 +33,34 @@ type Stage =
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showAudio, setShowAudio] = useState(false);
+  const [muted, setMuted] = useState(() => audio.getSettings().muted);
   const navigate = useNavigate();
   const { isFullscreen, isMobile, supported: fsSupported } = useFullscreen();
+
+  // Init audio on first pointer/keyboard interaction (browser autoplay policy).
+  useEffect(() => {
+    const kick = () => {
+      audio.ensure();
+      if (stage.kind === "menu") audio.playMusic("menu");
+    };
+    window.addEventListener("pointerdown", kick, { once: true });
+    window.addEventListener("keydown", kick, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", kick);
+      window.removeEventListener("keydown", kick);
+    };
+  }, [stage.kind]);
+
+  // Track mute state
+  useEffect(() => audio.subscribe((s) => setMuted(s.muted)), []);
+
+  // Menu music when returning to menu
+  useEffect(() => {
+    if (stage.kind === "menu") audio.playMusic("menu");
+    else if (stage.kind === "playing") audio.playMusic("combat");
+  }, [stage.kind]);
+
 
   useEffect(() => {
     if (!showHowTo) return;
@@ -156,14 +184,22 @@ function Home() {
         </div>
 
 
-        {/* Botões discretos — Como Jogar + Tela Cheia */}
-        <div className="flex items-center gap-2">
+        {/* Botões discretos — Como Jogar + Áudio + Tela Cheia */}
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           <button
-            onClick={() => setShowHowTo(true)}
+            onClick={() => { playSfx("click"); setShowHowTo(true); }}
             className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
           >
             <HelpCircle size={14} />
             Como jogar
+          </button>
+          <button
+            onClick={() => { audio.ensure(); playSfx("click"); setShowAudio(true); }}
+            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
+            aria-label="Áudio"
+          >
+            {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            Áudio
           </button>
           {isMobile && fsSupported && !isFullscreen && (
             <button
@@ -185,6 +221,7 @@ function Home() {
       </footer>
 
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
+      {showAudio && <AudioSettingsPanel onClose={() => setShowAudio(false)} />}
     </div>
     </OrientationGate>
   );

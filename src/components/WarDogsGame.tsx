@@ -5,6 +5,8 @@ import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
+import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
+import { audio } from "@/game/audio";
 
 
 
@@ -178,6 +180,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const onGameOverRef = useRef(onGameOver);
   const missionConfigRef = useRef(missionConfig);
   useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
+  const [showAudio, setShowAudio] = useState(false);
   useEffect(() => { missionConfigRef.current = missionConfig; }, [missionConfig]);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
@@ -534,6 +537,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   >
                     🎯 {aimAssistLocked ? "Mira 🔒" : (aimAssist ? "Mira ON" : "Mira OFF")}
                   </button>
+                  <button onClick={() => setShowAudio(true)} className="btn-hud text-[10px] px-2 py-1" aria-label="Áudio">🔊</button>
                   <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
                 </div>
                 <WindGauge wind={s.wind} />
@@ -799,6 +803,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
           )}
         </div>
       </div>
+      {showAudio && <AudioSettingsPanel onClose={() => setShowAudio(false)} />}
     </div>
   );
 }
