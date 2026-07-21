@@ -30,42 +30,34 @@ function CharCard({
   onSelect: () => void;
 }) {
   const c = CHARACTERS[charId];
-  const b = characterBars(charId);
   const color = c.skin.teamColor;
-  const stats: [string, number][] = [["♥", b.hp], ["⚡", b.mob], ["◆", b.def]];
   return (
-    <button
-      onClick={onSelect}
-      className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center ${active ? "is-selected" : ""}`}
-      style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
-      title={`${c.name} — ${c.tagline}`}
-    >
-      <img
-        src={c.portraitUrl}
-        alt={c.name}
-        className="w-full aspect-square rounded object-contain bg-black/40"
-        style={{ boxShadow: `0 0 6px ${color}` }}
-      />
-      <div className="flex items-center gap-1 justify-center w-full min-w-0">
-        <div className="stencil text-[11px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
-        {c.tier === "elite" && (
-          <span
-            className="text-[7px] uppercase tracking-[0.15em] px-1 rounded font-bold shrink-0"
-            style={{ color: "#0b0f16", background: color }}
-          >
-            E
-          </span>
-        )}
-      </div>
-      <div className="flex gap-1.5 text-[9px] text-muted-foreground">
-        {stats.map(([icon, val]) => (
-          <span key={icon} className="inline-flex items-center gap-0.5">
-            <span style={{ color }}>{icon}</span>
-            <span>{Math.round(val * 10)}</span>
-          </span>
-        ))}
-      </div>
-    </button>
+    <CharacterInfoPopover charId={charId}>
+      <button
+        onClick={onSelect}
+        className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center w-full ${active ? "is-selected" : ""}`}
+        style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
+        title={`${c.name} — ${c.tagline}`}
+      >
+        <img
+          src={c.portraitUrl}
+          alt={c.name}
+          className="w-full aspect-square rounded object-contain bg-black/40"
+          style={{ boxShadow: `0 0 6px ${color}` }}
+        />
+        <div className="flex items-center gap-1 justify-center w-full min-w-0">
+          <div className="stencil text-[11px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
+          {c.tier === "elite" && (
+            <span
+              className="text-[7px] uppercase tracking-[0.15em] px-1 rounded font-bold shrink-0"
+              style={{ color: "#0b0f16", background: color }}
+            >
+              E
+            </span>
+          )}
+        </div>
+      </button>
+    </CharacterInfoPopover>
   );
 }
 
