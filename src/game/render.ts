@@ -359,6 +359,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     }
   }
 
+  // Barricades (draw before dogs so dogs stand in front / can stand on top)
+  drawBarricades(ctx, state);
+
   // Dogs — ensure no residual composite/alpha from previous passes dims them
   ctx.save();
   ctx.globalAlpha = 1;
