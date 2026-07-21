@@ -135,7 +135,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
   },
   negao: {
     id: "negao",
-    name: "Negão",
+    name: "Corso",
     breed: "Cane Corso · Elite",
     tagline: "Tanque de elite — blindagem pesada e mordida esmagadora.",
     portraitUrl: negaoPortrait.url,
