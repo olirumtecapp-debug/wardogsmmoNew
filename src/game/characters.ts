@@ -163,7 +163,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     name: "Miu",
     breed: "Street Cat · Elite",
     tagline: "Assassina felina — rápida, alta e imprevisível.",
-    portraitUrl: miuPortrait.url,
+    portraitUrl: miuFront.url,
     comicPortraitUrl: miuFront.url,
     stats: { hp: 95, mobility: 170, jump: 1.5, defense: 1.0 },
     skin: MIU_SKIN,
