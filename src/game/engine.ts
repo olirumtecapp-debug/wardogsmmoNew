@@ -1196,6 +1196,7 @@ function executeTeleport(state: GameState, tx: number, _ty: number) {
   const sy = surfaceOrBarricadeY(state, tx);
   // dissipation FX at origin
   spawnExplosion(state, dog.x, dog.y - 8, 18, "#38f0ff");
+  playSfx("teleport");
   dog.x = tx;
   dog.y = sy - 18;
   dog.vy = 0;
