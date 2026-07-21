@@ -183,7 +183,7 @@ function simulate(state: GameState, angle: number, power: number, weaponId: Weap
       // Penalize self-hits (only General fully avoids them)
       const selfDist = Math.hypot(x - me.x, y - me.y);
       if (selfDist < 40) {
-        dist += diff === "general" ? 500 : 120;
+        dist += diff === "general" ? 800 : diff === "sergeant" ? 260 : 120;
       }
       return dist;
     }

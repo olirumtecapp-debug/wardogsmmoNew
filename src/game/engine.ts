@@ -382,6 +382,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
   const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
   let totalDamage = 0;
   let hits = 0;
+  let selfDamage = 0;
   const stackOffsets = new Map<number, number>();
   for (const dog of state.dogs) {
     if (dog.hp <= 0) continue;
@@ -411,6 +412,9 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
+        if (ownerTeam !== undefined && dog.team === ownerTeam) {
+          selfDamage += dmg;
+        }
         // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
         if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
           let gain = dmg >= 31 ? 85 : dmg >= 16 ? 55 : 35;
@@ -435,6 +439,24 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       life: 1.4, maxLife: 1.4, value: `-${totalDamage} TOTAL`,
       color: "#ffe6a3", size: 22,
     });
+  }
+  // Contra-golpe: se o atirador se explodiu, o adversário vivo recupera 40% do dano.
+  if (selfDamage > 0 && ownerTeam !== undefined) {
+    const foe = state.dogs.find(d => d.team !== ownerTeam && d.hp > 0);
+    if (foe && foe.hp < foe.maxHp) {
+      const heal = Math.max(1, Math.round(selfDamage * 0.4));
+      const applied = Math.min(heal, foe.maxHp - foe.hp);
+      if (applied > 0) {
+        foe.hp += applied;
+        state.floatingTexts.push({
+          id: Math.random(), x: foe.x, y: foe.y - 46,
+          vx: 0, vy: -60, life: 1.6, maxLife: 1.6,
+          value: `+${applied} CONTRA-GOLPE`,
+          color: "#7cff8a", size: 22,
+        });
+        state.message = `Contra-golpe! Adversário recuperou ${applied} HP`;
+      }
+    }
   }
 }
 
