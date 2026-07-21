@@ -409,6 +409,7 @@ export function fire(state: GameState) {
     weapon: state.weapon, age: 0, ownerTeam: state.currentPlayer, trail: [],
   };
   state.projectiles.push(p);
+  playSfx("fire");
 }
 
 
