@@ -1,4 +1,4 @@
-import type { Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
+import type { Barricade, BarricadeKind, Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
 import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
