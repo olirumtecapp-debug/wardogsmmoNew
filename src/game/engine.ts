@@ -471,6 +471,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
+        if (dmg >= 20) playSfx("bark_hurt", 0.9);
         if (ownerTeam !== undefined && dog.team === ownerTeam) {
           selfDamage += dmg;
         }
