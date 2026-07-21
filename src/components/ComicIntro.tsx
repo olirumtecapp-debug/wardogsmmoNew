@@ -212,11 +212,6 @@ function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean;
             {scenarioLabel}
           </div>
         )}
-        {scenarioLabel && (
-          <div className="mt-2 stencil text-[11px] sm:text-sm tracking-[0.35em] text-white/90 bg-black/60 inline-block px-2 py-1 border border-white/20 rounded">
-            {scenarioLabel}
-          </div>
-        )}
       </div>
     </div>
   );
