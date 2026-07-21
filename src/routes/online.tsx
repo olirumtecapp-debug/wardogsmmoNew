@@ -16,7 +16,7 @@ export const Route = createFileRoute("/online")({
   }),
 });
 
-const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy"];
+const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy", "negao", "miu"];
 
 function OnlineHome() {
   const navigate = useNavigate();

@@ -56,8 +56,18 @@ function CharCard({
           className="w-12 h-12 rounded object-contain bg-black/40 shrink-0"
           style={{ boxShadow: `0 0 6px ${color}` }}
         />
-        <div className="min-w-0">
-          <div className="stencil text-[12px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <div className="stencil text-[12px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
+            {c.tier === "elite" && (
+              <span
+                className="text-[8px] uppercase tracking-[0.2em] px-1 py-0.5 rounded border font-bold shrink-0"
+                style={{ color: "#0b0f16", background: color, borderColor: color }}
+              >
+                Elite
+              </span>
+            )}
+          </div>
           <div className="text-[9px] text-muted-foreground truncate">{c.breed}</div>
         </div>
       </div>
