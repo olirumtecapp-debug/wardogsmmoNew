@@ -12,6 +12,8 @@ import musaSide from "@/assets/wardogs-musa-side.png.asset.json";
 import ozzySide from "@/assets/wardogs-ozzy-side.png.asset.json";
 import negaoSide from "@/assets/wardogs-negao-side.png.asset.json";
 import miuSide from "@/assets/wardogs-miu-side.png.asset.json";
+import corsoFront from "@/assets/corso-front.png.asset.json";
+import miuFront from "@/assets/miu-front.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
 
@@ -151,7 +153,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Cane Corso · Elite",
     tagline: "Tanque de elite — blindagem pesada e mordida esmagadora.",
     portraitUrl: negaoPortrait.url,
-    comicPortraitUrl: negaoSide.url,
+    comicPortraitUrl: corsoFront.url,
     stats: { hp: 150, mobility: 90, jump: 0.9, defense: 0.7 },
     skin: NEGAO_SKIN,
     tier: "elite",
@@ -162,7 +164,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Street Cat · Elite",
     tagline: "Assassina felina — rápida, alta e imprevisível.",
     portraitUrl: miuPortrait.url,
-    comicPortraitUrl: miuSide.url,
+    comicPortraitUrl: miuFront.url,
     stats: { hp: 95, mobility: 170, jump: 1.5, defense: 1.0 },
     skin: MIU_SKIN,
     tier: "elite",
