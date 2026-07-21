@@ -41,10 +41,15 @@ export const WEAPONS: Record<WeaponId, Weapon> = {
     speed: 0, kind: "airstrike", affectedByWind: false,
     color: "#ff2a2a", accent: "#ffdc4a", gravityScale: 0,
   },
+  teleport: {
+    id: "teleport", name: "Teletransporte", damage: 0, radius: 0, ammo: 2,
+    speed: 0, kind: "utility", affectedByWind: false,
+    color: "#38f0ff", accent: "#c0f8ff", gravityScale: 0,
+  },
 };
 
 export const WEAPON_ORDER: WeaponId[] = [
-  "bazooka", "grenade", "rpg", "bow", "artillery", "frag", "cluster", "airstrike",
+  "bazooka", "grenade", "rpg", "bow", "artillery", "frag", "cluster", "airstrike", "teleport",
 ];
 
 export function initialAmmo(): Record<WeaponId, number> {
