@@ -1018,6 +1018,7 @@ export function endTurn(state: GameState) {
     if (next) state.weapon = next;
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
+  playSfx("bark");
   // Consome Fúria enfileirada (pedida no turno anterior enquanto o tiro resolvia)
   if (dog.rageQueued && dog.hp > 0 && dog.rageCharge >= RAGE_READY_THRESHOLD) {
     dog.rageQueued = false;
