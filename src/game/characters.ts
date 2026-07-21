@@ -6,6 +6,12 @@ import musaPortrait from "@/assets/wardogs-musa.png.asset.json";
 import ozzyPortrait from "@/assets/wardogs-ozzy.png.asset.json";
 import negaoPortrait from "@/assets/wardogs-negao.png.asset.json";
 import miuPortrait from "@/assets/wardogs-miu.png.asset.json";
+import rangerSide from "@/assets/wardogs-ranger-side.png.asset.json";
+import brutusSide from "@/assets/wardogs-brutus-side.png.asset.json";
+import musaSide from "@/assets/wardogs-musa-side.png.asset.json";
+import ozzySide from "@/assets/wardogs-ozzy-side.png.asset.json";
+import negaoSide from "@/assets/wardogs-negao-side.png.asset.json";
+import miuSide from "@/assets/wardogs-miu-side.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
 
