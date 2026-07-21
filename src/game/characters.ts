@@ -151,6 +151,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Cane Corso · Elite",
     tagline: "Tanque de elite — blindagem pesada e mordida esmagadora.",
     portraitUrl: negaoPortrait.url,
+    comicPortraitUrl: negaoSide.url,
     stats: { hp: 150, mobility: 90, jump: 0.9, defense: 0.7 },
     skin: NEGAO_SKIN,
     tier: "elite",
