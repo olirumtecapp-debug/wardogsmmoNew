@@ -35,9 +35,7 @@ export interface Character {
   skin: TeamSkin;
   tier: CharacterTier;
 }
-  skin: TeamSkin;
-  tier: CharacterTier;
-}
+
 
 // Musa (Boxer) — bruta, boa defesa, dano decente
 const MUSA_SKIN: TeamSkin = {
