@@ -1586,8 +1586,7 @@ function drawBarricadePattern(ctx: CanvasRenderingContext2D, kind: string, w: nu
     }
     ctx.strokeStyle = "rgba(0,0,0,0.35)";
     ctx.strokeRect(0, 0, w, h);
-  } else {
-    // container
+  } else if (kind === "container") {
     const g = ctx.createLinearGradient(0, 0, 0, h);
     g.addColorStop(0, "#c93a2a");
     g.addColorStop(1, "#7a1c12");
@@ -1599,6 +1598,73 @@ function drawBarricadePattern(ctx: CanvasRenderingContext2D, kind: string, w: nu
       ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x, h - 2); ctx.stroke();
     }
     ctx.strokeRect(0, 0, w, h);
+  } else {
+    // minitank — decoração destrutível estilo mini blindado
+    const trackH = Math.max(6, Math.round(h * 0.28));
+    const hullH = h - trackH;
+    const turretH = Math.max(6, Math.round(hullH * 0.55));
+    const turretY = 2;
+    const turretW = Math.round(w * 0.55);
+    const turretX = Math.round((w - turretW) / 2);
+    const hullY = turretY + turretH;
+    // Casco
+    const g = ctx.createLinearGradient(0, hullY, 0, hullY + (hullH - turretH));
+    g.addColorStop(0, "#5c6e34");
+    g.addColorStop(1, "#2f3a1c");
+    ctx.fillStyle = g;
+    ctx.fillRect(2, hullY, w - 4, hullH - turretH);
+    ctx.strokeStyle = "#1a1f0d";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(2, hullY, w - 4, hullH - turretH);
+    // Torre (trapézio)
+    ctx.fillStyle = "#4a5a2e";
+    ctx.beginPath();
+    ctx.moveTo(turretX, turretY + turretH);
+    ctx.lineTo(turretX + 4, turretY);
+    ctx.lineTo(turretX + turretW - 4, turretY);
+    ctx.lineTo(turretX + turretW, turretY + turretH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#1a1f0d";
+    ctx.stroke();
+    // Canhão
+    const barrelLen = Math.round(w * 0.32);
+    const barrelY = turretY + Math.round(turretH * 0.45);
+    ctx.fillStyle = "#22271a";
+    ctx.fillRect(turretX + turretW - 2, barrelY, barrelLen, 3);
+    ctx.fillStyle = "#111";
+    ctx.fillRect(turretX + turretW + barrelLen - 3, barrelY - 1, 3, 5);
+    // Estrela
+    ctx.fillStyle = "#f0ead2";
+    const starX = Math.round(w * 0.28);
+    const starY = hullY + Math.round((hullH - turretH) * 0.55);
+    const sR = Math.max(2, Math.round(Math.min(w, hullH) * 0.06));
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+      const x1 = starX + Math.cos(a) * sR;
+      const y1 = starY + Math.sin(a) * sR;
+      i === 0 ? ctx.moveTo(x1, y1) : ctx.lineTo(x1, y1);
+      const a2 = a + Math.PI / 5;
+      ctx.lineTo(starX + Math.cos(a2) * sR * 0.45, starY + Math.sin(a2) * sR * 0.45);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // Esteira
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, h - trackH, w, trackH);
+    ctx.strokeStyle = "#0a0a0a";
+    ctx.strokeRect(0, h - trackH, w, trackH);
+    // Rodas
+    ctx.fillStyle = "#3a3a3a";
+    const wheelR = Math.max(2, Math.round(trackH * 0.32));
+    const wheelY = h - trackH / 2;
+    const step = Math.max(8, Math.round(w / 6));
+    for (let x = step / 2; x < w; x += step) {
+      ctx.beginPath();
+      ctx.arc(x, wheelY, wheelR, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 

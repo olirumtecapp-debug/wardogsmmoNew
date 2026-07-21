@@ -30,7 +30,7 @@ const WEAPON_SHORT: Record<WeaponId, string> = {
   frag: "Frag",
   cluster: "Cluster",
   airstrike: "Aéreo",
-  teleport: "Teleport",
+  teleport: "Teleporte",
 };
 
 
@@ -140,6 +140,25 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
           <path d="M12 10 L8 4 L16 8 M12 15 L8 21 L16 17" fill="#e94560" stroke="#1a0208" strokeWidth="0.7" strokeLinejoin="round" />
           <circle cx="26" cy="12" r="1.1" fill="#fff" />
           <path d="M4 22 L28 22 M6 26 L26 26" stroke="#ff2a2a" strokeWidth="1.2" strokeDasharray="2 2" strokeLinecap="round" />
+        </svg>
+      );
+    case "teleport":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <radialGradient id="wi-tp" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="0.35" stopColor="#7ff0ff" />
+              <stop offset="0.75" stopColor="#38f0ff" />
+              <stop offset="1" stopColor="#0a3a55" />
+            </radialGradient>
+          </defs>
+          <circle cx="16" cy="16" r="13" fill="url(#wi-tp)" stroke="#0a1128" strokeWidth="1.2" />
+          <path d="M16 5 A 11 11 0 0 1 27 16" stroke="#ffffff" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.9" />
+          <path d="M16 27 A 11 11 0 0 1 5 16" stroke="#c0f8ff" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.8" />
+          <circle cx="16" cy="16" r="4" fill="#0a1128" />
+          <circle cx="16" cy="16" r="1.6" fill="#ffffff" />
+          <path d="M22 6 L24 4 M26 10 L28 8 M6 24 L4 26 M10 26 L8 28" stroke="#7ff0ff" strokeWidth="1" strokeLinecap="round" />
         </svg>
       );
   }
@@ -992,9 +1011,12 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
                   onBlur={() => setHovered(null)}
                   aria-pressed={active}
                   aria-label={`${w.name}${a === -1 ? "" : `, ${a} munições`}${empty ? ", sem munição" : ""}`}
-                  className={`btn-hud btn-hud-weapon flex-col items-center !px-1 py-1.5 min-w-0 overflow-hidden ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
-                  style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : undefined}
+                  className={`btn-hud btn-hud-weapon relative flex-col items-center !px-1 py-1.5 min-w-0 overflow-hidden ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
+                  style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : w.kind === "utility" ? { borderColor: "#38f0ff88", background: "linear-gradient(155deg, rgba(56,240,255,0.14), rgba(112,60,220,0.14))" } : undefined}
                 >
+                  {w.kind === "utility" && (
+                    <span className="absolute top-0.5 right-0.5 stencil text-[7px] tracking-widest px-1 rounded-sm bg-cyan-400/25 text-cyan-100 border border-cyan-300/40">UTIL</span>
+                  )}
                   <span aria-hidden><WeaponIcon id={id} className="w-6 h-6" /></span>
                   <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center w-full truncate">
                     {WEAPON_SHORT[id]}
