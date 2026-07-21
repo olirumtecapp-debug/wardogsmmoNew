@@ -357,12 +357,43 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 }
 
 
+// Barricade AABB helpers
+export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
+  }
+  return null;
+}
+
+function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    if (x >= b.x - 1 && x <= b.x + b.w + 1 && y >= b.y - tol && y <= b.y + 2) return b;
+  }
+  return null;
+}
+
 // Robust "supported" check: sample a window across the dog's feet
 function isSupported(state: GameState, dog: Dog): boolean {
   for (let dx = -4; dx <= 4; dx++) {
-    if (terrainAt(state, dog.x + dx, dog.y + 19)) return true;
+    const fy = dog.y + 19;
+    if (terrainAt(state, dog.x + dx, fy)) return true;
+    if (barricadeTopAt(state, dog.x + dx, fy)) return true;
   }
   return false;
+}
+
+// Highest solid surface (terrain top OR barricade top) at column x.
+function surfaceOrBarricadeY(state: GameState, x: number): number {
+  let sy = surfaceY(state.terrain, state.width, state.height, x);
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    if (x >= b.x && x <= b.x + b.w) {
+      if (b.y < sy) sy = b.y;
+    }
+  }
+  return sy;
 }
 
 // How many solid pixels exist in a short vertical window just below the dog's feet.
