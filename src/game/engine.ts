@@ -150,6 +150,59 @@ function spawnBarricades(
   return out;
 }
 
+// Balões/obstáculos flutuantes: mesma mecânica de barricada (máscara pixel, erosão),
+// mas posicionados no ar — não são plataforma jogável, apenas atrapalham trajetórias.
+function spawnFloatingObstacles(
+  terrain: Uint8Array, out: Barricade[], w: number, h: number, topReserve: number, rng: () => number,
+): void {
+  const count = 2 + Math.floor(rng() * 3); // 2..4
+  const bw = 44, bh = 34;
+  const minY = topReserve + 20;
+  const tries = count * 12;
+  let placed = 0;
+  for (let t = 0; t < tries && placed < count; t++) {
+    const cx = w * 0.12 + rng() * (w * 0.76);
+    const groundY = surfaceY(terrain, w, h, cx);
+    const maxY = groundY - 60;
+    if (maxY - minY < 40) continue;
+    const cy = minY + rng() * (maxY - minY);
+    const bx = Math.round(cx - bw / 2);
+    const by = Math.round(cy - bh / 2);
+    // Distância mínima horizontal a outros balões e barricadas.
+    let ok = true;
+    for (const b of out) {
+      if (bx < b.x0 + b.w0 + 24 && bx + bw + 24 > b.x0 && by < b.y0 + b.h0 + 16 && by + bh + 16 > b.y0) {
+        ok = false; break;
+      }
+    }
+    if (!ok) continue;
+    const mask = new Uint8Array(bw * bh);
+    // Máscara elíptica (formato balão) — o resto fica transparente e não colide.
+    const rx = bw / 2 - 1, ry = 12; // corpo do balão (elipse superior)
+    const ecx = bw / 2, ecy = 12;
+    for (let py = 0; py < bh; py++) {
+      for (let px = 0; px < bw; px++) {
+        const dx = (px - ecx) / rx, dy = (py - ecy) / ry;
+        if (dx * dx + dy * dy <= 1) mask[py * bw + px] = 1;
+      }
+    }
+    // Cesta (retângulo pequeno pendurado)
+    const cbw = 14, cbh = 8;
+    const cbx = Math.floor((bw - cbw) / 2);
+    const cby = bh - cbh - 1;
+    for (let py = cby; py < cby + cbh; py++) {
+      for (let px = cbx; px < cbx + cbw; px++) mask[py * bw + px] = 1;
+    }
+    out.push({
+      id: `f${out.length}_${Math.floor(rng() * 1e6)}`,
+      x: bx, y: by, w: bw, h: bh,
+      x0: bx, y0: by, w0: bw, h0: bh, mask,
+      kind: "balloon",
+    });
+    placed++;
+  }
+}
+
 
 
 
@@ -815,11 +868,22 @@ export function step(state: GameState, dt: number) {
     }
 
     if (!exploded) {
-      for (const dog of state.dogs) {
-        if (dog.hp <= 0) continue;
-        if (dog.team === p.ownerTeam && p.age < 0.15) continue;
-        const dx = p.x - dog.x, dy = p.y - (dog.y - 8);
-        if (dx * dx + dy * dy < 260) { exploded = true; break; }
+      // Armas com fuse (granada/frag/cluster/sub) NÃO detonam por proximidade —
+      // só por tempo, terreno ou barricada. Evita "explode no ar" próximo ao alvo.
+      const proximityArm = !w.fuse;
+      if (proximityArm) {
+        for (const dog of state.dogs) {
+          if (dog.hp <= 0) continue;
+          if (dog.team === p.ownerTeam && p.age < 0.15) continue;
+          if (dog.team !== p.ownerTeam && p.age < 0.05) continue;
+          const dx = p.x - dog.x, dy = p.y - (dog.y - 8);
+          const d2 = dx * dx + dy * dy;
+          if (d2 > 170) continue; // ~13px — hit realmente próximo
+          // Precisa estar se aproximando (produto escalar velocidade·(dog-proj) > 0)
+          const toDogX = dog.x - p.x, toDogY = (dog.y - 8) - p.y;
+          if (p.vx * toDogX + p.vy * toDogY < 0) continue;
+          exploded = true; break;
+        }
       }
     }
 
