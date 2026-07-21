@@ -1011,9 +1011,12 @@ function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSe
                   onBlur={() => setHovered(null)}
                   aria-pressed={active}
                   aria-label={`${w.name}${a === -1 ? "" : `, ${a} munições`}${empty ? ", sem munição" : ""}`}
-                  className={`btn-hud btn-hud-weapon flex-col items-center !px-1 py-1.5 min-w-0 overflow-hidden ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
-                  style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : undefined}
+                  className={`btn-hud btn-hud-weapon relative flex-col items-center !px-1 py-1.5 min-w-0 overflow-hidden ${active ? "is-selected" : ""} ${empty ? "is-empty opacity-40" : ""}`}
+                  style={active ? { borderColor: w.color, boxShadow: `inset 0 0 0 1px ${w.color}55, 0 0 18px ${w.color}55` } : w.kind === "utility" ? { borderColor: "#38f0ff88", background: "linear-gradient(155deg, rgba(56,240,255,0.14), rgba(112,60,220,0.14))" } : undefined}
                 >
+                  {w.kind === "utility" && (
+                    <span className="absolute top-0.5 right-0.5 stencil text-[7px] tracking-widest px-1 rounded-sm bg-cyan-400/25 text-cyan-100 border border-cyan-300/40">UTIL</span>
+                  )}
                   <span aria-hidden><WeaponIcon id={id} className="w-6 h-6" /></span>
                   <span className="stencil text-[9px] uppercase tracking-wider leading-tight mt-0.5 text-center w-full truncate">
                     {WEAPON_SHORT[id]}
