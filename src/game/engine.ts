@@ -1079,6 +1079,7 @@ export function jumpDog(state: GameState) {
   dog.airborne = true;
   dog.fallStartY = dog.y;
   dog.hasJumped = true;
+  playSfx("jump");
 }
 
 export function cycleWeapon(state: GameState, dir: 1 | -1) {
