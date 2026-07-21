@@ -1454,10 +1454,25 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
 
 // Angry-Birds-style predicted trajectory. Simulates using the same constants
 // as engine.ts (GRAVITY=500, wind coeff 40) so the arc matches the real shot.
+function isSolidAt(state: GameState, x: number, y: number): boolean {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  if (xi < 0 || xi >= state.width || yi < 0 || yi >= state.height) return false;
+  if (state.terrain[yi * state.width + xi] === 1) return true;
+  const bars = state.barricades;
+  for (let i = 0; i < bars.length; i++) {
+    const b = bars[i];
+    if (xi < b.x0 || yi < b.y0 || xi >= b.x0 + b.w0 || yi >= b.y0 + b.h0) continue;
+    if (b.mask[(yi - b.y0) * b.w0 + (xi - b.x0)]) return true;
+  }
+  return false;
+}
+
 function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
   const dog = state.dogs[state.currentPlayer];
   const weapon = WEAPONS[state.weapon];
-  if (state.ammo[state.weapon] === 0) return;
+  if (!weapon || state.ammo[state.weapon] === 0) return;
+  // Non-ballistic weapons: teleport has its own reticle; skip preview.
+  if (weapon.id === "teleport" || !weapon.speed) return;
   const dir = dog.facing;
   const color = weaponColor(state.weapon);
 
@@ -1484,18 +1499,24 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
 
   const rad = (state.angle * Math.PI) / 180;
   const v = state.power * weapon.speed * 0.6;
+  // Origin at muzzle; lift up if inside solid (e.g. dog on slope/barricade).
   let x = dog.x + dir * 18;
-  let y = dog.y - 6;
+  let y = dog.y - 10;
+  for (let lift = 0; lift < 14 && isSolidAt(state, x, y); lift++) y -= 2;
   let vx = Math.cos(rad) * v * dir;
   let vy = -Math.sin(rad) * v;
 
-  const dt = 0.05;
-  const maxPoints = 26;
+  const dt = 0.045;
+  const maxPoints = 60;
   const windMul = dog.rageActive ? 0.5 : 1;
   const maxY = state.height - state.hudReserve - 2;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
 
   ctx.save();
+  let impact = false;
+  let lastX = x, lastY = y;
+  // Grace period: while origin is still inside solid, skip collision checks.
+  let escaped = !isSolidAt(state, x, y);
   for (let i = 0; i < maxPoints; i++) {
     if (weapon.id === "rpg" && i * dt < 1.4) {
       const sp = Math.hypot(vx, vy) || 1;
@@ -1508,13 +1529,14 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     y += vy * dt;
 
     if (x < 0 || x > state.width || y > maxY) break;
+    if (!escaped) {
+      if (!isSolidAt(state, x, y)) escaped = true;
+      lastX = x; lastY = y;
+      continue;
+    }
     if (i < 2) continue;
 
-    const xi = Math.floor(x), yi = Math.floor(y);
-    const hitTerrain = xi >= 0 && xi < state.width && yi >= 0 && yi < state.height &&
-      state.terrain[yi * state.width + xi] === 1;
-
-    if (hitTerrain) {
+    if (isSolidAt(state, x, y)) {
       // Impact target: dark halo + neon ring + white cross
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
@@ -1537,6 +1559,7 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.moveTo(x - 9, y); ctx.lineTo(x + 9, y);
       ctx.moveTo(x, y - 9); ctx.lineTo(x, y + 9);
       ctx.stroke();
+      impact = true;
       break;
     }
 
@@ -1544,17 +1567,27 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     const alpha = 1 - t * 0.55;
     const r = 2.6 - t * 1.1;
     const rr = Math.max(1, r);
-    // Dark halo
     ctx.globalAlpha = Math.min(1, alpha + 0.15);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.beginPath(); ctx.arc(x, y, rr + 1.4, 0, Math.PI * 2); ctx.fill();
-    // Neon core
     ctx.globalAlpha = alpha;
     ctx.fillStyle = core;
     ctx.shadowColor = core;
     ctx.shadowBlur = 6;
     ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
+    lastX = x; lastY = y;
+  }
+  // No impact found — draw a small arrow at the last visible point.
+  if (!impact && lastX > 0 && lastX < state.width && lastY < maxY) {
+    ctx.globalAlpha = 0.85;
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(0,0,0,0.7)";
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = core;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.stroke();
   }
   ctx.restore();
 }
