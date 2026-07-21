@@ -1,4 +1,4 @@
-import type { Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
+import type { Barricade, BarricadeKind, Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
 import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
@@ -77,7 +77,48 @@ export function createGame(
     terrainBottom,
     matchStartGrace: 0.8,
     rageEnabled,
+    barricades: spawnBarricades(terrain, width, height, dogs, rng),
+    teleportAiming: null,
   };
+}
+
+function spawnBarricades(
+  terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
+): Barricade[] {
+  const kinds: { k: BarricadeKind; w: number; h: number; hp: number }[] = [
+    { k: "concrete", w: 40, h: 60, hp: 120 },
+    { k: "sandbag", w: 50, h: 24, hp: 60 },
+    { k: "container", w: 70, h: 40, hp: 90 },
+  ];
+  const out: Barricade[] = [];
+  const count = 3 + Math.floor(rng() * 3); // 3..5
+  const tries = count * 8;
+  const minGapDog = 90;
+  const centerMin = w * 0.18;
+  const centerMax = w * 0.82;
+  for (let t = 0; t < tries && out.length < count; t++) {
+    const spec = kinds[Math.floor(rng() * kinds.length)];
+    const cx = centerMin + rng() * (centerMax - centerMin);
+    if (Math.abs(cx - dogs[0].x) < minGapDog || Math.abs(cx - dogs[1].x) < minGapDog) continue;
+    const sy = surfaceY(terrain, w, h, cx);
+    if (sy >= h - 8) continue;
+    const x = Math.round(cx - spec.w / 2);
+    const y = Math.round(sy - spec.h);
+    // Bounding-box overlap check with existing barricades (+ 10px padding).
+    let overlap = false;
+    for (const b of out) {
+      if (x < b.x + b.w + 10 && x + spec.w + 10 > b.x && y < b.y + b.h + 10 && y + spec.h + 10 > b.y) {
+        overlap = true; break;
+      }
+    }
+    if (overlap) continue;
+    out.push({
+      id: `b${out.length}_${Math.floor(rng() * 1e6)}`,
+      x, y, w: spec.w, h: spec.h,
+      hp: spec.hp, maxHp: spec.hp, kind: spec.k,
+    });
+  }
+  return out;
 }
 
 
@@ -186,6 +227,17 @@ export function fire(state: GameState) {
   if (state.phase !== "aiming") return;
   const weapon = WEAPONS[state.weapon];
   if (state.ammo[state.weapon] === 0) return;
+
+  // Teleport is a utility weapon — requires a valid target picked beforehand.
+  if (weapon.id === "teleport") {
+    const t = state.teleportAiming;
+    if (!t || !t.valid) return;
+    if (state.ammo[state.weapon] > 0) state.ammo[state.weapon]--;
+    executeTeleport(state, t.x, t.y);
+    state.teleportAiming = null;
+    return;
+  }
+
   if (state.chaosWind) {
     const sc = getActiveScenario();
     state.wind = (Math.random() - 0.5) * 2 * Math.max(1, sc.windScale);
@@ -316,12 +368,43 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 }
 
 
+// Barricade AABB helpers
+export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
+  }
+  return null;
+}
+
+function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    if (x >= b.x - 1 && x <= b.x + b.w + 1 && y >= b.y - tol && y <= b.y + 2) return b;
+  }
+  return null;
+}
+
 // Robust "supported" check: sample a window across the dog's feet
 function isSupported(state: GameState, dog: Dog): boolean {
   for (let dx = -4; dx <= 4; dx++) {
-    if (terrainAt(state, dog.x + dx, dog.y + 19)) return true;
+    const fy = dog.y + 19;
+    if (terrainAt(state, dog.x + dx, fy)) return true;
+    if (barricadeTopAt(state, dog.x + dx, fy)) return true;
   }
   return false;
+}
+
+// Highest solid surface (terrain top OR barricade top) at column x.
+function surfaceOrBarricadeY(state: GameState, x: number): number {
+  let sy = surfaceY(state.terrain, state.width, state.height, x);
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    if (x >= b.x && x <= b.x + b.w) {
+      if (b.y < sy) sy = b.y;
+    }
+  }
+  return sy;
 }
 
 // How many solid pixels exist in a short vertical window just below the dog's feet.
@@ -540,6 +623,27 @@ export function step(state: GameState, dt: number) {
       state.projectiles.splice(i, 1); continue;
     }
 
+    // Barricade hit — absorb damage, chip HP, then explode/bounce
+    const hitBarricade = !exploded ? barricadeAt(state, p.x, p.y) : null;
+    if (hitBarricade) {
+      const absorb = hitBarricade.kind === "concrete" ? 0.5 : hitBarricade.kind === "container" ? 0.7 : 0.9;
+      hitBarricade.hp -= Math.max(6, Math.round(w.damage * absorb));
+      if (hitBarricade.hp <= 0) {
+        spawnExplosion(state, hitBarricade.x + hitBarricade.w / 2, hitBarricade.y + hitBarricade.h / 2, 30, "#a0a0a8");
+        state.floatingTexts.push({
+          id: Math.random(), x: hitBarricade.x + hitBarricade.w / 2, y: hitBarricade.y - 6,
+          vx: 0, vy: -60, life: 1.2, maxLife: 1.2, value: "DESTRUÍDA", color: "#ffb84a", size: 16,
+        });
+      }
+      if (w.id === "grenade" || w.id === "frag") {
+        // bounce off face
+        p.x -= p.vx * dt * 1.2; p.y -= p.vy * dt * 1.2;
+        p.vx = -p.vx * 0.5; p.vy = -p.vy * 0.5;
+      } else {
+        exploded = true;
+      }
+    }
+
     if (!exploded && terrainAt(state, p.x, p.y)) {
       if (w.id === "grenade" || w.id === "frag") {
         const nx = terrainAt(state, p.x - 3, p.y) ? 1 : terrainAt(state, p.x + 3, p.y) ? -1 : 0;
@@ -674,6 +778,7 @@ export function endTurn(state: GameState) {
   }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
   state.phase = "aiming";
+  state.teleportAiming = null;
   state.turnTimer = state.turnTimeLimit ?? MAX_TURN_TIME;
   const windScale = getActiveScenario().windScale;
   state.wind = Math.max(-1, Math.min(1, state.wind + (Math.random() - 0.5) * 0.6 * windScale));
@@ -730,15 +835,16 @@ export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
   let dx = dir * MOVE_SPEED * dt;
   if (Math.abs(dx) > dog.moveBudget) dx = dir * dog.moveBudget;
   const newX = Math.max(10, Math.min(state.width - 10, dog.x + dx));
-  const currentSurface = surfaceY(state.terrain, state.width, state.height, dog.x);
-  const targetSurface = surfaceY(state.terrain, state.width, state.height, newX);
-  // Allow step-up up to STEP_UP; step-down always allowed (dog will fall)
-  if (currentSurface - targetSurface <= STEP_UP) {
-    dog.x = newX;
-    dog.y = targetSurface - 18;
-    dog.moveBudget -= Math.abs(dx);
-    dog.facing = dir;
-  }
+  const currentSurface = surfaceOrBarricadeY(state, dog.x);
+  const targetSurface = surfaceOrBarricadeY(state, newX);
+  // Block if we'd enter the side of a tall barricade (step-up too big)
+  if (currentSurface - targetSurface > STEP_UP) return;
+  // Block if the new position would clip through a barricade body
+  if (barricadeAt(state, newX, targetSurface - 10) || barricadeAt(state, newX, targetSurface + 10)) return;
+  dog.x = newX;
+  dog.y = targetSurface - 18;
+  dog.moveBudget -= Math.abs(dx);
+  dog.facing = dir;
 }
 
 export function jumpDog(state: GameState) {
@@ -764,6 +870,7 @@ export function setWeapon(state: GameState, id: WeaponId) {
   if (state.phase !== "aiming" || state.winner !== null) return;
   if (state.ammo[id] === 0) return;
   state.weapon = id;
+  state.teleportAiming = null;
 }
 
 export const SPECIAL_READY_THRESHOLD = 100;
@@ -807,3 +914,58 @@ export function triggerCanineBarrage(state: GameState): "activated" | "low" | "u
   }
   return "activated";
 }
+
+// ============ Teleport ============
+
+export const TELEPORT_MAX_RANGE = 320;
+export const TELEPORT_HP_COST = 5;
+
+export function isValidTeleportTarget(state: GameState, tx: number, ty: number): boolean {
+  const dog = state.dogs[state.currentPlayer];
+  if (!dog || dog.hp <= 0) return false;
+  if (tx < 24 || tx > state.width - 24) return false;
+  const dist = Math.hypot(tx - dog.x, ty - dog.y);
+  const maxR = Math.min(TELEPORT_MAX_RANGE, state.width * 0.5);
+  if (dist > maxR) return false;
+  // ground column beneath target must be solid
+  const sy = surfaceOrBarricadeY(state, tx);
+  if (sy >= state.terrainBottom - 4) return false;
+  if (sy < 40) return false;
+  // Reject if the drop point is inside a barricade body
+  if (barricadeAt(state, tx, sy + 4)) return false;
+  return true;
+}
+
+export function setTeleportTarget(state: GameState, tx: number, ty: number) {
+  if (state.weapon !== "teleport" || state.phase !== "aiming") return;
+  const valid = isValidTeleportTarget(state, tx, ty);
+  state.teleportAiming = { x: tx, y: ty, valid };
+}
+
+export function clearTeleportTarget(state: GameState) {
+  state.teleportAiming = null;
+}
+
+function executeTeleport(state: GameState, tx: number, _ty: number) {
+  const dog = state.dogs[state.currentPlayer];
+  const sy = surfaceOrBarricadeY(state, tx);
+  // dissipation FX at origin
+  spawnExplosion(state, dog.x, dog.y - 8, 18, "#38f0ff");
+  dog.x = tx;
+  dog.y = sy - 18;
+  dog.vy = 0;
+  dog.airborne = false;
+  dog.fallStartY = undefined;
+  dog.unsupportedTicks = 0;
+  dog.hp = Math.max(1, dog.hp - TELEPORT_HP_COST);
+  // materialization FX at destination
+  spawnExplosion(state, dog.x, dog.y - 8, 18, "#38f0ff");
+  state.floatingTexts.push({
+    id: Math.random(), x: dog.x, y: dog.y - 40, vx: 0, vy: -60,
+    life: 1.5, maxLife: 1.5, value: `TELEPORTE -${TELEPORT_HP_COST} HP`,
+    color: "#7ff0ff", size: 20,
+  });
+  state.phase = "resolving";
+  state.message = "Reposicionado!";
+}
+

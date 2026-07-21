@@ -8,7 +8,8 @@ export type WeaponId =
   | "artillery"
   | "frag"
   | "cluster"
-  | "airstrike";
+  | "airstrike"
+  | "teleport";
 
 export interface Weapon {
   id: WeaponId;
@@ -17,12 +18,25 @@ export interface Weapon {
   radius: number;
   ammo: number;
   speed: number;
-  kind: "ballistic" | "cluster" | "airstrike";
+  kind: "ballistic" | "cluster" | "airstrike" | "utility";
   affectedByWind: boolean;
   color: string;
   accent?: string;
   gravityScale: number;
   fuse?: number;
+}
+
+export type BarricadeKind = "concrete" | "sandbag" | "container";
+
+export interface Barricade {
+  id: string;
+  x: number;      // top-left
+  y: number;      // top-left
+  w: number;
+  h: number;
+  hp: number;
+  maxHp: number;
+  kind: BarricadeKind;
 }
 
 export interface Dog {
@@ -115,6 +129,8 @@ export interface GameState {
   turnTimeLimit?: number;    // segundos por turno (padrão MAX_TURN_TIME)
   chaosWind?: boolean;       // re-sorteia o vento a cada tiro
   onExplosion?: (x: number, y: number, radius: number) => void;
+  barricades: Barricade[];
+  teleportAiming?: { x: number; y: number; valid: boolean } | null;
 }
 
 

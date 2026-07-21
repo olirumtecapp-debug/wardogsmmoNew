@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, setTeleportTarget, clearTeleportTarget } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -17,6 +17,7 @@ const WEAPON_DESC: Record<WeaponId, string> = {
   frag: "Frag rápida com pavio curto (1s). Boa pra acertos próximos que não dão tempo de fugir.",
   cluster: "Munição cluster: no impacto libera 4 sub-bombas que espalham dano em área.",
   airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
+  teleport: "Toque num ponto do mapa pra reposicionar o cão. Custa 5 HP e encerra o turno.",
 };
 
 // Short labels for the arsenal grid cells (avoid overflowing narrow columns on mobile).
@@ -29,6 +30,7 @@ const WEAPON_SHORT: Record<WeaponId, string> = {
   frag: "Frag",
   cluster: "Cluster",
   airstrike: "Aéreo",
+  teleport: "Teleport",
 };
 
 
@@ -314,13 +316,24 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const s = stateRef.current;
       if (!s || s.phase !== "aiming" || s.winner === null && mode === "ai" && s.currentPlayer === 1) return;
       const { x, y } = toWorld(e);
+      // Teleport aim mode: single tap picks the target.
+      if (s.weapon === "teleport") {
+        setTeleportTarget(s, x, y);
+        return;
+      }
       const dog = s.dogs[s.currentPlayer];
       dragRef.current = { startX: x, startY: y, dogX: dog.x, dogY: dog.y };
     };
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
+      if (!s) return;
+      if (s.weapon === "teleport" && s.teleportAiming) {
+        const { x, y } = toWorld(e);
+        setTeleportTarget(s, x, y);
+        return;
+      }
       const drag = dragRef.current;
-      if (!s || !drag) return;
+      if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
       const dx = (px - drag.startX) * -dog.facing;
@@ -336,7 +349,9 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const s = stateRef.current;
       const drag = dragRef.current;
       dragRef.current = null;
-      if (!s || !drag) return;
+      if (!s) return;
+      if (s.weapon === "teleport") return; // teleport uses tap, fired via HUD button
+      if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist > 20 && s.phase === "aiming" && s.winner === null) fire(s);

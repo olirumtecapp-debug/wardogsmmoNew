@@ -359,6 +359,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     }
   }
 
+  // Barricades (draw before dogs so dogs stand in front / can stand on top)
+  drawBarricades(ctx, state);
+
   // Dogs — ensure no residual composite/alpha from previous passes dims them
   ctx.save();
   ctx.globalAlpha = 1;
@@ -406,6 +409,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
 
   }
   ctx.restore();
+
+  // Teleport aiming reticle
+  drawTeleportAim(ctx, state, now);
 
 
   // Aim indicator
@@ -1550,5 +1556,96 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowBlur = 6;
     ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
   }
+  ctx.restore();
+}
+
+// ============ Barricades & Teleport ============
+
+function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
+  for (const b of state.barricades) {
+    if (b.hp <= 0) continue;
+    ctx.save();
+    const hpT = Math.max(0, b.hp / b.maxHp);
+    if (b.kind === "concrete") {
+      ctx.fillStyle = "#6b6b74";
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = "#83838d";
+      ctx.fillRect(b.x, b.y, b.w, 4);
+      ctx.strokeStyle = "#2a2a2f";
+      ctx.lineWidth = 1;
+      for (let yy = b.y + 10; yy < b.y + b.h; yy += 10) {
+        ctx.beginPath(); ctx.moveTo(b.x, yy); ctx.lineTo(b.x + b.w, yy); ctx.stroke();
+      }
+    } else if (b.kind === "sandbag") {
+      ctx.fillStyle = "#8a6f3f";
+      const rows = 3;
+      const rh = b.h / rows;
+      for (let r = 0; r < rows; r++) {
+        const off = (r % 2) * 8;
+        for (let x = b.x - 4 + off; x < b.x + b.w; x += 16) {
+          ctx.beginPath();
+          ctx.ellipse(x + 8, b.y + rh * r + rh / 2, 9, rh / 2 - 1, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+    } else {
+      // container
+      const g = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+      g.addColorStop(0, "#c93a2a");
+      g.addColorStop(1, "#7a1c12");
+      ctx.fillStyle = g;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.strokeStyle = "#3a0a05";
+      ctx.lineWidth = 2;
+      for (let x = b.x + 6; x < b.x + b.w; x += 8) {
+        ctx.beginPath(); ctx.moveTo(x, b.y + 2); ctx.lineTo(x, b.y + b.h - 2); ctx.stroke();
+      }
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+    }
+    // damage cracks
+    if (hpT < 0.6) {
+      ctx.strokeStyle = `rgba(0,0,0,${0.4 + (1 - hpT) * 0.4})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(b.x + b.w * 0.2, b.y + 2);
+      ctx.lineTo(b.x + b.w * 0.35, b.y + b.h * 0.6);
+      ctx.lineTo(b.x + b.w * 0.55, b.y + b.h * 0.4);
+      ctx.lineTo(b.x + b.w * 0.75, b.y + b.h - 2);
+      ctx.stroke();
+    }
+    // HP pip
+    const pipW = b.w * hpT;
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(b.x, b.y - 5, b.w, 3);
+    ctx.fillStyle = hpT > 0.5 ? "#7ff08a" : hpT > 0.25 ? "#f0d54a" : "#ff5a5a";
+    ctx.fillRect(b.x, b.y - 5, pipW, 3);
+    ctx.restore();
+  }
+}
+
+function drawTeleportAim(ctx: CanvasRenderingContext2D, state: GameState, now: number) {
+  const t = state.teleportAiming;
+  if (!t) return;
+  const color = t.valid ? "#38f0ff" : "#ff5a5a";
+  const dog = state.dogs[state.currentPlayer];
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.setLineDash([6, 4]);
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(dog.x, dog.y - 10);
+  ctx.lineTo(t.x, t.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  const pulse = 14 + Math.sin(now * 6) * 3;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(t.x, t.y, pulse, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(t.x - 20, t.y); ctx.lineTo(t.x + 20, t.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(t.x, t.y - 20); ctx.lineTo(t.x, t.y + 20); ctx.stroke();
   ctx.restore();
 }
