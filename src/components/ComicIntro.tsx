@@ -152,8 +152,11 @@ function ComicPanel({
         style={{ transform: side === "right" ? "scaleX(-1)" : undefined }}
       />
       <div
-        className={`absolute top-2 ${side === "left" ? "right-2" : "left-2"} max-w-[62%] bg-white text-black px-2 py-1.5 border-[2px] border-black rounded-md text-[11px] sm:text-[13px] leading-tight font-bold`}
-        style={{ boxShadow: "3px 3px 0 rgba(0,0,0,0.9)" }}
+        className={`absolute top-1.5 ${side === "left" ? "right-1.5" : "left-1.5"} max-w-[68%] bg-white text-black px-2 py-1 border-[2px] border-black rounded-md leading-tight font-bold`}
+        style={{
+          boxShadow: "3px 3px 0 rgba(0,0,0,0.9)",
+          fontSize: "clamp(9px, 1.5vw, 13px)",
+        }}
       >
         {text}
         <span
@@ -162,8 +165,10 @@ function ComicPanel({
           aria-hidden
         />
       </div>
-      <div className="absolute bottom-1.5 left-1.5 stencil text-[11px] tracking-widest px-1.5 py-0.5 bg-black/70 border border-white/20 rounded"
-           style={{ color }}>
+      <div
+        className="absolute bottom-1.5 left-1.5 stencil tracking-widest px-1.5 py-0.5 bg-black/70 border border-white/20 rounded"
+        style={{ color, fontSize: "clamp(8px, 1.3vw, 12px)" }}
+      >
         {name}
       </div>
     </div>
