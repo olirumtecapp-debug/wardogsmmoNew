@@ -58,10 +58,10 @@ const OZZY_SKIN: TeamSkin = {
   badgeGlyph: "▲",
 };
 
-// Negão (Cane Corso) — tanque elite, blindagem pesada
+// Corso (Cane Corso) — tanque elite, blindagem pesada
 const NEGAO_SKIN: TeamSkin = {
   ...BRUTUS,
-  name: "NEGÃO",
+  name: "CORSO",
   silhouette: "stocky",
   teamColor: "#a855f7",
   teamDark: "#5b21b6",
