@@ -30,7 +30,7 @@ const WEAPON_SHORT: Record<WeaponId, string> = {
   frag: "Frag",
   cluster: "Cluster",
   airstrike: "Aéreo",
-  teleport: "Teleport",
+  teleport: "Teleporte",
 };
 
 
