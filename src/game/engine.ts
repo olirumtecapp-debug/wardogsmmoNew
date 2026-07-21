@@ -84,19 +84,48 @@ export function createGame(
 function generateTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
   const heights = new Float32Array(w);
-  const baseline = usableH * 0.62;
-  const amp = usableH * 0.10;
+  const baseline = usableH * 0.60;
+  const amp = usableH * 0.20;
   const octaves = [
-    { freq: 0.002, amp: amp * 0.7, phase: rng() * Math.PI * 2 },
-    { freq: 0.006, amp: amp * 0.25, phase: rng() * Math.PI * 2 },
-    { freq: 0.015, amp: amp * 0.10, phase: rng() * Math.PI * 2 },
-    { freq: 0.04, amp: amp * 0.04, phase: rng() * Math.PI * 2 },
+    { freq: 0.0012, amp: amp * 0.55, phase: rng() * Math.PI * 2 }, // grandes elevações
+    { freq: 0.003,  amp: amp * 0.30, phase: rng() * Math.PI * 2 }, // colinas médias
+    { freq: 0.008,  amp: amp * 0.18, phase: rng() * Math.PI * 2 }, // ondulações
+    { freq: 0.020,  amp: amp * 0.08, phase: rng() * Math.PI * 2 }, // rochas
+    { freq: 0.055,  amp: amp * 0.03, phase: rng() * Math.PI * 2 }, // detalhe fino
   ];
   for (let x = 0; x < w; x++) {
     let y = baseline;
     for (const o of octaves) y += Math.sin(x * o.freq + o.phase) * o.amp;
-    heights[x] = Math.max(usableH * 0.45, Math.min(usableH - 12, y)) + topReserve;
+    heights[x] = Math.max(usableH * 0.35, Math.min(usableH - 8, y));
   }
+
+  // Suavização nas zonas de spawn (achata plataformas iniciais dos cães)
+  const flattenBand = (start: number, end: number) => {
+    const s = Math.floor(w * start);
+    const e = Math.floor(w * end);
+    if (e - s < 4) return;
+    let sum = 0;
+    for (let x = s; x < e; x++) sum += heights[x];
+    const avg = sum / (e - s);
+    for (let x = s; x < e; x++) {
+      // mistura 70% média + 30% valor original — plataforma estável mas não totalmente reta
+      heights[x] = heights[x] * 0.3 + avg * 0.7;
+    }
+  };
+  flattenBand(0.08, 0.22);
+  flattenBand(0.78, 0.92);
+
+  // Garante cobertura mínima: pelo menos 60% das colunas têm terreno alto o bastante
+  const minTop = usableH - 20;
+  let goodCols = 0;
+  for (let x = 0; x < w; x++) if (heights[x] < minTop) goodCols++;
+  if (goodCols / w < 0.6) {
+    const lift = usableH * 0.08;
+    for (let x = 0; x < w; x++) heights[x] = Math.max(usableH * 0.35, heights[x] - lift);
+  }
+
+  // Aplica topReserve e desenha o terreno sólido
+  for (let x = 0; x < w; x++) heights[x] += topReserve;
   const bottom = Math.min(h, usableH + topReserve);
   for (let x = 0; x < w; x++) {
     const top = Math.floor(heights[x]);
