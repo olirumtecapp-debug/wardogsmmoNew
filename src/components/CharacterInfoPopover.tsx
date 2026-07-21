@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { CHARACTERS, characterBars, type CharacterId } from "@/game/characters";
 
 interface Props {
   charId: CharacterId;
   children: ReactNode;
-  /** where to anchor the popover relative to the trigger */
+  /** preferred anchor side; auto-flips if not enough room */
   placement?: "top" | "bottom";
 }
 
@@ -15,20 +16,52 @@ const STAT_META: { key: "hp" | "mob" | "jump" | "def"; icon: string; label: stri
   { key: "def", icon: "◆", label: "Defesa" },
 ];
 
-/**
- * Wraps a character card trigger and shows a floating info popover
- * on hover (desktop) or long-press (mobile) with stats and lore.
- */
+const POPOVER_W = 224; // 14rem
+const GUTTER = 8;
+
 export function CharacterInfoPopover({ charId, children, placement = "top" }: Props) {
   const c = CHARACTERS[charId];
   const bars = characterBars(charId);
   const color = c.skin.teamColor;
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ left: number; top: number } | null>(null);
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const popRef = useRef<HTMLDivElement | null>(null);
   const lpTimer = useRef<number | null>(null);
 
   useEffect(() => () => {
     if (lpTimer.current) window.clearTimeout(lpTimer.current);
   }, []);
+
+  const compute = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const w = Math.min(POPOVER_W, vw - GUTTER * 2);
+    const h = popRef.current?.offsetHeight ?? 180;
+    const spaceTop = r.top;
+    const spaceBottom = vh - r.bottom;
+    const flipToBottom = placement === "top" ? spaceTop < h + GUTTER && spaceBottom > spaceTop : spaceBottom >= h + GUTTER || spaceBottom > spaceTop;
+    const top = flipToBottom ? Math.min(vh - h - GUTTER, r.bottom + 6) : Math.max(GUTTER, r.top - h - 6);
+    const centerX = r.left + r.width / 2 - w / 2;
+    const left = Math.max(GUTTER, Math.min(centerX, vw - w - GUTTER));
+    setCoords({ left, top });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    compute();
+    const onScroll = () => compute();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const clearLp = () => {
     if (lpTimer.current) {
@@ -36,19 +69,20 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
       lpTimer.current = null;
     }
   };
-
   const onTouchStart = () => {
     clearLp();
     lpTimer.current = window.setTimeout(() => setOpen(true), 380);
   };
   const onTouchEnd = () => {
     clearLp();
-    // keep open briefly so mobile users can read; close on next tap outside
     window.setTimeout(() => setOpen(false), 2200);
   };
 
+  const width = Math.min(POPOVER_W, typeof window !== "undefined" ? window.innerWidth - GUTTER * 2 : POPOVER_W);
+
   return (
     <div
+      ref={triggerRef}
       className="relative"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -57,11 +91,11 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
       onTouchCancel={onTouchEnd}
     >
       {children}
-      {open && (
+      {open && coords && typeof document !== "undefined" && createPortal(
         <div
-          className={`pointer-events-none absolute left-1/2 -translate-x-1/2 z-50 w-[min(14rem,calc(100vw-1rem))] ${
-            placement === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
-          }`}
+          ref={popRef}
+          className="pointer-events-none fixed z-[100]"
+          style={{ left: coords.left, top: coords.top, width }}
         >
           <div
             className="panel p-2 text-left shadow-xl card-in overflow-hidden"
@@ -97,7 +131,8 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
