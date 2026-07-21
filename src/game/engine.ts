@@ -291,6 +291,10 @@ function isSupported(state: GameState, dog: Dog): boolean {
 
 export function step(state: GameState, dt: number) {
   const scGravity = getActiveScenario().gravityScale;
+  if (state.matchStartGrace && state.matchStartGrace > 0) {
+    state.matchStartGrace = Math.max(0, state.matchStartGrace - dt);
+  }
+
 
   // Dogs — gravity + fall damage
   for (const dog of state.dogs) {
