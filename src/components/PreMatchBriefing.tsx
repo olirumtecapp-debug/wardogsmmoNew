@@ -19,17 +19,6 @@ const DIFF_INFO: { id: Difficulty; label: string; desc: string; color: string }[
   { id: "general", label: "General", desc: "Preciso, aproveita cada abertura", color: "var(--team-red)" },
 ];
 
-function StatRow({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[8px] uppercase tracking-widest text-muted-foreground w-8 shrink-0">{label}</span>
-      <div className="flex-1 h-1 bg-black/50 rounded-full overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${value * 100}%`, background: color }} />
-      </div>
-    </div>
-  );
-}
-
 function CharCard({
   charId,
   active,
@@ -42,45 +31,43 @@ function CharCard({
   const c = CHARACTERS[charId];
   const b = characterBars(charId);
   const color = c.skin.teamColor;
+  const stats: [string, number][] = [["♥", b.hp], ["⚡", b.mob], ["◆", b.def]];
   return (
     <button
       onClick={onSelect}
-      className={`btn-hud p-2 flex flex-col gap-1 items-stretch text-left ${active ? "is-selected" : ""}`}
+      className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center ${active ? "is-selected" : ""}`}
       style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
-      title={c.tagline}
+      title={`${c.name} — ${c.tagline}`}
     >
-      <div className="flex items-center gap-2">
-        <img
-          src={c.portraitUrl}
-          alt={c.name}
-          className="w-12 h-12 rounded object-contain bg-black/40 shrink-0"
-          style={{ boxShadow: `0 0 6px ${color}` }}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <div className="stencil text-[12px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
-            {c.tier === "elite" && (
-              <span
-                className="text-[8px] uppercase tracking-[0.2em] px-1 py-0.5 rounded border font-bold shrink-0"
-                style={{ color: "#0b0f16", background: color, borderColor: color }}
-              >
-                Elite
-              </span>
-            )}
-          </div>
-          <div className="text-[9px] text-muted-foreground truncate">{c.breed}</div>
-        </div>
+      <img
+        src={c.portraitUrl}
+        alt={c.name}
+        className="w-full aspect-square rounded object-contain bg-black/40"
+        style={{ boxShadow: `0 0 6px ${color}` }}
+      />
+      <div className="flex items-center gap-1 justify-center w-full min-w-0">
+        <div className="stencil text-[11px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
+        {c.tier === "elite" && (
+          <span
+            className="text-[7px] uppercase tracking-[0.15em] px-1 rounded font-bold shrink-0"
+            style={{ color: "#0b0f16", background: color }}
+          >
+            E
+          </span>
+        )}
       </div>
-      <div className="text-[9px] text-muted-foreground leading-tight line-clamp-2">{c.tagline}</div>
-      <div className="flex flex-col gap-0.5 mt-0.5">
-        <StatRow label="HP" value={b.hp} color={color} />
-        <StatRow label="MOV" value={b.mob} color={color} />
-        <StatRow label="PULO" value={b.jump} color={color} />
-        <StatRow label="DEF" value={b.def} color={color} />
+      <div className="flex gap-1.5 text-[9px] text-muted-foreground">
+        {stats.map(([icon, val]) => (
+          <span key={icon} className="inline-flex items-center gap-0.5">
+            <span style={{ color }}>{icon}</span>
+            <span>{Math.round(val * 10)}</span>
+          </span>
+        ))}
       </div>
     </button>
   );
 }
+
 
 function SummaryCard({
   label,
@@ -340,7 +327,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
       {picker === "p1" && (
         <PickerModal title="Escolher Jogador 1" onClose={close}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {CHARACTER_LIST.map(c => (
               <CharCard key={`p1-${c.id}`} charId={c.id} active={p1 === c.id} onSelect={() => { setP1(c.id); close(); }} />
             ))}
@@ -350,7 +337,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
       {picker === "p2" && (
         <PickerModal title={mode === "ai" ? "Escolher IA" : "Escolher Jogador 2"} onClose={close}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {CHARACTER_LIST.map(c => (
               <CharCard key={`p2-${c.id}`} charId={c.id} active={p2 === c.id} onSelect={() => { setP2(c.id); close(); }} />
             ))}
