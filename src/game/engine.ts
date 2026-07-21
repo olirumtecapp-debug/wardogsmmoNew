@@ -43,14 +43,10 @@ export function createGame(
   const usableH = Math.max(200, height - hudReserve - topReserve);
   const terrain = generateTerrain(width, height, usableH, topReserve, rng);
   const terrainBottom = Math.min(height, usableH + topReserve);
-  const dogs = placeDogs(terrain, width, height, rng, chars);
-  // Snap seguro: garante que nenhum cão nasça abaixo do terreno visível
-  for (const d of dogs) {
-    const sy = surfaceY(terrain, width, height, d.x);
-    d.y = Math.min(sy - 18, terrainBottom - 20);
-    d.vy = 0;
-    d.airborne = false;
-  }
+  // 1) Barricadas primeiro (sem restrição de proximidade de cães).
+  const barricades = spawnBarricades(terrain, width, height, rng);
+  // 2) Cães podem nascer no chão OU em cima de uma barricada/pilha na sua metade.
+  const dogs = placeDogs(terrain, barricades, width, height, rng, chars, terrainBottom);
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
   const dur = Math.max(0, matchDuration);
@@ -77,10 +73,11 @@ export function createGame(
     terrainBottom,
     matchStartGrace: 0.8,
     rageEnabled,
-    barricades: spawnBarricades(terrain, width, height, dogs, rng),
+    barricades,
     teleportAiming: null,
   };
 }
+
 
 function spawnBarricades(
   terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
