@@ -3,6 +3,7 @@ import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
 import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
 import { CHARACTERS, type CharacterId } from "./characters";
+import { playSfx } from "./audio";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
