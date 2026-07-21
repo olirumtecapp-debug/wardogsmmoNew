@@ -162,7 +162,7 @@ function ComicPanel({
 function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean; scenarioLabel?: string; colorA: string; colorB: string }) {
   return (
     <div
-      className="relative overflow-hidden rounded-md border-[3px] border-black shadow-[6px_6px_0_rgba(0,0,0,0.9)] aspect-[3/4] transition-all duration-300 flex items-center justify-center"
+      className="relative overflow-hidden rounded-md border-[3px] border-black shadow-[6px_6px_0_rgba(0,0,0,0.9)] h-full w-full transition-all duration-300 flex items-center justify-center"
       style={{
         transform: `scale(${visible ? 1 : 0.85})`,
         opacity: visible ? 1 : 0,
