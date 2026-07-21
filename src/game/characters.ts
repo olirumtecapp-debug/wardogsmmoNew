@@ -107,6 +107,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Pastor Alemão",
     tagline: "Equilibrado — bom em todo terreno.",
     portraitUrl: rangerPortrait.url,
+    comicPortraitUrl: rangerSide.url,
     stats: { hp: 100, mobility: 120, jump: 1.0, defense: 1.0 },
     skin: RANGER,
     tier: "standard",
