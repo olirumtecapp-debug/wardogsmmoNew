@@ -196,7 +196,7 @@ function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean;
         <div
           className="stencil font-black leading-none"
           style={{
-            fontSize: "clamp(40px, 12vw, 160px)",
+            fontSize: "clamp(36px, min(11vw, 18vh), 160px)",
             color: "#fff",
             textShadow: `4px 4px 0 #000, 8px 8px 0 ${colorA}, -4px -4px 0 ${colorB}`,
             letterSpacing: "0.05em",
@@ -204,6 +204,14 @@ function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean;
         >
           VS
         </div>
+        {scenarioLabel && (
+          <div
+            className="mt-2 stencil tracking-[0.3em] text-white/90 bg-black/60 inline-block px-2 py-1 border border-white/20 rounded truncate max-w-full"
+            style={{ fontSize: "clamp(8px, 1.4vw, 13px)" }}
+          >
+            {scenarioLabel}
+          </div>
+        )}
         {scenarioLabel && (
           <div className="mt-2 stencil text-[11px] sm:text-sm tracking-[0.35em] text-white/90 bg-black/60 inline-block px-2 py-1 border border-white/20 rounded">
             {scenarioLabel}
