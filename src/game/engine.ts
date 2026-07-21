@@ -374,17 +374,30 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 }
 
 
-// Barricade AABB helpers
+// Barricade helpers (mask-based: barricades erode pixel by pixel like terrain)
 export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
+  const xi = Math.floor(x), yi = Math.floor(y);
   for (const b of state.barricades) {
-    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
+    const lx = xi - b.x0, ly = yi - b.y0;
+    if (lx < 0 || ly < 0 || lx >= b.w0 || ly >= b.h0) continue;
+    if (b.mask[ly * b.w0 + lx]) return b;
   }
   return null;
 }
 
 function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
+  const xi = Math.floor(x);
   for (const b of state.barricades) {
-    if (x >= b.x - 1 && x <= b.x + b.w + 1 && y >= b.y - tol && y <= b.y + 2) return b;
+    const lx = xi - b.x0;
+    if (lx < 0 || lx >= b.w0) continue;
+    for (let dy = -tol; dy <= 2; dy++) {
+      const ly = Math.floor(y - b.y0) + dy;
+      if (ly < 0 || ly >= b.h0) continue;
+      if (b.mask[ly * b.w0 + lx]) {
+        if (ly === 0 || !b.mask[(ly - 1) * b.w0 + lx]) return b;
+        break;
+      }
+    }
   }
   return null;
 }
@@ -402,41 +415,69 @@ function isSupported(state: GameState, dog: Dog): boolean {
 // Highest solid surface (terrain top OR barricade top) at column x.
 function surfaceOrBarricadeY(state: GameState, x: number): number {
   let sy = surfaceY(state.terrain, state.width, state.height, x);
+  const xi = Math.floor(x);
   for (const b of state.barricades) {
-    if (x >= b.x && x <= b.x + b.w) {
-      if (b.y < sy) sy = b.y;
+    const lx = xi - b.x0;
+    if (lx < 0 || lx >= b.w0) continue;
+    for (let ly = 0; ly < b.h0; ly++) {
+      if (b.mask[ly * b.w0 + lx]) {
+        const yy = b.y0 + ly;
+        if (yy < sy) sy = yy;
+        break;
+      }
     }
   }
   return sy;
 }
 
-// Erode barricades hit by an explosion: shrink from the side facing the blast.
+// Erode barricades hit by an explosion: destroy pixels within the blast circle.
+// Barricades are treated like terrain — they shrink progressively and open holes
+// where hit, but stay on the map until almost fully destroyed.
 function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
+  const rr = Math.max(2, r * 0.9);
+  const rr2 = rr * rr;
   for (let i = state.barricades.length - 1; i >= 0; i--) {
     const b = state.barricades[i];
-    const bcx = b.x + b.w / 2;
-    const bcy = b.y + b.h / 2;
-    const dx = cx - bcx;
-    const dy = cy - bcy;
-    // Skip if bounding box is far outside blast radius
-    if (Math.abs(dx) > r + b.w / 2 && Math.abs(dy) > r + b.h / 2) continue;
-    // Trim along the dominant axis toward the explosion center
-    if (Math.abs(dx) * b.h > Math.abs(dy) * b.w) {
-      const trim = Math.min(b.w, Math.max(4, Math.round(r * 0.9)));
-      if (dx > 0) {
-        b.w -= trim; // hit from right → shrink right side
-      } else {
-        b.x += trim; b.w -= trim; // hit from left → shrink left side
-      }
-    } else {
-      const trim = Math.min(b.h, Math.max(4, Math.round(r * 0.9)));
-      if (dy > 0) {
-        b.h -= trim; // hit from below → shrink bottom
-      } else {
-        b.y += trim; b.h -= trim; // hit from above → shrink top
+    if (cx + rr < b.x0 || cx - rr > b.x0 + b.w0 || cy + rr < b.y0 || cy - rr > b.y0 + b.h0) continue;
+    const lx0 = Math.max(0, Math.floor(cx - rr - b.x0));
+    const lx1 = Math.min(b.w0 - 1, Math.ceil(cx + rr - b.x0));
+    const ly0 = Math.max(0, Math.floor(cy - rr - b.y0));
+    const ly1 = Math.min(b.h0 - 1, Math.ceil(cy + rr - b.y0));
+    let changed = false;
+    for (let ly = ly0; ly <= ly1; ly++) {
+      const dy = (b.y0 + ly) - cy;
+      for (let lx = lx0; lx <= lx1; lx++) {
+        const dx = (b.x0 + lx) - cx;
+        if (dx * dx + dy * dy <= rr2) {
+          const idx = ly * b.w0 + lx;
+          if (b.mask[idx]) { b.mask[idx] = 0; changed = true; }
+        }
       }
     }
-    if (b.w < 8 || b.h < 8) state.barricades.splice(i, 1);
+    if (!changed) continue;
+    b._dirty = true;
+    // Recompute effective AABB + live-pixel count.
+    let minX = b.w0, maxX = -1, minY = b.h0, maxY = -1, live = 0;
+    for (let ly = 0; ly < b.h0; ly++) {
+      for (let lx = 0; lx < b.w0; lx++) {
+        if (b.mask[ly * b.w0 + lx]) {
+          live++;
+          if (lx < minX) minX = lx;
+          if (lx > maxX) maxX = lx;
+          if (ly < minY) minY = ly;
+          if (ly > maxY) maxY = ly;
+        }
+      }
+    }
+    const total = b.w0 * b.h0;
+    if (live < total * 0.08 || maxX - minX < 6 || maxY - minY < 6) {
+      state.barricades.splice(i, 1);
+      continue;
+    }
+    b.x = b.x0 + minX;
+    b.y = b.y0 + minY;
+    b.w = maxX - minX + 1;
+    b.h = maxY - minY + 1;
   }
 }
 
