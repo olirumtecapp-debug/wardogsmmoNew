@@ -142,6 +142,25 @@ function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
           <path d="M4 22 L28 22 M6 26 L26 26" stroke="#ff2a2a" strokeWidth="1.2" strokeDasharray="2 2" strokeLinecap="round" />
         </svg>
       );
+    case "teleport":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} fill="none">
+          <defs>
+            <radialGradient id="wi-tp" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="0.35" stopColor="#7ff0ff" />
+              <stop offset="0.75" stopColor="#38f0ff" />
+              <stop offset="1" stopColor="#0a3a55" />
+            </radialGradient>
+          </defs>
+          <circle cx="16" cy="16" r="13" fill="url(#wi-tp)" stroke="#0a1128" strokeWidth="1.2" />
+          <path d="M16 5 A 11 11 0 0 1 27 16" stroke="#ffffff" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.9" />
+          <path d="M16 27 A 11 11 0 0 1 5 16" stroke="#c0f8ff" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.8" />
+          <circle cx="16" cy="16" r="4" fill="#0a1128" />
+          <circle cx="16" cy="16" r="1.6" fill="#ffffff" />
+          <path d="M22 6 L24 4 M26 10 L28 8 M6 24 L4 26 M10 26 L8 28" stroke="#7ff0ff" strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      );
   }
 }
 
