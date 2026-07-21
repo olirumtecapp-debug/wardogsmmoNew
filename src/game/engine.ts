@@ -205,13 +205,14 @@ function generateTerrain(w: number, h: number, usableH: number, topReserve: numb
 }
 
 
-function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number, chars: [CharacterId, CharacterId]): [Dog, Dog] {
-  const p1x = Math.floor(w * (0.10 + rng() * 0.10));
-  const p2x = Math.floor(w * (0.80 + rng() * 0.10));
-  const mk = (x: number, team: 0 | 1, facing: 1 | -1, charId: CharacterId): Dog => {
+function placeDogs(
+  terrain: Uint8Array, barricades: Barricade[], w: number, h: number,
+  rng: () => number, chars: [CharacterId, CharacterId], terrainBottom: number,
+): [Dog, Dog] {
+  const mk = (x: number, y: number, team: 0 | 1, facing: 1 | -1, charId: CharacterId): Dog => {
     const c = CHARACTERS[charId];
     return {
-      x, y: surfaceY(terrain, w, h, x) - 18, vy: 0,
+      x, y, vy: 0,
       hp: c.stats.hp, maxHp: c.stats.hp,
       team, facing, aliveTicks: 0, airborne: false,
       moveBudget: c.stats.mobility, moveMax: c.stats.mobility,
@@ -222,8 +223,47 @@ function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number,
     };
   };
 
-  return [mk(p1x, 0, 1, chars[0]), mk(p2x, 1, -1, chars[1])];
+  // Escolhe (x, y) para o time. 60% em cima de uma barricada elegível, se houver.
+  function pickSpawn(team: 0 | 1, occupiedX: number | null): { x: number; y: number } {
+    const zoneMin = team === 0 ? w * 0.08 : w * 0.58;
+    const zoneMax = team === 0 ? w * 0.42 : w * 0.92;
+    // Candidatos: barricadas cuja coluna central cai na zona do time.
+    const candidates: Array<{ x: number; y: number }> = [];
+    for (const b of barricades) {
+      const cx = b.x0 + b.w0 / 2;
+      if (cx < zoneMin || cx > zoneMax) continue;
+      if (b.w0 < 20) continue;
+      // Topo real via máscara.
+      let topLy = -1;
+      const midLx = Math.floor(b.w0 / 2);
+      for (let ly = 0; ly < b.h0; ly++) {
+        if (b.mask[ly * b.w0 + midLx]) { topLy = ly; break; }
+      }
+      if (topLy < 0) continue;
+      const topY = b.y0 + topLy;
+      const groundY = surfaceY(terrain, w, h, cx);
+      // Precisa estar razoavelmente acima do chão pra fazer sentido "em cima".
+      if (groundY - topY < 12) continue;
+      if (occupiedX !== null && Math.abs(cx - occupiedX) < 60) continue;
+      candidates.push({ x: Math.round(cx), y: topY - 18 });
+    }
+    if (candidates.length > 0 && rng() < 0.6) {
+      return candidates[Math.floor(rng() * candidates.length)];
+    }
+    // Fallback: chão com pequena variação horizontal.
+    const baseX = team === 0 ? 0.15 : 0.85;
+    const jitter = ((rng() - 0.5) * 2 * 40) / w;
+    const fx = Math.floor(w * Math.max(0.08, Math.min(0.92, baseX + jitter)));
+    const sy = surfaceY(terrain, w, h, fx);
+    const fy = Math.min(sy - 18, terrainBottom - 20);
+    return { x: fx, y: fy };
+  }
+
+  const s0 = pickSpawn(0, null);
+  const s1 = pickSpawn(1, s0.x);
+  return [mk(s0.x, s0.y, 0, 1, chars[0]), mk(s1.x, s1.y, 1, -1, chars[1])];
 }
+
 
 export function surfaceY(terrain: Uint8Array, w: number, h: number, x: number): number {
   const xi = Math.max(0, Math.min(w - 1, Math.floor(x)));
