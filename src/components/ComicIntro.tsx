@@ -51,8 +51,11 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-2 sm:p-6 gap-2 sm:gap-3 overflow-y-auto">
       <div
-        className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full max-w-5xl select-none"
-        style={{ maxHeight: "min(70dvh, 560px)" }}
+        className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full select-none"
+        style={{
+          height: "min(70dvh, 560px)",
+          maxWidth: "min(100%, calc(70dvh * 9 / 4))",
+        }}
       >
         <ComicPanel
           visible={panel >= 0}
