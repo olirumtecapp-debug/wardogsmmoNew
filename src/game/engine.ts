@@ -972,7 +972,7 @@ export function setWeapon(state: GameState, id: WeaponId) {
   state.teleportAiming = null;
 }
 
-export const SPECIAL_READY_THRESHOLD = 100;
+export const SPECIAL_READY_THRESHOLD = 65;
 
 /**
  * Bombardeio Canino — ataque especial automático.
