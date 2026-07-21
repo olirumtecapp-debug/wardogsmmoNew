@@ -129,6 +129,8 @@ export interface GameState {
   turnTimeLimit?: number;    // segundos por turno (padrão MAX_TURN_TIME)
   chaosWind?: boolean;       // re-sorteia o vento a cada tiro
   onExplosion?: (x: number, y: number, radius: number) => void;
+  barricades: Barricade[];
+  teleportAiming?: { x: number; y: number; valid: boolean } | null;
 }
 
 
