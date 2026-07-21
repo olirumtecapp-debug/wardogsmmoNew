@@ -45,6 +45,8 @@ export function createGame(
   const terrainBottom = Math.min(height, usableH + topReserve);
   // 1) Barricadas primeiro (sem restrição de proximidade de cães).
   const barricades = spawnBarricades(terrain, width, height, rng);
+  // 1.5) Obstáculos flutuantes (balões) — mesma máscara/erosão, só arte diferente.
+  spawnFloatingObstacles(terrain, barricades, width, height, topReserve, rng);
   // 2) Cães podem nascer no chão OU em cima de uma barricada/pilha na sua metade.
   const dogs = placeDogs(terrain, barricades, width, height, rng, chars, terrainBottom);
   const sc = getActiveScenario();
@@ -230,6 +232,7 @@ function placeDogs(
     // Candidatos: barricadas cuja coluna central cai na zona do time.
     const candidates: Array<{ x: number; y: number }> = [];
     for (const b of barricades) {
+      if (b.kind === "balloon") continue; // flutuante — não spawn em cima
       const cx = b.x0 + b.w0 / 2;
       if (cx < zoneMin || cx > zoneMax) continue;
       if (b.w0 < 20) continue;
