@@ -316,9 +316,14 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const s = stateRef.current;
       if (!s || s.phase !== "aiming" || s.winner === null && mode === "ai" && s.currentPlayer === 1) return;
       const { x, y } = toWorld(e);
-      // Teleport aim mode: single tap picks the target.
+      // Teleport aim: tap the mark to confirm, tap elsewhere to (re)position it.
       if (s.weapon === "teleport") {
-        setTeleportTarget(s, x, y);
+        const t = s.teleportAiming;
+        if (t && t.valid && Math.hypot(x - t.x, y - t.y) <= TELEPORT_CONFIRM_TOL) {
+          confirmTeleport(s);
+        } else {
+          setTeleportTarget(s, x, y);
+        }
         return;
       }
       const dog = s.dogs[s.currentPlayer];
@@ -327,7 +332,10 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
       if (!s) return;
-      if (s.weapon === "teleport" && s.teleportAiming) {
+      // Only re-aim the teleport mark while a pointer is actively pressed
+      // (e.buttons > 0 on mouse, or a touch is down). Prevents the mouse
+      // simply hovering over the canvas from stealing the mark.
+      if (s.weapon === "teleport" && s.teleportAiming && e.buttons > 0) {
         const { x, y } = toWorld(e);
         setTeleportTarget(s, x, y);
         return;
@@ -350,12 +358,13 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const drag = dragRef.current;
       dragRef.current = null;
       if (!s) return;
-      if (s.weapon === "teleport") return; // teleport uses tap, fired via HUD button
+      if (s.weapon === "teleport") return; // teleport is tap-only, confirm via canvas or HUD
       if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist > 20 && s.phase === "aiming" && s.winner === null) fire(s);
     };
+
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
