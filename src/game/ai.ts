@@ -1,6 +1,6 @@
 import type { GameState, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER } from "./weapons";
-import { activateRage, fire, RAGE_READY_THRESHOLD } from "./engine";
+import { activateRage, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD } from "./engine";
 import { getAIDifficulty } from "./scenarioContext";
 
 // Difficulty-aware AI.
