@@ -651,26 +651,18 @@ export function step(state: GameState, dt: number) {
       state.projectiles.splice(i, 1); continue;
     }
 
-    // Barricade hit — absorb damage, chip HP, then explode/bounce
+    // Barricade hit — behave exactly like terrain: bounce for grenade/frag, explode otherwise.
+    // Erosion of the barricade happens through the explosion (see erodeBarricades).
     const hitBarricade = !exploded ? barricadeAt(state, p.x, p.y) : null;
     if (hitBarricade) {
-      const absorb = hitBarricade.kind === "concrete" ? 0.5 : hitBarricade.kind === "container" ? 0.7 : 0.9;
-      hitBarricade.hp -= Math.max(6, Math.round(w.damage * absorb));
-      if (hitBarricade.hp <= 0) {
-        spawnExplosion(state, hitBarricade.x + hitBarricade.w / 2, hitBarricade.y + hitBarricade.h / 2, 30, "#a0a0a8");
-        state.floatingTexts.push({
-          id: Math.random(), x: hitBarricade.x + hitBarricade.w / 2, y: hitBarricade.y - 6,
-          vx: 0, vy: -60, life: 1.2, maxLife: 1.2, value: "DESTRUÍDA", color: "#ffb84a", size: 16,
-        });
-      }
       if (w.id === "grenade" || w.id === "frag") {
-        // bounce off face
         p.x -= p.vx * dt * 1.2; p.y -= p.vy * dt * 1.2;
         p.vx = -p.vx * 0.5; p.vy = -p.vy * 0.5;
       } else {
         exploded = true;
       }
     }
+
 
     if (!exploded && terrainAt(state, p.x, p.y)) {
       if (w.id === "grenade" || w.id === "frag") {
