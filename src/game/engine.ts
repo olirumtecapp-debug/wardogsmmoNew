@@ -870,6 +870,7 @@ export function setWeapon(state: GameState, id: WeaponId) {
   if (state.phase !== "aiming" || state.winner !== null) return;
   if (state.ammo[id] === 0) return;
   state.weapon = id;
+  state.teleportAiming = null;
 }
 
 export const SPECIAL_READY_THRESHOLD = 100;
