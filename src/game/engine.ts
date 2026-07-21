@@ -968,6 +968,24 @@ export function clearTeleportTarget(state: GameState) {
   state.teleportAiming = null;
 }
 
+// Tolerance (in world pixels) around the current teleport mark that a
+// second tap should treat as "confirm" instead of "move mark".
+export const TELEPORT_CONFIRM_TOL = 42;
+
+// Confirm the current teleport target. Returns true when the teleport
+// actually executed. Callers should treat `false` as "keep aiming".
+export function confirmTeleport(state: GameState): boolean {
+  if (state.weapon !== "teleport" || state.phase !== "aiming") return false;
+  const t = state.teleportAiming;
+  if (!t || !t.valid) return false;
+  if ((state.ammo.teleport ?? 0) <= 0) return false;
+  state.ammo.teleport = Math.max(0, (state.ammo.teleport ?? 0) - 1);
+  executeTeleport(state, t.x, t.y);
+  state.teleportAiming = null;
+  return true;
+}
+
+
 function executeTeleport(state: GameState, tx: number, _ty: number) {
   const dog = state.dogs[state.currentPlayer];
   const sy = surfaceOrBarricadeY(state, tx);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, setTeleportTarget, clearTeleportTarget } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, setTeleportTarget, clearTeleportTarget, confirmTeleport, TELEPORT_CONFIRM_TOL, TELEPORT_MAX_RANGE, TELEPORT_HP_COST } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -17,7 +17,7 @@ const WEAPON_DESC: Record<WeaponId, string> = {
   frag: "Frag rápida com pavio curto (1s). Boa pra acertos próximos que não dão tempo de fugir.",
   cluster: "Munição cluster: no impacto libera 4 sub-bombas que espalham dano em área.",
   airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
-  teleport: "Toque num ponto do mapa pra reposicionar o cão. Custa 5 HP e encerra o turno.",
+  teleport: `Toque no mapa pra marcar o destino, depois toque na marca (ou em CONFIRMAR) pra se teletransportar. Alcance ${TELEPORT_MAX_RANGE}px, custa ${TELEPORT_HP_COST} HP e encerra o turno.`,
 };
 
 // Short labels for the arsenal grid cells (avoid overflowing narrow columns on mobile).
@@ -316,9 +316,14 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const s = stateRef.current;
       if (!s || s.phase !== "aiming" || s.winner === null && mode === "ai" && s.currentPlayer === 1) return;
       const { x, y } = toWorld(e);
-      // Teleport aim mode: single tap picks the target.
+      // Teleport aim: tap the mark to confirm, tap elsewhere to (re)position it.
       if (s.weapon === "teleport") {
-        setTeleportTarget(s, x, y);
+        const t = s.teleportAiming;
+        if (t && t.valid && Math.hypot(x - t.x, y - t.y) <= TELEPORT_CONFIRM_TOL) {
+          confirmTeleport(s);
+        } else {
+          setTeleportTarget(s, x, y);
+        }
         return;
       }
       const dog = s.dogs[s.currentPlayer];
@@ -327,7 +332,10 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
       if (!s) return;
-      if (s.weapon === "teleport" && s.teleportAiming) {
+      // Only re-aim the teleport mark while a pointer is actively pressed
+      // (e.buttons > 0 on mouse, or a touch is down). Prevents the mouse
+      // simply hovering over the canvas from stealing the mark.
+      if (s.weapon === "teleport" && s.teleportAiming && e.buttons > 0) {
         const { x, y } = toWorld(e);
         setTeleportTarget(s, x, y);
         return;
@@ -350,12 +358,13 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const drag = dragRef.current;
       dragRef.current = null;
       if (!s) return;
-      if (s.weapon === "teleport") return; // teleport uses tap, fired via HUD button
+      if (s.weapon === "teleport") return; // teleport is tap-only, confirm via canvas or HUD
       if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist > 20 && s.phase === "aiming" && s.winner === null) fire(s);
     };
+
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
@@ -512,6 +521,28 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               </div>
             </div>
           )}
+
+          {s && s.phase === "aiming" && s.weapon === "teleport" && !isAiTurn && (
+            <div className="absolute left-1/2 -translate-x-1/2 top-[76px] sm:top-[92px] pointer-events-none z-20 animate-fade-in">
+              <div
+                className="panel px-3 py-1.5 flex items-center gap-2 shadow-xl"
+                style={{
+                  borderColor: s.teleportAiming?.valid ? "#38f0ff" : s.teleportAiming ? "#ff5a5a" : "rgba(255,255,255,0.2)",
+                  boxShadow: s.teleportAiming?.valid ? "0 0 14px rgba(56,240,255,0.55)" : undefined,
+                }}
+              >
+                <span className="text-lg leading-none">🌀</span>
+                <div className="stencil text-[10px] sm:text-[11px] tracking-widest leading-tight text-center">
+                  {!s.teleportAiming
+                    ? <>TOQUE NO MAPA PARA MARCAR O DESTINO</>
+                    : s.teleportAiming.valid
+                      ? <span style={{ color: "#7ff0ff" }}>TOQUE NA MARCA OU EM CONFIRMAR</span>
+                      : <span style={{ color: "#ff9a9a" }}>PONTO INVÁLIDO — TENTE MAIS PERTO</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && (
             <div
@@ -690,14 +721,42 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   );
                 })()}
 
-                <button
-                  disabled={isAiTurn || s.phase !== "aiming"}
-                  onClick={() => fire(s)}
-                  aria-label="Atirar"
-                  className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
-                >
-                  FOGO
-                </button>
+                {s.weapon === "teleport" ? (
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      disabled={isAiTurn || s.phase !== "aiming" || !s.teleportAiming?.valid}
+                      onClick={() => confirmTeleport(s)}
+                      aria-label="Confirmar teletransporte"
+                      className="px-3 h-9 sm:h-11 rounded-md stencil text-[11px] sm:text-xs tracking-widest border-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        borderColor: s.teleportAiming?.valid ? "#38f0ff" : "rgba(255,255,255,0.15)",
+                        color: s.teleportAiming?.valid ? "#0a1418" : "rgba(255,255,255,0.5)",
+                        background: s.teleportAiming?.valid ? "linear-gradient(180deg,#7ff0ff,#38c8e0)" : "rgba(255,255,255,0.05)",
+                        boxShadow: s.teleportAiming?.valid ? "0 0 12px rgba(56,240,255,0.55)" : undefined,
+                      }}
+                    >
+                      CONFIRMAR
+                    </button>
+                    <button
+                      disabled={isAiTurn}
+                      onClick={() => { clearTeleportTarget(s); setWeapon(s, "bazooka"); }}
+                      aria-label="Cancelar teletransporte"
+                      className="px-3 h-7 sm:h-8 rounded-md stencil text-[10px] tracking-widest border border-white/20 text-muted-foreground hover:bg-white/5"
+                    >
+                      CANCELAR
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    disabled={isAiTurn || s.phase !== "aiming"}
+                    onClick={() => fire(s)}
+                    aria-label="Atirar"
+                    className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                  >
+                    FOGO
+                  </button>
+                )}
+
 
               </div>
             </div>
