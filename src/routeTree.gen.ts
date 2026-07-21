@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as OnlineRouteImport } from './routes/online'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignIndexRouteImport } from './routes/campaign.index'
 import { Route as MatchCodeRouteImport } from './routes/match.$code'
@@ -26,11 +25,6 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const OnlineRoute = OnlineRouteImport.update({
   id: '/online',
   path: '/online',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -61,7 +55,6 @@ const CampaignMissionIdRoute = CampaignMissionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/campaign/$missionId': typeof CampaignMissionIdRoute
@@ -71,7 +64,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/campaign/$missionId': typeof CampaignMissionIdRoute
@@ -82,7 +74,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/campaign/$missionId': typeof CampaignMissionIdRoute
@@ -94,7 +85,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/online'
     | '/sitemap.xml'
     | '/campaign/$missionId'
@@ -104,7 +94,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/online'
     | '/sitemap.xml'
     | '/campaign/$missionId'
@@ -114,7 +103,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/admin'
     | '/online'
     | '/sitemap.xml'
     | '/campaign/$missionId'
@@ -125,7 +113,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
   OnlineRoute: typeof OnlineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CampaignMissionIdRoute: typeof CampaignMissionIdRoute
@@ -148,13 +135,6 @@ declare module '@tanstack/react-router' {
       path: '/online'
       fullPath: '/online'
       preLoaderRoute: typeof OnlineRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -197,7 +177,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
   OnlineRoute: OnlineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CampaignMissionIdRoute: CampaignMissionIdRoute,
@@ -208,13 +187,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
