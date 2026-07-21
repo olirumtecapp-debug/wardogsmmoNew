@@ -4,6 +4,7 @@ import type { GameMode } from "@/game/types";
 import type { ScenarioId } from "@/game/scenarios";
 import { CHARACTER_LIST, CHARACTERS, type CharacterId } from "@/game/characters";
 import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
+import { characterUnlockHint, isCharacterUnlocked } from "@/lib/unlocks";
 
 interface Props {
   mode: GameMode;
