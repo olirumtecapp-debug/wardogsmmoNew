@@ -63,7 +63,6 @@ export function aiTakeTurn(state: GameState) {
   }
 
 
-  const diff = getAIDifficulty();
 
   // ---------- RECRUIT ----------
   if (diff === "recruit") {
