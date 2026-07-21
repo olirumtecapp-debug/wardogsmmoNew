@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, setTeleportTarget, clearTeleportTarget } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, setTeleportTarget, clearTeleportTarget, confirmTeleport, TELEPORT_CONFIRM_TOL, TELEPORT_MAX_RANGE, TELEPORT_HP_COST } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
