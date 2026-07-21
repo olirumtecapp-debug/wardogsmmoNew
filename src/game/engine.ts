@@ -3,7 +3,7 @@ import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
 import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
 import { CHARACTERS, type CharacterId } from "./characters";
-import { playSfx } from "./audio";
+import { playSfx, playFireSfx } from "./audio";
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
@@ -409,7 +409,7 @@ export function fire(state: GameState) {
     weapon: state.weapon, age: 0, ownerTeam: state.currentPlayer, trail: [],
   };
   state.projectiles.push(p);
-  playSfx("fire");
+  playFireSfx(state.weapon);
 }
 
 
@@ -471,6 +471,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
+        if (dmg >= 20) playSfx("bark_hurt", 0.9);
         if (ownerTeam !== undefined && dog.team === ownerTeam) {
           selfDamage += dmg;
         }
@@ -816,10 +817,16 @@ export function step(state: GameState, dt: number) {
       p.vx += state.wind * 40 * dt * windMul;
     }
 
+    const prevAge = p.age - dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
     if (p.trail.length > 24) p.trail.shift();
+
+    // Whistle for rocket/mortar in flight (once, after 0.5s airborne)
+    if (prevAge < 0.5 && p.age >= 0.5 && (w.id === "bazooka" || w.id === "rpg" || w.id === "artillery" || w.id === "airstrike")) {
+      playSfx("whistle", 0.9);
+    }
 
     if (w.id === "rpg" && Math.random() < 0.9) {
       state.explosions.push({
