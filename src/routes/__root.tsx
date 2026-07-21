@@ -12,6 +12,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ScenarioProvider } from "../game/scenarioContext";
+import { Toaster } from "@/components/ui/sonner";
+import { useDevShortcuts } from "@/hooks/useDevShortcuts";
+
 
 
 function NotFoundComponent() {
@@ -100,10 +103,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useDevShortcuts();
   return (
     <QueryClientProvider client={queryClient}>
       <ScenarioProvider>
         <Outlet />
+        <Toaster />
       </ScenarioProvider>
     </QueryClientProvider>
   );
