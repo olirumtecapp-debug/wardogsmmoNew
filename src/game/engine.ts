@@ -963,6 +963,7 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate!"
         : `Vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+      playSfx(state.winner === null ? "defeat" : "victory");
     } else if (state.matchDuration > 0 && state.matchTimer <= 0) {
       state.phase = "gameover";
       const hp0 = state.dogs[0].hp, hp1 = state.dogs[1].hp;
@@ -970,6 +971,7 @@ export function step(state: GameState, dt: number) {
       state.message = state.winner === null
         ? "Empate por tempo!"
         : `Tempo esgotado — vitória de ${CHARACTERS[state.dogs[state.winner].charId].name.toUpperCase()}!`;
+      playSfx(state.winner === null ? "defeat" : "victory");
     }
   }
 
