@@ -106,6 +106,8 @@ export interface GameState {
   airstrikeMarker?: { x: number; life: number };
   hudReserve: number;
   topReserve: number;
+  terrainBottom: number;     // pixel Y absoluto do fundo do terreno sólido
+  matchStartGrace?: number;  // segundos iniciais em que o resgate off-world é ignorado
   rageEnabled: boolean;      // Modo Fúria disponível (Campanha)
   turnTimeLimit?: number;    // segundos por turno (padrão MAX_TURN_TIME)
   chaosWind?: boolean;       // re-sorteia o vento a cada tiro
