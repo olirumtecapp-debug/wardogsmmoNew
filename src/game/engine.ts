@@ -42,7 +42,15 @@ export function createGame(
   const rng = mulberry32(seed);
   const usableH = Math.max(200, height - hudReserve - topReserve);
   const terrain = generateTerrain(width, height, usableH, topReserve, rng);
+  const terrainBottom = Math.min(height, usableH + topReserve);
   const dogs = placeDogs(terrain, width, height, rng, chars);
+  // Snap seguro: garante que nenhum cão nasça abaixo do terreno visível
+  for (const d of dogs) {
+    const sy = surfaceY(terrain, width, height, d.x);
+    d.y = Math.min(sy - 18, terrainBottom - 20);
+    d.vy = 0;
+    d.airborne = false;
+  }
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
   const dur = Math.max(0, matchDuration);
@@ -66,6 +74,8 @@ export function createGame(
     seed,
     hudReserve,
     topReserve,
+    terrainBottom,
+    matchStartGrace: 0.8,
     rageEnabled,
   };
 }
