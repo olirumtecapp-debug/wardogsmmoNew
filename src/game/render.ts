@@ -1631,6 +1631,43 @@ function drawBarricadePattern(ctx: CanvasRenderingContext2D, kind: string, w: nu
       ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x, h - 2); ctx.stroke();
     }
     ctx.strokeRect(0, 0, w, h);
+  } else if (kind === "balloon") {
+    // Balão de observação — corpo (elipse) + corda + cesta.
+    const rx = w / 2 - 1, ry = 12;
+    const ecx = w / 2, ecy = 12;
+    const g = ctx.createRadialGradient(ecx - rx * 0.3, ecy - ry * 0.4, 2, ecx, ecy, rx);
+    g.addColorStop(0, "#c94a3a");
+    g.addColorStop(1, "#5a1a10");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(ecx, ecy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2a0a05";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Faixa central
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.moveTo(ecx - rx + 2, ecy);
+    ctx.lineTo(ecx + rx - 2, ecy);
+    ctx.stroke();
+    // Corda
+    ctx.strokeStyle = "#3a2a1a";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ecx - 4, ecy + ry - 1);
+    ctx.lineTo(ecx - 3, h - 10);
+    ctx.moveTo(ecx + 4, ecy + ry - 1);
+    ctx.lineTo(ecx + 3, h - 10);
+    ctx.stroke();
+    // Cesta
+    const cbw = 14, cbh = 8;
+    const cbx = Math.floor((w - cbw) / 2);
+    const cby = h - cbh - 1;
+    ctx.fillStyle = "#6b4a24";
+    ctx.fillRect(cbx, cby, cbw, cbh);
+    ctx.strokeStyle = "#3a2410";
+    ctx.strokeRect(cbx + 0.5, cby + 0.5, cbw - 1, cbh - 1);
   } else {
     // minitank — decoração destrutível estilo mini blindado
     const trackH = Math.max(6, Math.round(h * 0.28));
