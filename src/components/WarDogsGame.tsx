@@ -534,6 +534,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   >
                     🎯 {aimAssistLocked ? "Mira 🔒" : (aimAssist ? "Mira ON" : "Mira OFF")}
                   </button>
+                  <button onClick={() => setShowAudio(true)} className="btn-hud text-[10px] px-2 py-1" aria-label="Áudio">🔊</button>
                   <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
                 </div>
                 <WindGauge wind={s.wind} />
