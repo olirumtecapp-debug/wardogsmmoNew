@@ -123,7 +123,7 @@ function Lobby() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <div className="panel p-4 max-w-md text-center space-y-3">
           <div className="stencil text-warn text-sm uppercase">Sala indisponível</div>
           <p className="text-sm text-muted-foreground">{error}</p>
@@ -135,7 +135,7 @@ function Lobby() {
 
   if (!match || !me) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-muted-foreground" />
       </div>
     );
@@ -144,7 +144,7 @@ function Lobby() {
   const slots = Array.from({ length: match.max_players }, (_, i) => players.find(p => p.slot === i) ?? null);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-dvh bg-background text-foreground flex flex-col">
       <header className="p-3 sm:p-4 flex items-center gap-3 flex-wrap">
         <button onClick={onLeave} className="btn-hud text-xs inline-flex items-center gap-1"><LogOut size={14} /> Sair</button>
         <div className="stencil uppercase tracking-[0.3em] text-sm">Sala de espera</div>

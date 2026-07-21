@@ -58,7 +58,7 @@ function MatchPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <div className="panel p-4 max-w-md text-center space-y-3">
           <div className="stencil text-warn text-sm">Erro</div>
           <p className="text-sm text-muted-foreground">{error}</p>
@@ -70,7 +70,7 @@ function MatchPage() {
 
   if (!match || !userId || players.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-muted-foreground" />
       </div>
     );
@@ -78,7 +78,7 @@ function MatchPage() {
 
   if (match.status !== "playing" && match.status !== "ended") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <div className="panel p-4 max-w-md text-center space-y-3">
           <div className="stencil text-sm uppercase">Aguardando início</div>
           <Link to="/lobby/$code" params={{ code }} className="btn-hud">Voltar ao lobby</Link>

@@ -61,7 +61,7 @@ function OnlineHome() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-dvh bg-background text-foreground flex flex-col">
       <header className="p-3 sm:p-4 flex items-center gap-3">
         <Link to="/" className="btn-hud text-xs inline-flex items-center gap-1"><ArrowLeft size={14} /> Base</Link>
         <div className="stencil uppercase tracking-[0.3em] text-sm">Multiplayer online</div>
