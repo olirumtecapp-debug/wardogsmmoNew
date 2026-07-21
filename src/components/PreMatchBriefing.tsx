@@ -333,20 +333,46 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
       {picker === "p1" && (
         <PickerModal title="Escolher Jogador 1" onClose={close}>
+          <p className="text-[10px] text-muted-foreground mb-2">
+            Personagens de elite (Corso, Miu) são desbloqueados concluindo missões da Campanha.
+          </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {CHARACTER_LIST.map(c => (
-              <CharCard key={`p1-${c.id}`} charId={c.id} active={p1 === c.id} onSelect={() => { setP1(c.id); close(); }} />
-            ))}
+            {CHARACTER_LIST.map(c => {
+              const locked = !isCharacterUnlocked(c.id);
+              return (
+                <CharCard
+                  key={`p1-${c.id}`}
+                  charId={c.id}
+                  active={p1 === c.id}
+                  locked={locked}
+                  lockHint={characterUnlockHint(c.id)}
+                  onSelect={() => { setP1(c.id); close(); }}
+                />
+              );
+            })}
           </div>
         </PickerModal>
       )}
 
       {picker === "p2" && (
         <PickerModal title={mode === "ai" ? "Escolher IA" : "Escolher Jogador 2"} onClose={close}>
+          <p className="text-[10px] text-muted-foreground mb-2">
+            Personagens de elite (Corso, Miu) são desbloqueados concluindo missões da Campanha.
+          </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {CHARACTER_LIST.map(c => (
-              <CharCard key={`p2-${c.id}`} charId={c.id} active={p2 === c.id} onSelect={() => { setP2(c.id); close(); }} />
-            ))}
+            {CHARACTER_LIST.map(c => {
+              const locked = !isCharacterUnlocked(c.id);
+              return (
+                <CharCard
+                  key={`p2-${c.id}`}
+                  charId={c.id}
+                  active={p2 === c.id}
+                  locked={locked}
+                  lockHint={characterUnlockHint(c.id)}
+                  onSelect={() => { setP2(c.id); close(); }}
+                />
+              );
+            })}
           </div>
         </PickerModal>
       )}
