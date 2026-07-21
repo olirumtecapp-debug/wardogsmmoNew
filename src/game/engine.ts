@@ -304,8 +304,10 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
   destroyTerrain(state, x, y, radius);
+  erodeBarricades(state, x, y, radius);
   state.scorchMarks.push({ x, y, radius: radius * 1.05, life: 6, maxLife: 6 });
   state.onExplosion?.(x, y, radius);
+
   // Shooter (if any) for rage accumulation
   const shooter = ownerTeam !== undefined ? state.dogs.find(d => d.team === ownerTeam) : undefined;
   const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
