@@ -603,7 +603,7 @@ export function step(state: GameState, dt: number) {
         dog.unsupportedTicks = 0;
       }
 
-      const treatAirborne = (dog.unsupportedTicks ?? 0) >= 2 || (dog.airborne && !supported);
+      const treatAirborne = (dog.unsupportedTicks ?? 0) >= 2 || (dog.airborne && !supported) || dog.vy < 0;
 
       if (treatAirborne) {
         if (!dog.airborne) {
