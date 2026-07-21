@@ -778,6 +778,7 @@ export function endTurn(state: GameState) {
   }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
   state.phase = "aiming";
+  state.teleportAiming = null;
   state.turnTimer = state.turnTimeLimit ?? MAX_TURN_TIME;
   const windScale = getActiveScenario().windScale;
   state.wind = Math.max(-1, Math.min(1, state.wind + (Math.random() - 0.5) * 0.6 * windScale));
