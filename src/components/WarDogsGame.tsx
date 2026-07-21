@@ -522,6 +522,28 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
             </div>
           )}
 
+          {s && s.phase === "aiming" && s.weapon === "teleport" && !isAiTurn && (
+            <div className="absolute left-1/2 -translate-x-1/2 top-[76px] sm:top-[92px] pointer-events-none z-20 animate-fade-in">
+              <div
+                className="panel px-3 py-1.5 flex items-center gap-2 shadow-xl"
+                style={{
+                  borderColor: s.teleportAiming?.valid ? "#38f0ff" : s.teleportAiming ? "#ff5a5a" : "rgba(255,255,255,0.2)",
+                  boxShadow: s.teleportAiming?.valid ? "0 0 14px rgba(56,240,255,0.55)" : undefined,
+                }}
+              >
+                <span className="text-lg leading-none">🌀</span>
+                <div className="stencil text-[10px] sm:text-[11px] tracking-widest leading-tight text-center">
+                  {!s.teleportAiming
+                    ? <>TOQUE NO MAPA PARA MARCAR O DESTINO</>
+                    : s.teleportAiming.valid
+                      ? <span style={{ color: "#7ff0ff" }}>TOQUE NA MARCA OU EM CONFIRMAR</span>
+                      : <span style={{ color: "#ff9a9a" }}>PONTO INVÁLIDO — TENTE MAIS PERTO</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
+
           {s && s.phase !== "gameover" && hudCssPx > 0 && (
             <div
               className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
