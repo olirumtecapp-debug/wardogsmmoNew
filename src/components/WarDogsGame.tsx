@@ -189,13 +189,17 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       const rect = parent.getBoundingClientRect();
       const w = Math.max(320, Math.floor(rect.width));
       const h = Math.max(280, Math.floor(rect.height));
-      // Reserve bottom band for the overlaid HUD (scales with viewport)
-      const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 112 : 148;
+      // Reserve top band (HP bars/turn card) and bottom band (arsenal HUD).
+      // Both scale with actual canvas height so short landscape phones get more headroom.
+      const shortLandscape = h < 460;
+      const isTablet = window.matchMedia("(min-width: 640px)").matches && h >= 520;
+      const hudReserve = isTablet ? 112 : shortLandscape ? 156 : 148;
+      const topReserve = isTablet ? 90 : shortLandscape ? 140 : 110;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars, matchDuration, !!rageEnabled);
+      stateRef.current = createGame(w, h, mode, undefined, hudReserve, chars, matchDuration, !!rageEnabled, topReserve);
       const cfg = missionConfigRef.current;
       if (cfg) {
         const st = stateRef.current;

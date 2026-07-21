@@ -56,14 +56,15 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const rect = parent.getBoundingClientRect();
     const w = Math.max(320, Math.floor(rect.width));
     const h = Math.max(280, Math.floor(rect.height));
-    const hudReserve = window.matchMedia("(min-width: 640px)").matches ? 96 : 132;
+    const hudReserve = window.matchMedia("(min-width: 640px)").matches && h >= 520 ? 112 : h < 460 ? 156 : 148;
+    const topReserve = window.matchMedia("(min-width: 640px)").matches && h >= 520 ? 90 : h < 460 ? 140 : 110;
 
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     const ctx = canvas.getContext("2d")!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const storedDur = getStoredMatchDuration(match.code);
-    stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false);
+    stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
 
     markTerrainDirty();
 
