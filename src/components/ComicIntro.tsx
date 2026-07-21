@@ -49,9 +49,10 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
     : { background: "linear-gradient(180deg,#0e141c,#050709)" };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-3 sm:p-6 gap-3">
+    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-2 sm:p-6 gap-2 sm:gap-3 overflow-y-auto">
       <div
-        className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-5xl select-none"
+        className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full max-w-5xl select-none"
+        style={{ maxHeight: "min(70dvh, 560px)" }}
       >
         <ComicPanel
           visible={panel >= 0}
