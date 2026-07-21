@@ -118,8 +118,9 @@ export function CharacterInfoPopover({ charId, children, placement = "top" }: Pr
         <div
           ref={popRef}
           className="pointer-events-none fixed z-[100]"
-          style={{ left: coords.left, top: coords.top, width }}
+          style={{ left: coords.left, top: coords.top, width, visibility: measured ? "visible" : "hidden" }}
         >
+
           <div
             className="panel p-2 text-left shadow-xl card-in overflow-hidden"
             style={{ borderColor: color, boxShadow: `0 6px 20px rgba(0,0,0,0.6), 0 0 0 1px ${color}88` }}
