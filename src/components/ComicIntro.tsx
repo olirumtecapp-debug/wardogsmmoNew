@@ -49,9 +49,13 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
     : { background: "linear-gradient(180deg,#0e141c,#050709)" };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-3 sm:p-6 gap-3">
+    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-2 sm:p-6 gap-2 sm:gap-3 overflow-y-auto">
       <div
-        className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-5xl select-none"
+        className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full select-none"
+        style={{
+          height: "min(70dvh, 560px)",
+          maxWidth: "min(100%, calc(70dvh * 9 / 4))",
+        }}
       >
         <ComicPanel
           visible={panel >= 0}
@@ -116,7 +120,7 @@ function ComicPanel({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-md border-[3px] border-black bg-black shadow-[6px_6px_0_rgba(0,0,0,0.9)] aspect-[3/4] transition-all duration-300"
+      className="relative overflow-hidden rounded-md border-[3px] border-black bg-black shadow-[6px_6px_0_rgba(0,0,0,0.9)] h-full w-full transition-all duration-300"
       style={{
         transform: `rotate(${rotate}deg) scale(${visible ? 1 : 0.9})`,
         opacity: visible ? 1 : 0,
@@ -158,7 +162,7 @@ function ComicPanel({
 function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean; scenarioLabel?: string; colorA: string; colorB: string }) {
   return (
     <div
-      className="relative overflow-hidden rounded-md border-[3px] border-black shadow-[6px_6px_0_rgba(0,0,0,0.9)] aspect-[3/4] transition-all duration-300 flex items-center justify-center"
+      className="relative overflow-hidden rounded-md border-[3px] border-black shadow-[6px_6px_0_rgba(0,0,0,0.9)] h-full w-full transition-all duration-300 flex items-center justify-center"
       style={{
         transform: `scale(${visible ? 1 : 0.85})`,
         opacity: visible ? 1 : 0,
@@ -176,7 +180,7 @@ function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean;
         <div
           className="stencil font-black leading-none"
           style={{
-            fontSize: "clamp(72px, 18vw, 180px)",
+            fontSize: "clamp(40px, 12vw, 160px)",
             color: "#fff",
             textShadow: `4px 4px 0 #000, 8px 8px 0 ${colorA}, -4px -4px 0 ${colorB}`,
             letterSpacing: "0.05em",

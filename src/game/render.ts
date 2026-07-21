@@ -793,7 +793,7 @@ function drawDog(
     name === "BRUTUS" ? brutusImg :
     name === "MUSA" ? musaImg :
     name === "OZZY" ? ozzyImg :
-    name === "NEGÃO" ? negaoImg :
+    name === "CORSO" ? negaoImg :
     name === "MIU" ? miuImg :
     null;
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
@@ -804,7 +804,7 @@ function drawDog(
     ctx.translate(0, bob);
     ctx.scale(facing, 1);
     // Size to match roughly the vector art footprint (~48px wide, ~50px tall)
-    const scaleBoost = name === "NEGÃO" || name === "MIU" ? 1.35 : 1;
+    const scaleBoost = name === "CORSO" || name === "MIU" ? 1.35 : 1;
     const targetH = 54 * scaleBoost;
     const ratio = photoImg.naturalWidth / photoImg.naturalHeight;
     const targetW = targetH * ratio;
