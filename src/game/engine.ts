@@ -347,12 +347,12 @@ export function step(state: GameState, dt: number) {
       dog.vy = 0;
       dog.airborne = false;
       dog.fallStartY = undefined;
-      const dmg = Math.round(25 * dog.defense);
+      const dmg = Math.round(10 * dog.defense);
       dog.hp = Math.max(1, dog.hp - dmg); // never lethal — protects against ground-collapse KO
       state.floatingTexts.push({
         id: Math.random(), x: dog.x, y: dog.y - 32, vx: 0, vy: -70,
-        life: 1.4, maxLife: 1.4, value: `-${dmg} RESGATE`,
-        color: "#ffb84a", size: 20,
+        life: 1.4, maxLife: 1.4, value: `RESGATE -${dmg} HP`,
+        color: "#ffb84a", size: 18,
       });
     }
     dog.x = Math.max(10, Math.min(state.width - 10, dog.x));
