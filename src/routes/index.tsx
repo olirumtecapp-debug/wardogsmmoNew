@@ -184,14 +184,22 @@ function Home() {
         </div>
 
 
-        {/* Botões discretos — Como Jogar + Tela Cheia */}
-        <div className="flex items-center gap-2">
+        {/* Botões discretos — Como Jogar + Áudio + Tela Cheia */}
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           <button
-            onClick={() => setShowHowTo(true)}
+            onClick={() => { playSfx("click"); setShowHowTo(true); }}
             className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
           >
             <HelpCircle size={14} />
             Como jogar
+          </button>
+          <button
+            onClick={() => { audio.ensure(); playSfx("click"); setShowAudio(true); }}
+            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
+            aria-label="Áudio"
+          >
+            {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            Áudio
           </button>
           {isMobile && fsSupported && !isFullscreen && (
             <button
@@ -213,6 +221,7 @@ function Home() {
       </footer>
 
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
+      {showAudio && <AudioSettingsPanel onClose={() => setShowAudio(false)} />}
     </div>
     </OrientationGate>
   );
