@@ -49,48 +49,59 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
     : { background: "linear-gradient(180deg,#0e141c,#050709)" };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-2 sm:p-6 gap-2 sm:gap-3 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-1 sm:p-4 md:p-6 gap-2 sm:gap-3 overflow-hidden">
       <div
-        className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full select-none"
+        className="grid grid-cols-3 gap-1 sm:gap-2 md:gap-3 w-full select-none"
         style={{
-          height: "min(70dvh, 560px)",
-          maxWidth: "min(100%, calc(70dvh * 9 / 4))",
+          height: "min(72dvh, 620px)",
+          maxWidth: "min(100%, calc(min(72dvh, 620px) * 9 / 4))",
         }}
       >
-        <ComicPanel
-          visible={panel >= 0}
-          rotate={-1.2}
-          bgStyle={bgStyle}
-          side="left"
-          portrait={A.portraitUrl}
-          name={A.name}
-          color={A.skin.teamColor}
-          text={dlg.challenge}
-        />
-        <ComicPanel
-          visible={panel >= 1}
-          rotate={1.4}
-          bgStyle={bgStyle}
-          side="right"
-          portrait={B.portraitUrl}
-          name={B.name}
-          color={B.skin.teamColor}
-          text={dlg.reply}
-        />
-        <VsPanel visible={panel >= 2} scenarioLabel={scenarioLabel} colorA={A.skin.teamColor} colorB={B.skin.teamColor} />
+        <div className="min-w-0 min-h-0">
+          <ComicPanel
+            visible={panel >= 0}
+            rotate={-1.2}
+            bgStyle={bgStyle}
+            side="left"
+            portrait={A.portraitUrl}
+            name={A.name}
+            color={A.skin.teamColor}
+            text={dlg.challenge}
+          />
+        </div>
+        <div className="min-w-0 min-h-0">
+          <ComicPanel
+            visible={panel >= 1}
+            rotate={1.4}
+            bgStyle={bgStyle}
+            side="right"
+            portrait={B.portraitUrl}
+            name={B.name}
+            color={B.skin.teamColor}
+            text={dlg.reply}
+          />
+        </div>
+        <div className="min-w-0 min-h-0">
+          <VsPanel visible={panel >= 2} scenarioLabel={scenarioLabel} colorA={A.skin.teamColor} colorB={B.skin.teamColor} />
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-3 mt-2">
+      <div className="flex flex-col items-center gap-2 sm:gap-3 mt-1 sm:mt-2 shrink-0">
         <button
           onClick={onDone}
           disabled={!ready}
-          className={`btn-hud btn-primary text-sm sm:text-base uppercase tracking-[0.3em] px-6 py-3 sm:px-8 sm:py-3.5 transition-all ${
+          className={`btn-hud btn-primary uppercase tracking-[0.28em] transition-all ${
             ready ? "animate-pulse shadow-[0_0_24px_rgba(255,180,80,0.55)]" : "opacity-40 cursor-not-allowed"
           }`}
+          style={{
+            fontSize: "clamp(11px, 2.2vw, 15px)",
+            padding: "clamp(8px, 1.4vh, 14px) clamp(18px, 4vw, 32px)",
+            minHeight: 44,
+          }}
         >
           {ready ? "▶ Iniciar Batalha" : "Preparando..."}
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-center">
           <button
             onClick={onDone}
             className="btn-hud text-[10px] uppercase tracking-[0.3em] px-3 py-1.5 opacity-80"
