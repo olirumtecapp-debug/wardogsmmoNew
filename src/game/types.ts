@@ -26,7 +26,7 @@ export interface Weapon {
   fuse?: number;
 }
 
-export type BarricadeKind = "concrete" | "sandbag" | "container";
+export type BarricadeKind = "concrete" | "sandbag" | "container" | "minitank";
 
 export interface Barricade {
   id: string;
