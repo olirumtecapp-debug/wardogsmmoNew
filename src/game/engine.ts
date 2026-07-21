@@ -298,6 +298,11 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         if (state.rageEnabled && dog.team !== ownerTeam && !dog.rageActive && dmg >= 20) {
           dog.rageCharge = Math.min(100, dog.rageCharge + 10);
         }
+        // Bombardeio Canino: carrega em todos os modos ao acertar inimigo
+        if (shooter && dog.team !== ownerTeam) {
+          const gain = Math.min(45, 8 + dmg * 0.7);
+          shooter.specialCharge = Math.min(100, shooter.specialCharge + gain);
+        }
       }
     }
   }
