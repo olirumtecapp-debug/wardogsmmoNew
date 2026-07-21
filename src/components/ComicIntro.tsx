@@ -20,6 +20,8 @@ interface Props {
   onDone: () => void;
 }
 
+const ONOMATOPEIAS = ["POW!", "BARK!", "GRRR!", "BOOM!", "WOOF!", "BAM!", "HISS!", "RAWR!"];
+
 export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   const [a, b] = chars;
   const A = CHARACTERS[a];
@@ -27,6 +29,12 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   const [dlg] = useState(() => pickDialogue(a, b));
   const [panel, setPanel] = useState(0); // 0,1,2
   const [ready, setReady] = useState(false);
+
+  // Onomatopeia aleatória por painel (40% de chance cada)
+  const [fx] = useState(() => ({
+    a: Math.random() < 0.4 ? ONOMATOPEIAS[Math.floor(Math.random() * ONOMATOPEIAS.length)] : null,
+    b: Math.random() < 0.4 ? ONOMATOPEIAS[Math.floor(Math.random() * ONOMATOPEIAS.length)] : null,
+  }));
 
   useEffect(() => {
     const t1 = setTimeout(() => setPanel(1), 900);
@@ -67,6 +75,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             name={A.name}
             color={A.skin.teamColor}
             text={dlg.challenge}
+            fx={fx.a}
           />
         </div>
         <div className="min-w-0 min-h-0">
@@ -79,6 +88,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             name={B.name}
             color={B.skin.teamColor}
             text={dlg.reply}
+            fx={fx.b}
           />
         </div>
         <div className="min-w-0 min-h-0">
@@ -123,11 +133,60 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
   );
 }
 
+function SpeechBubble({ text, side }: { text: string; side: "left" | "right" }) {
+  const shout = /!!|!\s*$/.test(text.trim());
+  // rabinho aponta para o personagem: painel esquerdo → tail no canto inferior-esquerdo (personagem à esquerda)
+  const tailOnLeft = side === "left";
+  // rotação suave estilo desenhada à mão
+  const rot = tailOnLeft ? -2 : 2;
+
+  return (
+    <div
+      className={`absolute top-1.5 ${side === "left" ? "right-1.5" : "left-1.5"} z-20`}
+      style={{ maxWidth: "78%", transform: `rotate(${rot}deg)` }}
+    >
+      <div
+        className={`relative bg-white text-black border-[3px] border-black px-2.5 py-1.5 ${shout ? "rounded-md" : "rounded-2xl"}`}
+        style={{
+          boxShadow: "4px 4px 0 0 #000",
+          fontFamily: "var(--font-comic)",
+          fontWeight: 700,
+          lineHeight: 1.1,
+          fontSize: "clamp(11px, 1.9vw, 16px)",
+          letterSpacing: shout ? "0.03em" : "0",
+          fontStyle: shout ? "italic" : "normal",
+          textTransform: shout ? "uppercase" : "none",
+        }}
+      >
+        {text}
+        {/* Rabinho do balão — dois triângulos SVG sobrepostos (contorno + preenchimento) */}
+        <svg
+          width="28"
+          height="22"
+          viewBox="0 0 28 22"
+          className="absolute"
+          style={{
+            [tailOnLeft ? "left" : "right"]: "18px",
+            bottom: "-19px",
+            transform: tailOnLeft ? "none" : "scaleX(-1)",
+          }}
+          aria-hidden
+        >
+          {/* Contorno preto */}
+          <path d="M2 0 L26 0 L4 21 Z" fill="#000" />
+          {/* Preenchimento branco (menor, offset para deixar borda visível) */}
+          <path d="M6 -1 L24 -1 L8 18 Z" fill="#fff" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 function ComicPanel({
-  visible, rotate, bgStyle, side, portrait, name, color, text,
+  visible, rotate, bgStyle, side, portrait, name, color, text, fx,
 }: {
   visible: boolean; rotate: number; bgStyle: React.CSSProperties;
-  side: "left" | "right"; portrait: string; name: string; color: string; text: string;
+  side: "left" | "right"; portrait: string; name: string; color: string; text: string; fx: string | null;
 }) {
   return (
     <div
@@ -148,25 +207,37 @@ function ComicPanel({
       <img
         src={portrait}
         alt={name}
-        className="absolute inset-x-0 bottom-0 mx-auto max-h-[88%] max-w-[94%] w-auto h-auto object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.6)]"
+        className="absolute inset-x-0 bottom-0 mx-auto max-h-[86%] max-w-[92%] w-auto h-auto object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.6)]"
       />
+
+      {/* Onomatopeia opcional */}
+      {fx && (
+        <div
+          className={`absolute z-10 pointer-events-none ${side === "left" ? "top-2 left-2" : "top-2 right-2"}`}
+          style={{
+            fontFamily: "var(--font-comic-title)",
+            fontSize: "clamp(18px, 3.4vw, 30px)",
+            color: "#FFD84D",
+            WebkitTextStroke: "2px #000",
+            textShadow: "3px 3px 0 #000",
+            transform: `rotate(${side === "left" ? -8 : 8}deg)`,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {fx}
+        </div>
+      )}
+
+      <SpeechBubble text={text} side={side} />
+
       <div
-        className={`absolute top-1.5 ${side === "left" ? "right-1.5" : "left-1.5"} max-w-[68%] bg-white text-black px-2 py-1 border-[2px] border-black rounded-md leading-tight font-bold`}
+        className="absolute bottom-1.5 left-1.5 tracking-widest px-1.5 py-0.5 bg-black/80 border-2 border-white/30 rounded"
         style={{
-          boxShadow: "3px 3px 0 rgba(0,0,0,0.9)",
-          fontSize: "clamp(9px, 1.5vw, 13px)",
+          color,
+          fontFamily: "var(--font-comic-title)",
+          fontSize: "clamp(11px, 1.7vw, 16px)",
+          letterSpacing: "0.08em",
         }}
-      >
-        {text}
-        <span
-          className={`absolute w-3 h-3 bg-white border-[2px] border-black rotate-45 -bottom-2 ${side === "left" ? "right-6" : "left-6"}`}
-          style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }}
-          aria-hidden
-        />
-      </div>
-      <div
-        className="absolute bottom-1.5 left-1.5 stencil tracking-widest px-1.5 py-0.5 bg-black/70 border border-white/20 rounded"
-        style={{ color, fontSize: "clamp(8px, 1.3vw, 12px)" }}
       >
         {name}
       </div>
@@ -193,9 +264,10 @@ function VsPanel({ visible, scenarioLabel, colorA, colorB }: { visible: boolean;
       />
       <div className="relative text-center">
         <div
-          className="stencil font-black leading-none"
+          className="font-black leading-none"
           style={{
-            fontSize: "clamp(36px, min(11vw, 18vh), 160px)",
+            fontFamily: "var(--font-comic-title)",
+            fontSize: "clamp(44px, min(13vw, 20vh), 180px)",
             color: "#fff",
             textShadow: `4px 4px 0 #000, 8px 8px 0 ${colorA}, -4px -4px 0 ${colorB}`,
             letterSpacing: "0.05em",
