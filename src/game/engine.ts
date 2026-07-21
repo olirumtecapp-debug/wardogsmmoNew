@@ -43,14 +43,10 @@ export function createGame(
   const usableH = Math.max(200, height - hudReserve - topReserve);
   const terrain = generateTerrain(width, height, usableH, topReserve, rng);
   const terrainBottom = Math.min(height, usableH + topReserve);
-  const dogs = placeDogs(terrain, width, height, rng, chars);
-  // Snap seguro: garante que nenhum cão nasça abaixo do terreno visível
-  for (const d of dogs) {
-    const sy = surfaceY(terrain, width, height, d.x);
-    d.y = Math.min(sy - 18, terrainBottom - 20);
-    d.vy = 0;
-    d.airborne = false;
-  }
+  // 1) Barricadas primeiro (sem restrição de proximidade de cães).
+  const barricades = spawnBarricades(terrain, width, height, rng);
+  // 2) Cães podem nascer no chão OU em cima de uma barricada/pilha na sua metade.
+  const dogs = placeDogs(terrain, barricades, width, height, rng, chars, terrainBottom);
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
   const dur = Math.max(0, matchDuration);
@@ -77,13 +73,14 @@ export function createGame(
     terrainBottom,
     matchStartGrace: 0.8,
     rageEnabled,
-    barricades: spawnBarricades(terrain, width, height, dogs, rng),
+    barricades,
     teleportAiming: null,
   };
 }
 
+
 function spawnBarricades(
-  terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
+  terrain: Uint8Array, w: number, h: number, rng: () => number,
 ): Barricade[] {
   const kinds: { k: BarricadeKind; w: number; h: number; weight: number }[] = [
     { k: "concrete", w: 40, h: 60, weight: 3 },
@@ -97,13 +94,11 @@ function spawnBarricades(
     for (const k of kinds) { r -= k.weight; if (r <= 0) return k; }
     return kinds[0];
   }
-  // Stackable kinds only — tanks/containers stay on the ground (base only).
   const stackTop = kinds.filter(k => k.k === "sandbag" || k.k === "concrete");
 
   const out: Barricade[] = [];
-  const stackCount = 3 + Math.floor(rng() * 3); // 3..5 "stacks" (each stack has 1..3 pieces)
+  const stackCount = 3 + Math.floor(rng() * 3);
   const tries = stackCount * 10;
-  const minGapDog = 90;
   const centerMin = w * 0.15;
   const centerMax = w * 0.85;
   let stacksPlaced = 0;
@@ -128,7 +123,6 @@ function spawnBarricades(
   for (let t = 0; t < tries && stacksPlaced < stackCount; t++) {
     const base = pickKind();
     const cx = centerMin + rng() * (centerMax - centerMin);
-    if (Math.abs(cx - dogs[0].x) < minGapDog || Math.abs(cx - dogs[1].x) < minGapDog) continue;
     const sy = surfaceY(terrain, w, h, cx);
     if (sy >= h - 8) continue;
     const bx = Math.round(cx - base.w / 2);
@@ -136,13 +130,11 @@ function spawnBarricades(
     if (!tryPlace(bx, by, base)) continue;
     push(base, bx, by);
 
-    // Try to stack extra pieces on top (only for stackable base types).
     if ((base.k === "concrete" || base.k === "container" || base.k === "sandbag") && rng() < 0.55) {
-      const extras = 1 + Math.floor(rng() * 2); // 1..2 extras
+      const extras = 1 + Math.floor(rng() * 2);
       let topY = by;
       for (let s = 0; s < extras; s++) {
         const spec = stackTop[Math.floor(rng() * stackTop.length)];
-        // Narrower pieces on top, kept within the base footprint horizontally.
         const sx = Math.round(cx - spec.w / 2 + (rng() - 0.5) * Math.max(0, base.w - spec.w) * 0.6);
         const syy = topY - spec.h;
         if (syy < 8) break;
@@ -155,6 +147,7 @@ function spawnBarricades(
   }
   return out;
 }
+
 
 
 
@@ -212,13 +205,14 @@ function generateTerrain(w: number, h: number, usableH: number, topReserve: numb
 }
 
 
-function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number, chars: [CharacterId, CharacterId]): [Dog, Dog] {
-  const p1x = Math.floor(w * (0.10 + rng() * 0.10));
-  const p2x = Math.floor(w * (0.80 + rng() * 0.10));
-  const mk = (x: number, team: 0 | 1, facing: 1 | -1, charId: CharacterId): Dog => {
+function placeDogs(
+  terrain: Uint8Array, barricades: Barricade[], w: number, h: number,
+  rng: () => number, chars: [CharacterId, CharacterId], terrainBottom: number,
+): [Dog, Dog] {
+  const mk = (x: number, y: number, team: 0 | 1, facing: 1 | -1, charId: CharacterId): Dog => {
     const c = CHARACTERS[charId];
     return {
-      x, y: surfaceY(terrain, w, h, x) - 18, vy: 0,
+      x, y, vy: 0,
       hp: c.stats.hp, maxHp: c.stats.hp,
       team, facing, aliveTicks: 0, airborne: false,
       moveBudget: c.stats.mobility, moveMax: c.stats.mobility,
@@ -229,8 +223,47 @@ function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number,
     };
   };
 
-  return [mk(p1x, 0, 1, chars[0]), mk(p2x, 1, -1, chars[1])];
+  // Escolhe (x, y) para o time. 60% em cima de uma barricada elegível, se houver.
+  function pickSpawn(team: 0 | 1, occupiedX: number | null): { x: number; y: number } {
+    const zoneMin = team === 0 ? w * 0.08 : w * 0.58;
+    const zoneMax = team === 0 ? w * 0.42 : w * 0.92;
+    // Candidatos: barricadas cuja coluna central cai na zona do time.
+    const candidates: Array<{ x: number; y: number }> = [];
+    for (const b of barricades) {
+      const cx = b.x0 + b.w0 / 2;
+      if (cx < zoneMin || cx > zoneMax) continue;
+      if (b.w0 < 20) continue;
+      // Topo real via máscara.
+      let topLy = -1;
+      const midLx = Math.floor(b.w0 / 2);
+      for (let ly = 0; ly < b.h0; ly++) {
+        if (b.mask[ly * b.w0 + midLx]) { topLy = ly; break; }
+      }
+      if (topLy < 0) continue;
+      const topY = b.y0 + topLy;
+      const groundY = surfaceY(terrain, w, h, cx);
+      // Precisa estar razoavelmente acima do chão pra fazer sentido "em cima".
+      if (groundY - topY < 12) continue;
+      if (occupiedX !== null && Math.abs(cx - occupiedX) < 60) continue;
+      candidates.push({ x: Math.round(cx), y: topY - 18 });
+    }
+    if (candidates.length > 0 && rng() < 0.6) {
+      return candidates[Math.floor(rng() * candidates.length)];
+    }
+    // Fallback: chão com pequena variação horizontal.
+    const baseX = team === 0 ? 0.15 : 0.85;
+    const jitter = ((rng() - 0.5) * 2 * 40) / w;
+    const fx = Math.floor(w * Math.max(0.08, Math.min(0.92, baseX + jitter)));
+    const sy = surfaceY(terrain, w, h, fx);
+    const fy = Math.min(sy - 18, terrainBottom - 20);
+    return { x: fx, y: fy };
+  }
+
+  const s0 = pickSpawn(0, null);
+  const s1 = pickSpawn(1, s0.x);
+  return [mk(s0.x, s0.y, 0, 1, chars[0]), mk(s1.x, s1.y, 1, -1, chars[1])];
 }
+
 
 export function surfaceY(terrain: Uint8Array, w: number, h: number, x: number): number {
   const xi = Math.max(0, Math.min(w - 1, Math.floor(x)));
