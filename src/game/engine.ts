@@ -382,6 +382,7 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
   const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
   let totalDamage = 0;
   let hits = 0;
+  let selfDamage = 0;
   const stackOffsets = new Map<number, number>();
   for (const dog of state.dogs) {
     if (dog.hp <= 0) continue;
