@@ -412,6 +412,9 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
+        if (ownerTeam !== undefined && dog.team === ownerTeam) {
+          selfDamage += dmg;
+        }
         // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
         if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
           let gain = dmg >= 31 ? 85 : dmg >= 16 ? 55 : 35;
