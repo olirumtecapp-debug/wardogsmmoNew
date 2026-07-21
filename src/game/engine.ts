@@ -85,10 +85,10 @@ export function createGame(
 function spawnBarricades(
   terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
 ): Barricade[] {
-  const kinds: { k: BarricadeKind; w: number; h: number; hp: number }[] = [
-    { k: "concrete", w: 40, h: 60, hp: 120 },
-    { k: "sandbag", w: 50, h: 24, hp: 60 },
-    { k: "container", w: 70, h: 40, hp: 90 },
+  const kinds: { k: BarricadeKind; w: number; h: number }[] = [
+    { k: "concrete", w: 40, h: 60 },
+    { k: "sandbag", w: 50, h: 24 },
+    { k: "container", w: 70, h: 40 },
   ];
   const out: Barricade[] = [];
   const count = 3 + Math.floor(rng() * 3); // 3..5
@@ -114,12 +114,12 @@ function spawnBarricades(
     if (overlap) continue;
     out.push({
       id: `b${out.length}_${Math.floor(rng() * 1e6)}`,
-      x, y, w: spec.w, h: spec.h,
-      hp: spec.hp, maxHp: spec.hp, kind: spec.k,
+      x, y, w: spec.w, h: spec.h, kind: spec.k,
     });
   }
   return out;
 }
+
 
 
 function generateTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
