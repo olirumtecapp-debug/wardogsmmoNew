@@ -6,6 +6,12 @@ import musaPortrait from "@/assets/wardogs-musa.png.asset.json";
 import ozzyPortrait from "@/assets/wardogs-ozzy.png.asset.json";
 import negaoPortrait from "@/assets/wardogs-negao.png.asset.json";
 import miuPortrait from "@/assets/wardogs-miu.png.asset.json";
+import rangerSide from "@/assets/wardogs-ranger-side.png.asset.json";
+import brutusSide from "@/assets/wardogs-brutus-side.png.asset.json";
+import musaSide from "@/assets/wardogs-musa-side.png.asset.json";
+import ozzySide from "@/assets/wardogs-ozzy-side.png.asset.json";
+import negaoSide from "@/assets/wardogs-negao-side.png.asset.json";
+import miuSide from "@/assets/wardogs-miu-side.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
 
@@ -24,10 +30,12 @@ export interface Character {
   breed: string;
   tagline: string;
   portraitUrl: string;
+  comicPortraitUrl: string;
   stats: CharacterStats;
   skin: TeamSkin;
   tier: CharacterTier;
 }
+
 
 // Musa (Boxer) — bruta, boa defesa, dano decente
 const MUSA_SKIN: TeamSkin = {
@@ -99,6 +107,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Pastor Alemão",
     tagline: "Equilibrado — bom em todo terreno.",
     portraitUrl: rangerPortrait.url,
+    comicPortraitUrl: rangerSide.url,
     stats: { hp: 100, mobility: 120, jump: 1.0, defense: 1.0 },
     skin: RANGER,
     tier: "standard",
@@ -109,6 +118,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Bulldog",
     tagline: "Tanque — encaixa dano, se move menos.",
     portraitUrl: brutusPortrait.url,
+    comicPortraitUrl: brutusSide.url,
     stats: { hp: 130, mobility: 80, jump: 0.8, defense: 0.75 },
     skin: BRUTUS,
     tier: "standard",
@@ -119,6 +129,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Boxer",
     tagline: "Bruta força — resistente e agressiva.",
     portraitUrl: musaPortrait.url,
+    comicPortraitUrl: musaSide.url,
     stats: { hp: 115, mobility: 105, jump: 1.05, defense: 0.9 },
     skin: MUSA_SKIN,
     tier: "standard",
@@ -129,6 +140,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Pinscher",
     tagline: "Rápido e saltador, mas frágil.",
     portraitUrl: ozzyPortrait.url,
+    comicPortraitUrl: ozzySide.url,
     stats: { hp: 85, mobility: 150, jump: 1.35, defense: 1.2 },
     skin: OZZY_SKIN,
     tier: "standard",
@@ -139,6 +151,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Cane Corso · Elite",
     tagline: "Tanque de elite — blindagem pesada e mordida esmagadora.",
     portraitUrl: negaoPortrait.url,
+    comicPortraitUrl: negaoSide.url,
     stats: { hp: 150, mobility: 90, jump: 0.9, defense: 0.7 },
     skin: NEGAO_SKIN,
     tier: "elite",
@@ -149,6 +162,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Street Cat · Elite",
     tagline: "Assassina felina — rápida, alta e imprevisível.",
     portraitUrl: miuPortrait.url,
+    comicPortraitUrl: miuSide.url,
     stats: { hp: 95, mobility: 170, jump: 1.5, defense: 1.0 },
     skin: MIU_SKIN,
     tier: "elite",
