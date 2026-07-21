@@ -202,9 +202,15 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
           <ShortcutRow label="Arma" keys={["1", "–", "8"]} />
         </div>
 
-        <div className="mt-4 pt-3 border-t border-border/40 text-center text-muted-foreground text-[10px] uppercase tracking-widest">
-          No celular · arraste do cachorro pra mirar e solte pra atirar
+        <div className="mt-4 pt-3 border-t border-border/40 space-y-1.5">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest text-center">
+            No celular · arraste do cachorro pra mirar e solte pra atirar
+          </div>
+          <div className="text-[10px] text-[color:var(--accent)]/90 text-center">
+            🌀 <b>Teletransporte:</b> toque no mapa pra marcar o destino, depois toque na marca (ou em CONFIRMAR) pra reaparecer lá.
+          </div>
         </div>
+
       </div>
     </div>
   );
