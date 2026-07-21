@@ -148,6 +148,7 @@ function placeDogs(terrain: Uint8Array, w: number, h: number, rng: () => number,
       jumpScale: c.stats.jump, defense: c.stats.defense,
       charId, hasJumped: false,
       rageCharge: 0, rageActive: false,
+      specialCharge: 0,
     };
   };
 
