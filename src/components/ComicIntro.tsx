@@ -148,8 +148,7 @@ function ComicPanel({
       <img
         src={portrait}
         alt={name}
-        className={`absolute bottom-0 ${side === "left" ? "left-0" : "right-0"} h-[85%] w-auto object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.6)]`}
-        style={{ transform: side === "right" ? "scaleX(-1)" : undefined }}
+        className="absolute inset-x-0 bottom-0 mx-auto max-h-[88%] max-w-[94%] w-auto h-auto object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.6)]"
       />
       <div
         className={`absolute top-1.5 ${side === "left" ? "right-1.5" : "left-1.5"} max-w-[68%] bg-white text-black px-2 py-1 border-[2px] border-black rounded-md leading-tight font-bold`}
