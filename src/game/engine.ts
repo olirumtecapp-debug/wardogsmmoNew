@@ -371,7 +371,6 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 // Barricade AABB helpers
 export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
     if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
   }
   return null;
@@ -379,7 +378,6 @@ export function barricadeAt(state: GameState, x: number, y: number): Barricade |
 
 function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
     if (x >= b.x - 1 && x <= b.x + b.w + 1 && y >= b.y - tol && y <= b.y + 2) return b;
   }
   return null;
@@ -399,13 +397,43 @@ function isSupported(state: GameState, dog: Dog): boolean {
 function surfaceOrBarricadeY(state: GameState, x: number): number {
   let sy = surfaceY(state.terrain, state.width, state.height, x);
   for (const b of state.barricades) {
-    if (b.hp <= 0) continue;
     if (x >= b.x && x <= b.x + b.w) {
       if (b.y < sy) sy = b.y;
     }
   }
   return sy;
 }
+
+// Erode barricades hit by an explosion: shrink from the side facing the blast.
+function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
+  for (let i = state.barricades.length - 1; i >= 0; i--) {
+    const b = state.barricades[i];
+    const bcx = b.x + b.w / 2;
+    const bcy = b.y + b.h / 2;
+    const dx = cx - bcx;
+    const dy = cy - bcy;
+    // Skip if bounding box is far outside blast radius
+    if (Math.abs(dx) > r + b.w / 2 && Math.abs(dy) > r + b.h / 2) continue;
+    // Trim along the dominant axis toward the explosion center
+    if (Math.abs(dx) * b.h > Math.abs(dy) * b.w) {
+      const trim = Math.min(b.w, Math.max(4, Math.round(r * 0.9)));
+      if (dx > 0) {
+        b.w -= trim; // hit from right → shrink right side
+      } else {
+        b.x += trim; b.w -= trim; // hit from left → shrink left side
+      }
+    } else {
+      const trim = Math.min(b.h, Math.max(4, Math.round(r * 0.9)));
+      if (dy > 0) {
+        b.h -= trim; // hit from below → shrink bottom
+      } else {
+        b.y += trim; b.h -= trim; // hit from above → shrink top
+      }
+    }
+    if (b.w < 8 || b.h < 8) state.barricades.splice(i, 1);
+  }
+}
+
 
 // How many solid pixels exist in a short vertical window just below the dog's feet.
 function columnDepth(state: GameState, x: number, fromY: number, span = 24): number {
