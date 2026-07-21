@@ -25,27 +25,39 @@ function CharCard({
   charId,
   active,
   onSelect,
+  locked,
+  lockHint,
 }: {
   charId: CharacterId;
   active: boolean;
   onSelect: () => void;
+  locked?: boolean;
+  lockHint?: string;
 }) {
   const c = CHARACTERS[charId];
   const color = c.skin.teamColor;
   return (
     <CharacterInfoPopover charId={charId}>
       <button
-        onClick={onSelect}
-        className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center w-full ${active ? "is-selected" : ""}`}
+        onClick={() => { if (!locked) onSelect(); }}
+        disabled={locked}
+        className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center w-full relative ${active ? "is-selected" : ""} ${locked ? "opacity-60 cursor-not-allowed" : ""}`}
         style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
-        title={`${c.name} — ${c.tagline}`}
+        title={locked ? lockHint : `${c.name} — ${c.tagline}`}
       >
-        <img
-          src={c.portraitUrl}
-          alt={c.name}
-          className="w-full aspect-square rounded object-contain bg-black/40"
-          style={{ boxShadow: `0 0 6px ${color}` }}
-        />
+        <div className="relative w-full">
+          <img
+            src={c.portraitUrl}
+            alt={c.name}
+            className={`w-full aspect-square rounded object-contain bg-black/40 ${locked ? "grayscale" : ""}`}
+            style={{ boxShadow: `0 0 6px ${color}` }}
+          />
+          {locked && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
+              <span className="text-2xl" aria-hidden>🔒</span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-1 justify-center w-full min-w-0">
           <div className="stencil text-[11px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
           {c.tier === "elite" && (
