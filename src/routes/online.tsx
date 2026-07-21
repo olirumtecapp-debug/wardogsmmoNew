@@ -77,33 +77,37 @@ function OnlineHome() {
             </label>
             <div>
               <span className="block mb-1.5 text-muted-foreground uppercase tracking-widest text-[10px]">Personagem</span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {CHAR_IDS.map(id => {
                   const c = CHARACTERS[id];
                   const selected = charId === id;
+                  const isElite = c.tier === "elite";
                   return (
                     <button
                       key={id}
                       type="button"
                       onClick={() => setCharId(id)}
-                      className={`relative rounded-lg border p-2 flex flex-col items-center gap-1 transition-all duration-200 ${
+                      className={`relative rounded-lg border p-1.5 flex flex-col items-center gap-1 transition-all duration-200 ${
                         selected
                           ? "border-primary ring-2 ring-primary/60 bg-primary/10 scale-[1.03] shadow-lg"
                           : "border-border/60 bg-secondary/40 opacity-80 hover:opacity-100 hover:border-border"
                       }`}
                     >
                       {selected && (
-                        <CheckCircle2 size={16} className="absolute top-1 right-1 text-primary drop-shadow" />
+                        <CheckCircle2 size={14} className="absolute top-0.5 right-0.5 text-primary drop-shadow" />
+                      )}
+                      {isElite && (
+                        <span className="absolute top-0.5 left-0.5 text-[7px] font-bold px-1 rounded bg-primary/90 text-primary-foreground tracking-widest">E</span>
                       )}
                       <div className="w-full aspect-square rounded-md overflow-hidden bg-black/30 flex items-center justify-center">
                         <img src={c.portraitUrl} alt={c.name} className={`w-full h-full object-contain ${selected ? "" : "grayscale-[30%]"}`} />
                       </div>
-                      <div className={`stencil text-[11px] uppercase tracking-wider ${selected ? "text-primary" : "text-foreground"}`}>{c.name}</div>
-                      <div className="text-[9px] text-muted-foreground leading-none">HP {c.stats.hp} · MOB {c.stats.mobility}</div>
+                      <div className={`stencil text-[10px] uppercase tracking-wider truncate max-w-full ${selected ? "text-primary" : "text-foreground"}`}>{c.name}</div>
                     </button>
                   );
                 })}
               </div>
+
             </div>
           </section>
 
