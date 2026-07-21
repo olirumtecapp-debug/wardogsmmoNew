@@ -112,9 +112,13 @@ function spawnBarricades(
       }
     }
     if (overlap) continue;
+    const mask = new Uint8Array(spec.w * spec.h);
+    mask.fill(1);
     out.push({
       id: `b${out.length}_${Math.floor(rng() * 1e6)}`,
-      x, y, w: spec.w, h: spec.h, kind: spec.k,
+      x, y, w: spec.w, h: spec.h,
+      x0: x, y0: y, w0: spec.w, h0: spec.h, mask,
+      kind: spec.k,
     });
   }
   return out;
