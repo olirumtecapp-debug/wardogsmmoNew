@@ -178,6 +178,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const onGameOverRef = useRef(onGameOver);
   const missionConfigRef = useRef(missionConfig);
   useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
+  const [showAudio, setShowAudio] = useState(false);
   useEffect(() => { missionConfigRef.current = missionConfig; }, [missionConfig]);
   const dragRef = useRef<{ startX: number; startY: number; dogX: number; dogY: number } | null>(null);
   const [, setTick] = useState(0);
