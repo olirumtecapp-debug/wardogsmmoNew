@@ -793,7 +793,7 @@ function drawDog(
     name === "BRUTUS" ? brutusImg :
     name === "MUSA" ? musaImg :
     name === "OZZY" ? ozzyImg :
-    name === "NEGÃO" ? negaoImg :
+    name === "CORSO" ? negaoImg :
     name === "MIU" ? miuImg :
     null;
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
