@@ -140,6 +140,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Pinscher",
     tagline: "Rápido e saltador, mas frágil.",
     portraitUrl: ozzyPortrait.url,
+    comicPortraitUrl: ozzySide.url,
     stats: { hp: 85, mobility: 150, jump: 1.35, defense: 1.2 },
     skin: OZZY_SKIN,
     tier: "standard",
