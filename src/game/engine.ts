@@ -37,10 +37,11 @@ export function createGame(
   chars: [CharacterId, CharacterId] = ["ranger", "brutus"],
   matchDuration: number = MATCH_DURATION_DEFAULT,
   rageEnabled: boolean = false,
+  topReserve = 0,
 ): GameState {
   const rng = mulberry32(seed);
-  const usableH = Math.max(200, height - hudReserve);
-  const terrain = generateTerrain(width, height, usableH, rng);
+  const usableH = Math.max(200, height - hudReserve - topReserve);
+  const terrain = generateTerrain(width, height, usableH, topReserve, rng);
   const dogs = placeDogs(terrain, width, height, rng, chars);
   const sc = getActiveScenario();
   const c0 = CHARACTERS[chars[0]];
@@ -64,12 +65,13 @@ export function createGame(
     mode,
     seed,
     hudReserve,
+    topReserve,
     rageEnabled,
   };
 }
 
 
-function generateTerrain(w: number, h: number, usableH: number, rng: () => number): Uint8Array {
+function generateTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
   const heights = new Float32Array(w);
   const baseline = usableH * 0.62;
@@ -83,11 +85,11 @@ function generateTerrain(w: number, h: number, usableH: number, rng: () => numbe
   for (let x = 0; x < w; x++) {
     let y = baseline;
     for (const o of octaves) y += Math.sin(x * o.freq + o.phase) * o.amp;
-    heights[x] = Math.max(usableH * 0.45, Math.min(usableH - 12, y));
+    heights[x] = Math.max(usableH * 0.45, Math.min(usableH - 12, y)) + topReserve;
   }
+  const bottom = Math.min(h, usableH + topReserve);
   for (let x = 0; x < w; x++) {
     const top = Math.floor(heights[x]);
-    const bottom = Math.min(h, usableH);
     for (let y = top; y < bottom; y++) terrain[y * w + x] = 1;
   }
   return terrain;
