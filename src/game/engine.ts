@@ -77,7 +77,48 @@ export function createGame(
     terrainBottom,
     matchStartGrace: 0.8,
     rageEnabled,
+    barricades: spawnBarricades(terrain, width, height, dogs, rng),
+    teleportAiming: null,
   };
+}
+
+function spawnBarricades(
+  terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
+): Barricade[] {
+  const kinds: { k: BarricadeKind; w: number; h: number; hp: number }[] = [
+    { k: "concrete", w: 40, h: 60, hp: 120 },
+    { k: "sandbag", w: 50, h: 24, hp: 60 },
+    { k: "container", w: 70, h: 40, hp: 90 },
+  ];
+  const out: Barricade[] = [];
+  const count = 3 + Math.floor(rng() * 3); // 3..5
+  const tries = count * 8;
+  const minGapDog = 90;
+  const centerMin = w * 0.18;
+  const centerMax = w * 0.82;
+  for (let t = 0; t < tries && out.length < count; t++) {
+    const spec = kinds[Math.floor(rng() * kinds.length)];
+    const cx = centerMin + rng() * (centerMax - centerMin);
+    if (Math.abs(cx - dogs[0].x) < minGapDog || Math.abs(cx - dogs[1].x) < minGapDog) continue;
+    const sy = surfaceY(terrain, w, h, cx);
+    if (sy >= h - 8) continue;
+    const x = Math.round(cx - spec.w / 2);
+    const y = Math.round(sy - spec.h);
+    // Bounding-box overlap check with existing barricades (+ 10px padding).
+    let overlap = false;
+    for (const b of out) {
+      if (x < b.x + b.w + 10 && x + spec.w + 10 > b.x && y < b.y + b.h + 10 && y + spec.h + 10 > b.y) {
+        overlap = true; break;
+      }
+    }
+    if (overlap) continue;
+    out.push({
+      id: `b${out.length}_${Math.floor(rng() * 1e6)}`,
+      x, y, w: spec.w, h: spec.h,
+      hp: spec.hp, maxHp: spec.hp, kind: spec.k,
+    });
+  }
+  return out;
 }
 
 
