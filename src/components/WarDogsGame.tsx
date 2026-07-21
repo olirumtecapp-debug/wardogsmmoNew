@@ -17,6 +17,7 @@ const WEAPON_DESC: Record<WeaponId, string> = {
   frag: "Frag rápida com pavio curto (1s). Boa pra acertos próximos que não dão tempo de fugir.",
   cluster: "Munição cluster: no impacto libera 4 sub-bombas que espalham dano em área.",
   airstrike: "Chame um bombardeio aéreo. Toque no céu pra marcar o alvo — 3 bombas em linha.",
+  teleport: "Toque num ponto do mapa pra reposicionar o cão. Custa 5 HP e encerra o turno.",
 };
 
 // Short labels for the arsenal grid cells (avoid overflowing narrow columns on mobile).
@@ -29,6 +30,7 @@ const WEAPON_SHORT: Record<WeaponId, string> = {
   frag: "Frag",
   cluster: "Cluster",
   airstrike: "Aéreo",
+  teleport: "Teleport",
 };
 
 
