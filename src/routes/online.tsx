@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ensureAnonSession, randomNickname } from "@/lib/anonAuth";
 import { createMatch, joinMatchByCode } from "@/lib/matchApi";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
+import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
 import { SCENARIOS } from "@/game/scenarios";
 import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
 
