@@ -129,6 +129,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     breed: "Boxer",
     tagline: "Bruta força — resistente e agressiva.",
     portraitUrl: musaPortrait.url,
+    comicPortraitUrl: musaSide.url,
     stats: { hp: 115, mobility: 105, jump: 1.05, defense: 0.9 },
     skin: MUSA_SKIN,
     tier: "standard",
