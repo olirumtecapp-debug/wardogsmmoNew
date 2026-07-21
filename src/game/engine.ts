@@ -80,7 +80,7 @@ export function createGame(
 
 
 function spawnBarricades(
-  terrain: Uint8Array, w: number, h: number, dogs: [Dog, Dog], rng: () => number,
+  terrain: Uint8Array, w: number, h: number, rng: () => number,
 ): Barricade[] {
   const kinds: { k: BarricadeKind; w: number; h: number; weight: number }[] = [
     { k: "concrete", w: 40, h: 60, weight: 3 },
@@ -94,13 +94,11 @@ function spawnBarricades(
     for (const k of kinds) { r -= k.weight; if (r <= 0) return k; }
     return kinds[0];
   }
-  // Stackable kinds only — tanks/containers stay on the ground (base only).
   const stackTop = kinds.filter(k => k.k === "sandbag" || k.k === "concrete");
 
   const out: Barricade[] = [];
-  const stackCount = 3 + Math.floor(rng() * 3); // 3..5 "stacks" (each stack has 1..3 pieces)
+  const stackCount = 3 + Math.floor(rng() * 3);
   const tries = stackCount * 10;
-  const minGapDog = 90;
   const centerMin = w * 0.15;
   const centerMax = w * 0.85;
   let stacksPlaced = 0;
@@ -125,7 +123,6 @@ function spawnBarricades(
   for (let t = 0; t < tries && stacksPlaced < stackCount; t++) {
     const base = pickKind();
     const cx = centerMin + rng() * (centerMax - centerMin);
-    if (Math.abs(cx - dogs[0].x) < minGapDog || Math.abs(cx - dogs[1].x) < minGapDog) continue;
     const sy = surfaceY(terrain, w, h, cx);
     if (sy >= h - 8) continue;
     const bx = Math.round(cx - base.w / 2);
@@ -133,13 +130,11 @@ function spawnBarricades(
     if (!tryPlace(bx, by, base)) continue;
     push(base, bx, by);
 
-    // Try to stack extra pieces on top (only for stackable base types).
     if ((base.k === "concrete" || base.k === "container" || base.k === "sandbag") && rng() < 0.55) {
-      const extras = 1 + Math.floor(rng() * 2); // 1..2 extras
+      const extras = 1 + Math.floor(rng() * 2);
       let topY = by;
       for (let s = 0; s < extras; s++) {
         const spec = stackTop[Math.floor(rng() * stackTop.length)];
-        // Narrower pieces on top, kept within the base footprint horizontally.
         const sx = Math.round(cx - spec.w / 2 + (rng() - 0.5) * Math.max(0, base.w - spec.w) * 0.6);
         const syy = topY - spec.h;
         if (syy < 8) break;
@@ -152,6 +147,7 @@ function spawnBarricades(
   }
   return out;
 }
+
 
 
 
