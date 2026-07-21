@@ -7,6 +7,8 @@ import rangerSideAsset from "@/assets/wardogs-ranger-side.png.asset.json";
 import brutusSideAsset from "@/assets/wardogs-brutus-side.png.asset.json";
 import musaSideAsset from "@/assets/wardogs-musa-side.png.asset.json";
 import ozzySideAsset from "@/assets/wardogs-ozzy-side.png.asset.json";
+import negaoAsset from "@/assets/wardogs-negao.png.asset.json";
+import miuAsset from "@/assets/wardogs-miu.png.asset.json";
 
 // Image asset cache — loaded once
 function loadImg(src: string): HTMLImageElement {
@@ -20,6 +22,9 @@ const rangerImg = typeof window !== "undefined" ? loadImg(rangerSideAsset.url) :
 const brutusImg = typeof window !== "undefined" ? loadImg(brutusSideAsset.url) : null;
 const musaImg = typeof window !== "undefined" ? loadImg(musaSideAsset.url) : null;
 const ozzyImg = typeof window !== "undefined" ? loadImg(ozzySideAsset.url) : null;
+const negaoImg = typeof window !== "undefined" ? loadImg(negaoAsset.url) : null;
+const miuImg = typeof window !== "undefined" ? loadImg(miuAsset.url) : null;
+
 
 
 // Per-scenario background cache
