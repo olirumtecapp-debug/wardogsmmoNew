@@ -28,20 +28,16 @@ export function OrientationGate({ children, soft = false }: { children: React.Re
           className={
             soft
               ? "fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 pointer-events-none"
-              : "fixed inset-0 z-50 bg-background/95 backdrop-blur flex items-center justify-center p-6 text-center"
+              : "fixed inset-0 z-[100] bg-[#050810]/97 backdrop-blur-xl flex items-center justify-center p-6 text-center"
           }
         >
-          <div className={soft ? "panel p-3 pr-2 flex items-center gap-3 pointer-events-auto max-w-sm" : "panel p-6 max-w-xs text-center"}>
-            <div className={soft ? "text-2xl animate-pulse shrink-0" : "text-4xl mb-3 animate-pulse"}>📱↻</div>
-            <div className="min-w-0 flex-1">
-              <h3 className={soft ? "stencil text-sm" : "stencil text-lg"}>Gire o dispositivo</h3>
-              <p className={soft ? "text-[11px] text-muted-foreground leading-tight" : "text-sm text-muted-foreground mt-2"}>
-                {soft ? "Melhor experiência em modo paisagem." : (
-                  <>O WarDogs é jogado em <strong>modo paisagem</strong>. Vire seu celular na horizontal para começar.</>
-                )}
-              </p>
-            </div>
-            {soft && (
+          {soft ? (
+            <div className="panel p-3 pr-2 flex items-center gap-3 pointer-events-auto max-w-sm">
+              <div className="text-2xl animate-pulse shrink-0">📱↻</div>
+              <div className="min-w-0 flex-1">
+                <h3 className="stencil text-sm">Gire o dispositivo</h3>
+                <p className="text-[11px] text-muted-foreground leading-tight">Melhor experiência em modo paisagem.</p>
+              </div>
               <button
                 onClick={() => setDismissed(true)}
                 className="btn-hud btn-hud-ghost !px-2 !py-1 text-xs shrink-0"
@@ -49,8 +45,49 @@ export function OrientationGate({ children, soft = false }: { children: React.Re
               >
                 ✕
               </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="panel p-8 max-w-sm text-center relative overflow-hidden">
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: "radial-gradient(circle at 50% 40%, var(--accent) 0%, transparent 60%)",
+                }}
+              />
+              <div className="relative">
+                <div className="flex items-center justify-center mb-6">
+                  <div
+                    className="text-6xl"
+                    style={{
+                      animation: "wd-rotate-hint 2.4s ease-in-out infinite",
+                      transformOrigin: "center",
+                      display: "inline-block",
+                    }}
+                    aria-hidden
+                  >
+                    📱
+                  </div>
+                </div>
+                <h3 className="stencil text-2xl tracking-widest mb-2" style={{ color: "var(--accent)" }}>
+                  GIRE O DISPOSITIVO
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                  O WarDogs é jogado em <strong className="text-white">modo paisagem</strong>.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Vire seu celular na horizontal para começar a batalha.
+                </p>
+                <div className="mt-5 stencil text-[10px] tracking-[0.3em] text-muted-foreground/70">
+                  ↻ AGUARDANDO ROTAÇÃO
+                </div>
+              </div>
+              <style>{`@keyframes wd-rotate-hint {
+                0%,15% { transform: rotate(0deg); }
+                45%,60% { transform: rotate(-90deg); }
+                90%,100% { transform: rotate(0deg); }
+              }`}</style>
+            </div>
+          )}
         </div>
       )}
     </>

@@ -4,6 +4,7 @@ import type { GameMode } from "@/game/types";
 import type { ScenarioId } from "@/game/scenarios";
 import { CHARACTER_LIST, CHARACTERS, type CharacterId } from "@/game/characters";
 import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
+import { characterUnlockHint, isCharacterUnlocked } from "@/lib/unlocks";
 
 interface Props {
   mode: GameMode;
@@ -24,27 +25,39 @@ function CharCard({
   charId,
   active,
   onSelect,
+  locked,
+  lockHint,
 }: {
   charId: CharacterId;
   active: boolean;
   onSelect: () => void;
+  locked?: boolean;
+  lockHint?: string;
 }) {
   const c = CHARACTERS[charId];
   const color = c.skin.teamColor;
   return (
     <CharacterInfoPopover charId={charId}>
       <button
-        onClick={onSelect}
-        className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center w-full ${active ? "is-selected" : ""}`}
+        onClick={() => { if (!locked) onSelect(); }}
+        disabled={locked}
+        className={`btn-hud p-1.5 flex flex-col gap-1 items-center text-center w-full relative ${active ? "is-selected" : ""} ${locked ? "opacity-60 cursor-not-allowed" : ""}`}
         style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
-        title={`${c.name} — ${c.tagline}`}
+        title={locked ? lockHint : `${c.name} — ${c.tagline}`}
       >
-        <img
-          src={c.portraitUrl}
-          alt={c.name}
-          className="w-full aspect-square rounded object-contain bg-black/40"
-          style={{ boxShadow: `0 0 6px ${color}` }}
-        />
+        <div className="relative w-full">
+          <img
+            src={c.portraitUrl}
+            alt={c.name}
+            className={`w-full aspect-square rounded object-contain bg-black/40 ${locked ? "grayscale" : ""}`}
+            style={{ boxShadow: `0 0 6px ${color}` }}
+          />
+          {locked && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
+              <span className="text-2xl" aria-hidden>🔒</span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-1 justify-center w-full min-w-0">
           <div className="stencil text-[11px] uppercase tracking-widest truncate" style={{ color }}>{c.name}</div>
           {c.tier === "elite" && (
@@ -320,20 +333,46 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
 
       {picker === "p1" && (
         <PickerModal title="Escolher Jogador 1" onClose={close}>
+          <p className="text-[10px] text-muted-foreground mb-2">
+            Personagens de elite (Corso, Miu) são desbloqueados concluindo missões da Campanha.
+          </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {CHARACTER_LIST.map(c => (
-              <CharCard key={`p1-${c.id}`} charId={c.id} active={p1 === c.id} onSelect={() => { setP1(c.id); close(); }} />
-            ))}
+            {CHARACTER_LIST.map(c => {
+              const locked = !isCharacterUnlocked(c.id);
+              return (
+                <CharCard
+                  key={`p1-${c.id}`}
+                  charId={c.id}
+                  active={p1 === c.id}
+                  locked={locked}
+                  lockHint={characterUnlockHint(c.id)}
+                  onSelect={() => { setP1(c.id); close(); }}
+                />
+              );
+            })}
           </div>
         </PickerModal>
       )}
 
       {picker === "p2" && (
         <PickerModal title={mode === "ai" ? "Escolher IA" : "Escolher Jogador 2"} onClose={close}>
+          <p className="text-[10px] text-muted-foreground mb-2">
+            Personagens de elite (Corso, Miu) são desbloqueados concluindo missões da Campanha.
+          </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {CHARACTER_LIST.map(c => (
-              <CharCard key={`p2-${c.id}`} charId={c.id} active={p2 === c.id} onSelect={() => { setP2(c.id); close(); }} />
-            ))}
+            {CHARACTER_LIST.map(c => {
+              const locked = !isCharacterUnlocked(c.id);
+              return (
+                <CharCard
+                  key={`p2-${c.id}`}
+                  charId={c.id}
+                  active={p2 === c.id}
+                  locked={locked}
+                  lockHint={characterUnlockHint(c.id)}
+                  onSelect={() => { setP2(c.id); close(); }}
+                />
+              );
+            })}
           </div>
         </PickerModal>
       )}

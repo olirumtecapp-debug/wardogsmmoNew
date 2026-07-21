@@ -1384,6 +1384,27 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   const y1 = y0 - Math.sin(rad) * len;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
   ctx.save();
+
+  // Base direction chevron — always visible ao pé do cão (não some com estados de canvas)
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(0,0,0,0.85)";
+  ctx.lineWidth = 3;
+  const bx = dog.x + dir * 14;
+  const by = dog.y + 8;
+  ctx.beginPath();
+  ctx.moveTo(bx, by); ctx.lineTo(bx + dir * 10, by);
+  ctx.moveTo(bx + dir * 10, by); ctx.lineTo(bx + dir * 6, by - 4);
+  ctx.moveTo(bx + dir * 10, by); ctx.lineTo(bx + dir * 6, by + 4);
+  ctx.stroke();
+  ctx.strokeStyle = core;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(bx, by); ctx.lineTo(bx + dir * 10, by);
+  ctx.moveTo(bx + dir * 10, by); ctx.lineTo(bx + dir * 6, by - 4);
+  ctx.moveTo(bx + dir * 10, by); ctx.lineTo(bx + dir * 6, by + 4);
+  ctx.stroke();
+
   ctx.setLineDash([5, 5]);
   ctx.lineDashOffset = -now * 0.03;
   // Halo (dark outline) for contrast on light backgrounds

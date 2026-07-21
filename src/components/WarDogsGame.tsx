@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step } from "@/game/engine";
+import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -637,6 +637,40 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                           </ul>
                         </div>
                       )}
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const dog = s.dogs[s.currentPlayer];
+                  const pct = Math.max(0, Math.min(100, dog.specialCharge));
+                  const ready = pct >= SPECIAL_READY_THRESHOLD;
+                  return (
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                      <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Bombardeio</span>
+                      <button
+                        disabled={isAiTurn || !ready || s.phase !== "aiming"}
+                        onClick={() => triggerCanineBarrage(s)}
+                        className={`relative w-full py-1.5 rounded text-[11px] stencil tracking-widest border transition ${
+                          ready
+                            ? "border-amber-300 text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(255,200,60,0.6)]"
+                            : "border-white/15 text-muted-foreground/80 bg-white/5"
+                        } disabled:cursor-not-allowed`}
+                        aria-label="Bombardeio Canino"
+                        title={ready ? "Bombardeio Canino pronto!" : "Acerte tiros para carregar"}
+                      >
+                        {ready ? "💣 GO" : `💣 ${Math.floor(pct)}%`}
+                      </button>
+                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-150"
+                          style={{
+                            width: `${pct}%`,
+                            background: ready ? "linear-gradient(90deg,#ffdc4a,#ff8a1a)" : "linear-gradient(90deg,#7a4a1a,#ffb84a)",
+                            boxShadow: ready ? "0 0 8px rgba(255,200,60,0.7)" : undefined,
+                          }}
+                        />
+                      </div>
                     </div>
                   );
                 })()}

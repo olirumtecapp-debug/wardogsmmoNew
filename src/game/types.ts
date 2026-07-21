@@ -45,6 +45,7 @@ export interface Dog {
   rageCharge: number;   // 0..100 (Modo Fúria — apenas Campanha)
   rageActive: boolean;  // ativo durante 1 turno
   rageQueued?: boolean; // ativação pedida fora da fase de mira; consome no início do próximo turno
+  specialCharge: number;  // 0..100 — Bombardeio Canino
 }
 
 
