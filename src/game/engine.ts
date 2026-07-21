@@ -1138,6 +1138,7 @@ export function triggerCanineBarrage(state: GameState): "activated" | "low" | "u
   for (let i = 0; i < 8; i++) {
     setTimeout(() => spawnBomb(i), i * 180);
   }
+  playSfx("barrage");
   return "activated";
 }
 
