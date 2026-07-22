@@ -4,10 +4,10 @@ import { weaponColor, weaponAccent, type TeamSkin } from "./skins";
 import { characterSkin } from "./characters";
 import { getActiveScenario } from "./scenarios";
 import rangerSideAsset from "@/assets/wardogs-ranger-side-v2.png.asset.json";
-import brutusSideAsset from "@/assets/wardogs-brutus-side-v3.png.asset.json";
+import brutusSideAsset from "@/assets/wardogs-brutus-ingame.png.asset.json";
 import musaSideAsset from "@/assets/wardogs-musa-side-v2.png.asset.json";
 import ozzySideAsset from "@/assets/wardogs-ozzy-side-v2.png.asset.json";
-import negaoSideAsset from "@/assets/wardogs-corso-side-v3.png.asset.json";
+import negaoSideAsset from "@/assets/wardogs-corso-ingame.png.asset.json";
 import miuSideAsset from "@/assets/wardogs-miu-side-v2.png.asset.json";
 
 // Image asset cache — loaded once
