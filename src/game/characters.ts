@@ -2,7 +2,7 @@ import type { TeamSkin } from "./skins";
 import { RANGER, BRUTUS } from "./skins";
 import rangerPortrait from "@/assets/wardogs-ranger-front-v2.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus-front-v2.png.asset.json";
-import musaPortrait from "@/assets/wardogs-musa-original-edit.png.asset.json";
+import musaPortrait from "@/assets/wardogs-musa-original-edit-v2.png.asset.json";
 import ozzyPortrait from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
 import negaoPortrait from "@/assets/corso-front-v5.png.asset.json";
 import miuPortrait from "@/assets/miu-front-v6.png.asset.json";
