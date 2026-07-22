@@ -1,19 +1,19 @@
 import type { TeamSkin } from "./skins";
 import { RANGER, BRUTUS } from "./skins";
-import rangerPortrait from "@/assets/wardogs-ranger.png.asset.json";
-import brutusPortrait from "@/assets/wardogs-brutus.png.asset.json";
-import musaPortrait from "@/assets/wardogs-musa-v3.png.asset.json";
-import ozzyPortrait from "@/assets/wardogs-ozzy.png.asset.json";
-import negaoPortrait from "@/assets/wardogs-negao.png.asset.json";
-import miuPortrait from "@/assets/miu-front-v5.png.asset.json";
-import rangerSide from "@/assets/wardogs-ranger-side.png.asset.json";
-import brutusSide from "@/assets/wardogs-brutus-side.png.asset.json";
-import musaSide from "@/assets/wardogs-musa-side.png.asset.json";
-import ozzySide from "@/assets/wardogs-ozzy-side.png.asset.json";
-import negaoSide from "@/assets/wardogs-negao-side.png.asset.json";
-import miuSide from "@/assets/wardogs-miu-side.png.asset.json";
-import corsoFront from "@/assets/corso-front-v4.png.asset.json";
-import miuFront from "@/assets/miu-front-v5.png.asset.json";
+import rangerPortrait from "@/assets/wardogs-ranger-front-v2.png.asset.json";
+import brutusPortrait from "@/assets/wardogs-brutus-front-v2.png.asset.json";
+import musaPortrait from "@/assets/wardogs-musa-front-v4.png.asset.json";
+import ozzyPortrait from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
+import negaoPortrait from "@/assets/corso-front-v5.png.asset.json";
+import miuPortrait from "@/assets/miu-front-v6.png.asset.json";
+import rangerSide from "@/assets/wardogs-ranger-side-v2.png.asset.json";
+import brutusSide from "@/assets/wardogs-brutus-side-v2.png.asset.json";
+import musaSide from "@/assets/wardogs-musa-side-v2.png.asset.json";
+import ozzySide from "@/assets/wardogs-ozzy-side-v2.png.asset.json";
+import negaoSide from "@/assets/wardogs-corso-side-v2.png.asset.json";
+import miuSide from "@/assets/wardogs-miu-side-v2.png.asset.json";
+import corsoFront from "@/assets/corso-front-v5.png.asset.json";
+import miuFront from "@/assets/miu-front-v6.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
 
