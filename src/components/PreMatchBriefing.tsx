@@ -232,7 +232,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
               title={c1.name}
               subtitle={`${c1.breed} — ${c1.tagline}`}
               color={c1.skin.teamColor}
-              thumb={<img src={c1.portraitUrl} alt={c1.name} className="w-full h-full object-contain" />}
+              thumb={<img src={c1.portraitUrl} alt={c1.name} className="w-full h-full object-contain" style={{ transform: `scale(${c1.sizing.portraitScale})`, transformOrigin: "bottom center" }} />}
               onClick={() => setPicker("p1")}
             />
 
