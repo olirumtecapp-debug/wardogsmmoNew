@@ -45,12 +45,12 @@ function CharCard({
         style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
         title={locked ? lockHint : `${c.name} — ${c.tagline}`}
       >
-        <div className="relative w-full">
+        <div className="relative w-full aspect-square rounded bg-black/40 overflow-hidden" style={{ boxShadow: `0 0 6px ${color}` }}>
           <img
             src={c.portraitUrl}
             alt={c.name}
-            className={`w-full aspect-square rounded object-contain bg-black/40 ${locked ? "grayscale" : ""}`}
-            style={{ boxShadow: `0 0 6px ${color}` }}
+            className={`absolute inset-0 w-full h-full object-contain ${locked ? "grayscale" : ""}`}
+            style={{ transform: `scale(${c.sizing.portraitScale})`, transformOrigin: "bottom center" }}
           />
           {locked && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
