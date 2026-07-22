@@ -19,6 +19,18 @@ import type { GameMode } from "@/game/types";
 import type { CharacterId } from "@/game/characters";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "WarDogs — Batalhas táticas entre pelotões caninos" },
+      { name: "description", content: "Entre no campo de guerra de WarDogs e comande esquadrões táticos em batalhas por turnos com cenários destrutíveis, campanha, partidas online e duelos locais." },
+      { property: "og:title", content: "WarDogs — Batalhas táticas entre pelotões caninos" },
+      { property: "og:description", content: "Entre no campo de guerra de WarDogs e comande esquadrões táticos em batalhas por turnos com cenários destrutíveis, campanha, partidas online e duelos locais." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "WarDogs — Batalhas táticas entre pelotões caninos" },
+      { name: "twitter:description", content: "Entre no campo de guerra de WarDogs e comande esquadrões táticos em batalhas por turnos com cenários destrutíveis, campanha, partidas online e duelos locais." },
+    ],
+  }),
   component: Home,
 });
 
