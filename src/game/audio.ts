@@ -226,7 +226,7 @@ class AudioManager {
       case "fire_bow":        this.sfxFireBow(t0, mul); break;
       case "whistle":         this.sfxWhistle(t0, mul); break;
       case "impact_thud":     this.sfxImpactThud(t0, mul); break;
-      case "bark":            this.sfxBark(t0, mul, Math.floor(Math.random() * 3)); break;
+      case "bark":            this.sfxBark(t0, mul, Math.floor(Math.random() * 4)); break;
       case "bark_hurt":       this.sfxBarkHurt(t0, mul); break;
       case "bark_win":        this.sfxBarkWin(t0, mul); break;
       case "jump":            this.sfxJump(t0, mul); break;
