@@ -672,40 +672,55 @@ class AudioManager {
   private scheduleMusicBar() {
     if (!this.ctx || !this.musicTrack) return;
     const isCombat = this.musicTrack === "combat";
-    const bpm = isCombat ? 78 : 62;         // slower, fluid
+    const bpm = isCombat ? 112 : 100;
     const beat = 60 / bpm;
     const bar = beat * 4;
     const t0 = this.now() + 0.05;
 
-    // Am key. Chord progression (natural minor).
+    // C major key — I-IV-V-I (menu) / I-vi-IV-V (combat). Roots in Hz (C2, F2, G2, A2).
+    const C2 = 65.41, D2 = 73.42, E2 = 82.41, F2 = 87.31, G2 = 98.0, A2 = 110.0;
     const progression = isCombat
-      ? [55, 65.4, 49, 55]      // A1 C2 G1 A1
-      : [55, 65.4, 73.4, 55];   // A1 C2 D2 A1  (calmer)
+      ? [C2, A2, F2, G2]
+      : [C2, F2, G2, C2];
     const root = progression[this.musicBarIdx % progression.length];
     this.musicBarIdx++;
 
-    // Pad — 3 detuned oscillators (root, 5th, min3 octave up), LP with slow LFO
-    this.padNote(t0, root * 2,        bar * 0.98, 0.09);
-    this.padNote(t0, root * 3,        bar * 0.98, 0.07);
-    this.padNote(t0, root * 2 * 1.19, bar * 0.98, 0.055); // ~min third
+    // Cheerful pad — root, major 3rd, 5th (all up an octave)
+    this.padNote(t0, root * 2,        bar * 0.95, 0.07);
+    this.padNote(t0, root * 2 * 1.26, bar * 0.95, 0.055); // major 3rd
+    this.padNote(t0, root * 3,        bar * 0.95, 0.05);  // 5th
 
-    // Slow bass — root on beat 1
-    this.bassNote(t0, root, beat * 3.5, 0.18);
+    // Bouncy tuba bass — "oom-pah" on beats 1 & 3 (root + 5th)
+    this.bounceBass(t0,             root,     beat * 0.7, 0.18);
+    this.bounceBass(t0 + beat,      root * 1.5, beat * 0.6, 0.12);
+    this.bounceBass(t0 + beat * 2,  root,     beat * 0.7, 0.18);
+    this.bounceBass(t0 + beat * 3,  root * 1.5, beat * 0.6, 0.12);
 
-    if (isCombat) {
-      // Slow arpeggio (root, min3, fifth, oct) — one note per beat
-      const arp = [root * 2, root * 2 * 1.19, root * 3, root * 4];
-      for (let b = 0; b < 4; b++) {
-        this.arpNote(t0 + b * beat, arp[b], beat * 0.9, 0.09);
-      }
-      // Soft heartbeat kick on 1 and 3
-      this.softKick(t0, 0.14);
-      this.softKick(t0 + beat * 2, 0.12);
-    } else {
-      // Menu — very soft heartbeat every half-bar
-      this.softKick(t0,             0.09);
-      this.softKick(t0 + beat * 2,  0.08);
+    // Marimba/xylophone melody — playful motif in major
+    const scale = [root * 2, root * 2 * 1.26, root * 3, root * 4]; // root, M3, 5th, oct
+    const pattern = isCombat
+      ? [0, 2, 1, 3, 2, 0, 1, 2]
+      : [0, 2, 3, 2, 1, 2, 0, -1];
+    const noteDur = beat / 2; // eighth notes
+    for (let i = 0; i < 8; i++) {
+      const idx = pattern[i];
+      if (idx < 0) continue;
+      this.plink(t0 + i * noteDur, scale[idx], noteDur * 0.85, 0.11);
     }
+
+    // Percussion — hihat ticks + kick/snare backbeat
+    for (let b = 0; b < 4; b++) {
+      this.hatTick(t0 + b * beat + beat * 0.5, 0.05);
+    }
+    this.softKick(t0,             0.14);
+    this.softKick(t0 + beat * 2,  0.13);
+    if (isCombat) {
+      this.snareTick(t0 + beat,     0.09);
+      this.snareTick(t0 + beat * 3, 0.09);
+    }
+
+    // Silence unused vars warnings (kept for API compatibility)
+    void D2; void E2;
 
     this.musicTimer = setTimeout(() => this.scheduleMusicBar(), Math.max(200, bar * 1000 - 30));
   }
@@ -713,7 +728,6 @@ class AudioManager {
   private padNote(start: number, freq: number, dur: number, vol: number) {
     if (!this.ctx) return;
     const ctx = this.ctx;
-    // Detuned pair for width
     const mkOsc = (type: OscillatorType, detune: number) => {
       const o = ctx.createOscillator();
       o.type = type;
@@ -727,65 +741,111 @@ class AudioManager {
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
     lp.Q.value = 0.7;
-    // Slow LFO on cutoff
-    const lfo = ctx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.08;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 260;
-    lp.frequency.value = 620;
-    lfo.connect(lfoGain).connect(lp.frequency);
+    lp.frequency.value = 1600;
 
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, start);
-    g.gain.exponentialRampToValueAtTime(vol, start + 0.6);
-    g.gain.setValueAtTime(vol, start + dur - 0.6);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.3);
+    g.gain.setValueAtTime(vol, start + dur - 0.4);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
 
     const mix = ctx.createGain();
     o1.connect(mix); o2.connect(mix);
     mix.connect(lp).connect(g).connect(this.musicGain);
-    o1.start(start); o2.start(start); lfo.start(start);
+    o1.start(start); o2.start(start);
     const end = start + dur + 0.1;
-    o1.stop(end); o2.stop(end); lfo.stop(end);
+    o1.stop(end); o2.stop(end);
   }
 
-  private bassNote(start: number, freq: number, dur: number, vol: number) {
+  // Bouncy tuba-style bass note — quick pitch bump on attack
+  private bounceBass(start: number, freq: number, dur: number, vol: number) {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = "sine";
-    o.frequency.value = freq;
+    o.frequency.setValueAtTime(freq * 0.75, start);
+    o.frequency.exponentialRampToValueAtTime(freq, start + 0.04);
     const o2 = ctx.createOscillator();
     o2.type = "triangle";
     o2.frequency.value = freq * 2;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, start);
-    g.gain.exponentialRampToValueAtTime(vol, start + 0.15);
-    g.gain.setValueAtTime(vol, start + dur - 0.3);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-    const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    const g2 = ctx.createGain(); g2.gain.value = 0.2;
     o.connect(g).connect(this.musicGain);
     o2.connect(g2).connect(g);
     o.start(start); o2.start(start);
-    o.stop(start + dur + 0.1); o2.stop(start + dur + 0.1);
+    o.stop(start + dur + 0.05); o2.stop(start + dur + 0.05);
   }
 
-  private arpNote(start: number, freq: number, dur: number, vol: number) {
+  // Marimba/xylophone-like plink
+  private plink(start: number, freq: number, dur: number, vol: number) {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = "triangle";
     o.frequency.value = freq;
+    const o2 = ctx.createOscillator();
+    o2.type = "sine";
+    o2.frequency.value = freq * 4; // bright partial
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.value = 2400;
+    lp.frequency.value = 3500;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, start);
-    g.gain.exponentialRampToValueAtTime(vol, start + 0.05);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.005);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    const g2 = ctx.createGain(); g2.gain.value = 0.25;
     o.connect(lp).connect(g).connect(this.musicGain);
-    o.start(start); o.stop(start + dur + 0.05);
+    o2.connect(g2).connect(g);
+    o.start(start); o2.start(start);
+    o.stop(start + dur + 0.05); o2.stop(start + dur + 0.05);
+  }
+
+  private hatTick(start: number, vol: number) {
+    if (!this.ctx || !this.noiseBuf) return;
+    const ctx = this.ctx;
+    const n = ctx.createBufferSource();
+    n.buffer = this.noiseBuf;
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 7000;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.05);
+    n.connect(hp).connect(g).connect(this.musicGain);
+    n.start(start); n.stop(start + 0.08);
+  }
+
+  private snareTick(start: number, vol: number) {
+    if (!this.ctx || !this.noiseBuf) return;
+    const ctx = this.ctx;
+    const n = ctx.createBufferSource();
+    n.buffer = this.noiseBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 1800;
+    bp.Q.value = 0.9;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
+    n.connect(bp).connect(g).connect(this.musicGain);
+    n.start(start); n.stop(start + 0.15);
+
+    // Body tone
+    const o = ctx.createOscillator();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(220, start);
+    o.frequency.exponentialRampToValueAtTime(140, start + 0.08);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, start);
+    og.gain.exponentialRampToValueAtTime(vol * 0.5, start + 0.005);
+    og.gain.exponentialRampToValueAtTime(0.0001, start + 0.1);
+    o.connect(og).connect(this.musicGain);
+    o.start(start); o.stop(start + 0.12);
   }
 
   private softKick(start: number, vol: number) {
@@ -793,14 +853,14 @@ class AudioManager {
     const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = "sine";
-    o.frequency.setValueAtTime(110, start);
-    o.frequency.exponentialRampToValueAtTime(38, start + 0.25);
+    o.frequency.setValueAtTime(120, start);
+    o.frequency.exponentialRampToValueAtTime(45, start + 0.18);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, start);
-    g.gain.exponentialRampToValueAtTime(vol, start + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.25);
     o.connect(g).connect(this.musicGain);
-    o.start(start); o.stop(start + 0.35);
+    o.start(start); o.stop(start + 0.28);
   }
 }
 
