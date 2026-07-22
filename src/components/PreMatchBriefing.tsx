@@ -45,12 +45,12 @@ function CharCard({
         style={active ? { borderColor: color, boxShadow: `inset 0 0 0 1px ${color}, 0 0 12px ${color}88` } : undefined}
         title={locked ? lockHint : `${c.name} — ${c.tagline}`}
       >
-        <div className="relative w-full">
+        <div className="relative w-full aspect-square rounded bg-black/40 overflow-hidden" style={{ boxShadow: `0 0 6px ${color}` }}>
           <img
             src={c.portraitUrl}
             alt={c.name}
-            className={`w-full aspect-square rounded object-contain bg-black/40 ${locked ? "grayscale" : ""}`}
-            style={{ boxShadow: `0 0 6px ${color}` }}
+            className={`absolute inset-0 w-full h-full object-contain ${locked ? "grayscale" : ""}`}
+            style={{ transform: `scale(${c.sizing.portraitScale})`, transformOrigin: "bottom center" }}
           />
           {locked && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
@@ -232,7 +232,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
               title={c1.name}
               subtitle={`${c1.breed} — ${c1.tagline}`}
               color={c1.skin.teamColor}
-              thumb={<img src={c1.portraitUrl} alt={c1.name} className="w-full h-full object-contain" />}
+              thumb={<img src={c1.portraitUrl} alt={c1.name} className="w-full h-full object-contain" style={{ transform: `scale(${c1.sizing.portraitScale})`, transformOrigin: "bottom center" }} />}
               onClick={() => setPicker("p1")}
             />
 
@@ -241,7 +241,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
               title={c2.name}
               subtitle={`${c2.breed} — ${c2.tagline}`}
               color={c2.skin.teamColor}
-              thumb={<img src={c2.portraitUrl} alt={c2.name} className="w-full h-full object-contain" />}
+              thumb={<img src={c2.portraitUrl} alt={c2.name} className="w-full h-full object-contain" style={{ transform: `scale(${c2.sizing.portraitScale})`, transformOrigin: "bottom center" }} />}
               onClick={() => setPicker("p2")}
             />
           </div>

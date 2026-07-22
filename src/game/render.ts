@@ -802,6 +802,16 @@ function drawDog(
     name === "CORSO" ? negaoImg :
     name === "MIU" ? miuImg :
     null;
+  // Per-character sizing so all six render at a coherent visual scale,
+  // regardless of the transparent padding baked into each source PNG.
+  const sizing =
+    name === "RANGER" ? { s: 1.05, pad: 0.139 } :
+    name === "BRUTUS" ? { s: 1.02, pad: 0.050 } :
+    name === "MUSA"   ? { s: 0.95, pad: 0.071 } :
+    name === "OZZY"   ? { s: 0.87, pad: 0.128 } :
+    name === "CORSO"  ? { s: 1.07, pad: 0.044 } :
+    name === "MIU"    ? { s: 0.84, pad: 0.051 } :
+                        { s: 1.00, pad: 0.000 };
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
     const injured = hp < 40;
     const critical = hp < 20;
@@ -809,19 +819,21 @@ function drawDog(
     ctx.save();
     ctx.translate(0, bob);
     ctx.scale(facing, 1);
-    // Size to match roughly the vector art footprint (~48px wide, ~50px tall)
-    const scaleBoost = name === "CORSO" || name === "MIU" ? 1.35 : 1;
-    const targetH = 54 * scaleBoost;
+    const BASE_H = 54;
+    const targetH = BASE_H * sizing.s;
     const ratio = photoImg.naturalWidth / photoImg.naturalHeight;
     const targetW = targetH * ratio;
+    // Shift image down by the empty transparent strip below the feet so paws touch the ground.
+    const feetOffset = targetH * sizing.pad;
     if (critical) {
       ctx.filter = "brightness(0.85) saturate(0.7)";
     }
-    ctx.drawImage(photoImg, -targetW / 2, -targetH + 16, targetW, targetH);
+    ctx.drawImage(photoImg, -targetW / 2, -targetH + 16 + feetOffset, targetW, targetH);
     ctx.restore();
     ctx.restore(); // matches the outer ctx.save() at top of drawDog
     return;
   }
+
 
 
 

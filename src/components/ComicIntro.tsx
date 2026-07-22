@@ -72,6 +72,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             bgStyle={bgStyle}
             side="left"
             portrait={A.comicPortraitUrl ?? A.portraitUrl}
+            portraitScale={A.sizing.portraitScale}
             name={A.name}
             color={A.skin.teamColor}
             text={dlg.challenge}
@@ -85,6 +86,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             bgStyle={bgStyle}
             side="right"
             portrait={B.comicPortraitUrl ?? B.portraitUrl}
+            portraitScale={B.sizing.portraitScale}
             name={B.name}
             color={B.skin.teamColor}
             text={dlg.reply}
@@ -183,10 +185,10 @@ function SpeechBubble({ text, side }: { text: string; side: "left" | "right" }) 
 }
 
 function ComicPanel({
-  visible, rotate, bgStyle, side, portrait, name, color, text, fx,
+  visible, rotate, bgStyle, side, portrait, portraitScale, name, color, text, fx,
 }: {
   visible: boolean; rotate: number; bgStyle: React.CSSProperties;
-  side: "left" | "right"; portrait: string; name: string; color: string; text: string; fx: string | null;
+  side: "left" | "right"; portrait: string; portraitScale: number; name: string; color: string; text: string; fx: string | null;
 }) {
   return (
     <div
@@ -208,6 +210,7 @@ function ComicPanel({
         src={portrait}
         alt={name}
         className="absolute inset-x-0 bottom-0 mx-auto max-h-[86%] max-w-[92%] w-auto h-auto object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.6)]"
+        style={{ transform: `scale(${portraitScale})`, transformOrigin: "bottom center" }}
       />
 
       {/* Onomatopeia opcional */}
