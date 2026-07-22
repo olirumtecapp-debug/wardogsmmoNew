@@ -26,6 +26,15 @@ export interface CharacterStats {
   defense: number;    // multiplicador do dano recebido (menor = mais resistente)
 }
 
+export interface CharacterSizing {
+  /** Multiplier applied to the in-game side sprite target height. */
+  spriteScale: number;
+  /** Multiplier applied to the frontal portrait in menus / comics (transform: scale). */
+  portraitScale: number;
+  /** Fraction of the side PNG that is empty below the feet — used to push sprite down so paws touch the ground. */
+  spriteBottomPad: number;
+}
+
 export interface Character {
   id: CharacterId;
   name: string;
@@ -36,6 +45,7 @@ export interface Character {
   stats: CharacterStats;
   skin: TeamSkin;
   tier: CharacterTier;
+  sizing: CharacterSizing;
 }
 
 
