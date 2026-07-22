@@ -72,6 +72,7 @@ export function ComicIntro({ chars, scenarioLabel, bgImage, onDone }: Props) {
             bgStyle={bgStyle}
             side="left"
             portrait={A.comicPortraitUrl ?? A.portraitUrl}
+            portraitScale={A.sizing.portraitScale}
             name={A.name}
             color={A.skin.teamColor}
             text={dlg.challenge}
