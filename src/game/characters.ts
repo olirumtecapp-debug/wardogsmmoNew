@@ -1,19 +1,11 @@
 import type { TeamSkin } from "./skins";
 import { RANGER, BRUTUS } from "./skins";
-import rangerPortrait from "@/assets/wardogs-ranger-front-v2.png.asset.json";
-import brutusPortrait from "@/assets/wardogs-brutus-front-v2.png.asset.json";
-import musaPortrait from "@/assets/wardogs-musa-original-edit-v2.png.asset.json";
-import ozzyPortrait from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
-import negaoPortrait from "@/assets/corso-front-v5.png.asset.json";
-import miuPortrait from "@/assets/miu-front-v6.png.asset.json";
-import rangerSide from "@/assets/wardogs-ranger-side-v5.png.asset.json";
-import brutusSide from "@/assets/wardogs-brutus-side-v5.png.asset.json";
-import musaSide from "@/assets/wardogs-musa-side-v5.png.asset.json";
-import ozzySide from "@/assets/wardogs-ozzy-side-v5.png.asset.json";
-import negaoSide from "@/assets/wardogs-corso-side-v5.png.asset.json";
-import miuSide from "@/assets/wardogs-miu-side-v5.png.asset.json";
-import corsoFront from "@/assets/corso-front-v5.png.asset.json";
-import miuFront from "@/assets/miu-front-v6.png.asset.json";
+import rangerAsset from "@/assets/characters/ranger-v7.png.asset.json";
+import brutusAsset from "@/assets/characters/brutus-v7.png.asset.json";
+import musaAsset from "@/assets/characters/musa-v7.png.asset.json";
+import ozzyAsset from "@/assets/characters/ozzy-v7.png.asset.json";
+import corsoAsset from "@/assets/characters/corso-v7.png.asset.json";
+import miuAsset from "@/assets/characters/miu-v7.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
 
