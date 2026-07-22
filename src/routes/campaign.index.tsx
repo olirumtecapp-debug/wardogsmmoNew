@@ -13,6 +13,8 @@ export const Route = createFileRoute("/campaign/")({
       { name: "description", content: "Missões táticas com dificuldade progressiva e recompensas em estrelas." },
       { property: "og:title", content: "Campanha — WarDogs" },
       { property: "og:description", content: "Missões táticas com dificuldade progressiva e recompensas em estrelas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CampaignMap,
