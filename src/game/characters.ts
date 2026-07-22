@@ -116,12 +116,12 @@ const MIU_SKIN: TeamSkin = {
 // all six characters appear at a coherent scale both in menus and in-game.
 // Species factor keeps a natural size hierarchy (Corso biggest, Miu smallest).
 const SIZING: Record<CharacterId, CharacterSizing> = {
-  ranger: { spriteScale: 1.05, portraitScale: 0.98, spriteBottomPad: 0.139 },
-  brutus: { spriteScale: 1.02, portraitScale: 1.13, spriteBottomPad: 0.050 },
-  musa:   { spriteScale: 0.95, portraitScale: 1.15, spriteBottomPad: 0.071 },
-  ozzy:   { spriteScale: 0.87, portraitScale: 0.94, spriteBottomPad: 0.128 },
-  negao:  { spriteScale: 1.07, portraitScale: 1.20, spriteBottomPad: 0.044 },
-  miu:    { spriteScale: 0.84, portraitScale: 0.99, spriteBottomPad: 0.051 },
+  ranger: { spriteScale: 1.02, portraitScale: 1.00, spriteBottomPad: 0.139 },
+  brutus: { spriteScale: 1.02, portraitScale: 1.02, spriteBottomPad: 0.050 },
+  musa:   { spriteScale: 1.00, portraitScale: 1.02, spriteBottomPad: 0.071 },
+  ozzy:   { spriteScale: 0.86, portraitScale: 0.88, spriteBottomPad: 0.128 },
+  negao:  { spriteScale: 1.06, portraitScale: 1.06, spriteBottomPad: 0.044 },
+  miu:    { spriteScale: 0.78, portraitScale: 0.82, spriteBottomPad: 0.051 },
 };
 
 export const CHARACTERS: Record<CharacterId, Character> = {
