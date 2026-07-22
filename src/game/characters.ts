@@ -6,12 +6,12 @@ import musaPortrait from "@/assets/wardogs-musa-original-edit-v2.png.asset.json"
 import ozzyPortrait from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
 import negaoPortrait from "@/assets/corso-front-v5.png.asset.json";
 import miuPortrait from "@/assets/miu-front-v6.png.asset.json";
-import rangerSide from "@/assets/wardogs-ranger-side-v2.png.asset.json";
-import brutusSide from "@/assets/wardogs-brutus-ingame.png.asset.json";
-import musaSide from "@/assets/wardogs-musa-side-v2.png.asset.json";
-import ozzySide from "@/assets/wardogs-ozzy-side-v2.png.asset.json";
-import negaoSide from "@/assets/wardogs-corso-ingame.png.asset.json";
-import miuSide from "@/assets/wardogs-miu-side-v2.png.asset.json";
+import rangerSide from "@/assets/wardogs-ranger-side-v5.png.asset.json";
+import brutusSide from "@/assets/wardogs-brutus-side-v5.png.asset.json";
+import musaSide from "@/assets/wardogs-musa-side-v5.png.asset.json";
+import ozzySide from "@/assets/wardogs-ozzy-side-v5.png.asset.json";
+import negaoSide from "@/assets/wardogs-corso-side-v5.png.asset.json";
+import miuSide from "@/assets/wardogs-miu-side-v5.png.asset.json";
 import corsoFront from "@/assets/corso-front-v5.png.asset.json";
 import miuFront from "@/assets/miu-front-v6.png.asset.json";
 
@@ -116,12 +116,12 @@ const MIU_SKIN: TeamSkin = {
 // all six characters appear at a coherent scale both in menus and in-game.
 // Species factor keeps a natural size hierarchy (Corso biggest, Miu smallest).
 const SIZING: Record<CharacterId, CharacterSizing> = {
-  ranger: { spriteScale: 1.02, portraitScale: 1.00, spriteBottomPad: 0.139 },
-  brutus: { spriteScale: 1.02, portraitScale: 1.02, spriteBottomPad: 0.050 },
-  musa:   { spriteScale: 1.00, portraitScale: 1.00, spriteBottomPad: 0.071 },
-  ozzy:   { spriteScale: 0.86, portraitScale: 0.88, spriteBottomPad: 0.128 },
-  negao:  { spriteScale: 1.06, portraitScale: 1.06, spriteBottomPad: 0.044 },
-  miu:    { spriteScale: 0.78, portraitScale: 0.82, spriteBottomPad: 0.051 },
+  ranger: { spriteScale: 1.02, portraitScale: 1.00, spriteBottomPad: 0.02 },
+  brutus: { spriteScale: 1.02, portraitScale: 1.02, spriteBottomPad: 0.02 },
+  musa:   { spriteScale: 1.00, portraitScale: 1.00, spriteBottomPad: 0.02 },
+  ozzy:   { spriteScale: 0.86, portraitScale: 0.88, spriteBottomPad: 0.02 },
+  negao:  { spriteScale: 1.06, portraitScale: 1.06, spriteBottomPad: 0.02 },
+  miu:    { spriteScale: 0.78, portraitScale: 0.82, spriteBottomPad: 0.02 },
 };
 
 export const CHARACTERS: Record<CharacterId, Character> = {
