@@ -457,18 +457,17 @@ class AudioManager {
     n.start(t0); n.stop(t0 + 0.15);
   }
 
-  // ---- BARK (formant-based woof, 3 variations) ----
+  // ---- BARK (formant-based woof, 4 variations) ----
   private sfxBark(t0: number, mul: number, variant: number) {
     const ctx = this.ctx!;
-    // Params per variant: base freq, formant peak, duration scale
     const cfg = [
-      { base: 220, formant: 900,  dur: 0.14, second: 0.09 },  // médio
-      { base: 170, formant: 700,  dur: 0.18, second: 0.11 },  // grave (Corso/Brutus)
-      { base: 280, formant: 1100, dur: 0.11, second: 0.07 },  // agudo (Miu style)
-    ][variant % 3];
+      { base: 240, formant: 950,  dur: 0.16, second: 0.10 },
+      { base: 175, formant: 720,  dur: 0.20, second: 0.12 },
+      { base: 300, formant: 1150, dur: 0.13, second: 0.08 },
+      { base: 210, formant: 880,  dur: 0.14, second: 0.09 },
+    ][variant % 4];
 
     const wof = (start: number, freqMul: number, vol: number) => {
-      // Two oscillators (saw+square) for rich source
       const o1 = ctx.createOscillator();
       const o2 = ctx.createOscillator();
       o1.type = "sawtooth";
@@ -476,61 +475,80 @@ class AudioManager {
       const f = cfg.base * freqMul * (0.97 + Math.random() * 0.06);
       o1.frequency.setValueAtTime(f * 0.55, start);
       o1.frequency.exponentialRampToValueAtTime(f, start + 0.02);
-      o1.frequency.exponentialRampToValueAtTime(f * 0.5, start + cfg.dur);
+      o1.frequency.exponentialRampToValueAtTime(f * 0.55, start + cfg.dur);
       o2.frequency.setValueAtTime(f * 1.5, start);
-      o2.frequency.exponentialRampToValueAtTime(f * 0.75, start + cfg.dur);
+      o2.frequency.exponentialRampToValueAtTime(f * 0.8, start + cfg.dur);
 
-      // Formant filter — bandpass sweeping (mouth opening/closing)
       const bp = ctx.createBiquadFilter();
       bp.type = "bandpass";
-      bp.frequency.setValueAtTime(cfg.formant * 0.6, start);
+      bp.frequency.setValueAtTime(cfg.formant * 0.7, start);
       bp.frequency.linearRampToValueAtTime(cfg.formant, start + cfg.dur * 0.4);
-      bp.frequency.linearRampToValueAtTime(cfg.formant * 0.7, start + cfg.dur);
-      bp.Q.value = 3;
+      bp.frequency.linearRampToValueAtTime(cfg.formant * 0.75, start + cfg.dur);
+      bp.Q.value = 1.2;
 
-      // Body LP
       const lp = ctx.createBiquadFilter();
       lp.type = "lowpass";
-      lp.frequency.value = 2200;
+      lp.frequency.value = 2600;
 
-      const mix = ctx.createGain();
-      const g1 = ctx.createGain(); g1.gain.value = 0.7;
-      const g2 = ctx.createGain(); g2.gain.value = 0.3;
-      o1.connect(g1).connect(mix);
-      o2.connect(g2).connect(mix);
-      mix.connect(bp).connect(lp);
+      const src = ctx.createGain();
+      const g1 = ctx.createGain(); g1.gain.value = 0.8;
+      const g2 = ctx.createGain(); g2.gain.value = 0.5;
+      o1.connect(g1).connect(src);
+      o2.connect(g2).connect(src);
 
-      const eg = this.env(start, 0.008, cfg.dur, vol * mul);
-      lp.connect(eg); this.connectSfx(eg);
+      // Parallel filtered + dry for punch
+      const filtered = ctx.createGain(); filtered.gain.value = 0.65;
+      const dry = ctx.createGain(); dry.gain.value = 0.45;
+      src.connect(bp).connect(lp).connect(filtered);
+      src.connect(dry);
+
+      const eg = ctx.createGain();
+      eg.gain.setValueAtTime(0.0001, start);
+      eg.gain.exponentialRampToValueAtTime(Math.max(0.0001, vol * mul), start + 0.008);
+      eg.gain.exponentialRampToValueAtTime(0.0001, start + cfg.dur);
+
+      filtered.connect(eg);
+      dry.connect(eg);
+      // Bypass reverb — bark direto, audível
+      eg.connect(this.sfxDryGain);
+
       o1.start(start); o2.start(start);
       o1.stop(start + cfg.dur + 0.05);
       o2.stop(start + cfg.dur + 0.05);
     };
 
-    wof(t0, 1.0, 0.55);
-    wof(t0 + cfg.second, 0.85, 0.42);
+    wof(t0, 1.0, 0.9);
+    wof(t0 + cfg.second, 0.88, 0.7);
   }
 
   private sfxBarkHurt(t0: number, mul: number) {
-    // "Yelp" — high pitched, descending
     const ctx = this.ctx!;
     const o = ctx.createOscillator();
     o.type = "sawtooth";
-    o.frequency.setValueAtTime(600, t0);
-    o.frequency.exponentialRampToValueAtTime(220, t0 + 0.25);
+    o.frequency.setValueAtTime(650, t0);
+    o.frequency.exponentialRampToValueAtTime(220, t0 + 0.28);
     const bp = ctx.createBiquadFilter();
     bp.type = "bandpass";
     bp.frequency.value = 1200;
-    bp.Q.value = 3;
-    const g = this.env(t0, 0.005, 0.28, 0.5 * mul);
-    o.connect(bp).connect(g); this.connectSfx(g);
-    o.start(t0); o.stop(t0 + 0.33);
+    bp.Q.value = 1.5;
+    const dry = ctx.createGain(); dry.gain.value = 0.5;
+    const filtered = ctx.createGain(); filtered.gain.value = 0.7;
+    o.connect(bp).connect(filtered);
+    o.connect(dry);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.75 * mul, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.33);
+    filtered.connect(g);
+    dry.connect(g);
+    g.connect(this.sfxDryGain);
+    o.start(t0); o.stop(t0 + 0.35);
   }
 
   private sfxBarkWin(t0: number, mul: number) {
-    // Double bark, triumphal
-    this.sfxBark(t0,        mul,      1);
-    this.sfxBark(t0 + 0.28, mul * 0.9, 0);
+    this.sfxBark(t0,        mul,      3);
+    this.sfxBark(t0 + 0.22, mul * 0.9, 0);
+    this.sfxBark(t0 + 0.44, mul * 0.85, 2);
   }
 
   private sfxJump(t0: number, mul: number) {
