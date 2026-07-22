@@ -6,12 +6,12 @@ import musaPortrait from "@/assets/wardogs-musa-original-edit-v2.png.asset.json"
 import ozzyPortrait from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
 import negaoPortrait from "@/assets/corso-front-v5.png.asset.json";
 import miuPortrait from "@/assets/miu-front-v6.png.asset.json";
-import rangerSide from "@/assets/wardogs-ranger-side-v2.png.asset.json";
-import brutusSide from "@/assets/wardogs-brutus-ingame.png.asset.json";
-import musaSide from "@/assets/wardogs-musa-side-v2.png.asset.json";
-import ozzySide from "@/assets/wardogs-ozzy-side-v2.png.asset.json";
-import negaoSide from "@/assets/wardogs-corso-ingame.png.asset.json";
-import miuSide from "@/assets/wardogs-miu-side-v2.png.asset.json";
+import rangerSide from "@/assets/wardogs-ranger-side-v5.png.asset.json";
+import brutusSide from "@/assets/wardogs-brutus-side-v5.png.asset.json";
+import musaSide from "@/assets/wardogs-musa-side-v5.png.asset.json";
+import ozzySide from "@/assets/wardogs-ozzy-side-v5.png.asset.json";
+import negaoSide from "@/assets/wardogs-corso-side-v5.png.asset.json";
+import miuSide from "@/assets/wardogs-miu-side-v5.png.asset.json";
 import corsoFront from "@/assets/corso-front-v5.png.asset.json";
 import miuFront from "@/assets/miu-front-v6.png.asset.json";
 
