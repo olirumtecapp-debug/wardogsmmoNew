@@ -3,12 +3,12 @@ import { WEAPONS } from "./weapons";
 import { weaponColor, weaponAccent, type TeamSkin } from "./skins";
 import { characterSkin } from "./characters";
 import { getActiveScenario } from "./scenarios";
-import rangerSideAsset from "@/assets/wardogs-ranger-side-v5.png.asset.json";
-import brutusSideAsset from "@/assets/wardogs-brutus-side-v5.png.asset.json";
-import musaSideAsset from "@/assets/wardogs-musa-side-v5.png.asset.json";
-import ozzySideAsset from "@/assets/wardogs-ozzy-side-v5.png.asset.json";
-import negaoSideAsset from "@/assets/wardogs-corso-side-v5.png.asset.json";
-import miuSideAsset from "@/assets/wardogs-miu-side-v5.png.asset.json";
+import rangerSideAsset from "@/assets/characters/ranger-v7.png.asset.json";
+import brutusSideAsset from "@/assets/characters/brutus-v7.png.asset.json";
+import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
+import ozzySideAsset from "@/assets/characters/ozzy-v7.png.asset.json";
+import negaoSideAsset from "@/assets/characters/corso-v7.png.asset.json";
+import miuSideAsset from "@/assets/characters/miu-v7.png.asset.json";
 
 // Image asset cache — loaded once
 function loadImg(src: string): HTMLImageElement {
