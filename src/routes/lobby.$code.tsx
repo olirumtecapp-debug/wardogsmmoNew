@@ -16,6 +16,10 @@ export const Route = createFileRoute("/lobby/$code")({
     meta: [
       { title: "WarDogs — Sala de espera" },
       { name: "description", content: "Sala de espera do multiplayer WarDogs. Escolha seu personagem, marque pronto e aguarde o anfitrião iniciar." },
+      { property: "og:title", content: "WarDogs — Sala de espera" },
+      { property: "og:description", content: "Sala de espera do multiplayer WarDogs. Escolha seu personagem, marque pronto e aguarde o anfitrião iniciar." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });

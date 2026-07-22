@@ -12,6 +12,10 @@ export const Route = createFileRoute("/match/$code")({
     meta: [
       { title: "WarDogs — Combate online" },
       { name: "description", content: "Combate multiplayer online em curso — WarDogs." },
+      { property: "og:title", content: "WarDogs — Combate online" },
+      { property: "og:description", content: "Combate multiplayer online em curso — WarDogs." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });

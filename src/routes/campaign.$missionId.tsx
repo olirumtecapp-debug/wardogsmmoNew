@@ -21,10 +21,12 @@ import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
 export const Route = createFileRoute("/campaign/$missionId")({
   head: ({ params }) => ({
     meta: [
-      { title: `Missão — WarDogs` },
+      { title: `Missão ${params.missionId} — WarDogs` },
       { name: "description", content: `Briefing da missão ${params.missionId} da campanha WarDogs.` },
       { property: "og:title", content: `Missão ${params.missionId} — WarDogs` },
-      { property: "og:description", content: "Missão da campanha WarDogs." },
+      { property: "og:description", content: `Briefing da missão ${params.missionId} da campanha WarDogs.` },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MissionPage,

@@ -13,6 +13,10 @@ export const Route = createFileRoute("/online")({
     meta: [
       { title: "WarDogs — Multiplayer online" },
       { name: "description", content: "Crie uma sala ou entre com código para jogar WarDogs online com até 4 companheiros de pelotão." },
+      { property: "og:title", content: "WarDogs — Multiplayer online" },
+      { property: "og:description", content: "Crie uma sala ou entre com código para jogar WarDogs online com até 4 companheiros de pelotão." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });

@@ -11,16 +11,26 @@ import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import { getActiveScenario } from "@/game/scenarios";
 import { useFullscreen, requestFullscreenNow } from "@/hooks/useFullscreen";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
-import keyHeroAsset from "@/assets/wardogs-menu-hero.png.asset.json";
-import keyArtAsset from "@/assets/wardogs-keyart-menu.png.asset.json";
+import menuHeroAsset from "@/assets/wardogs-menu-hero-v2.png.asset.json";
 const logoImg = logoAsset.url;
-const bgImg = keyArtAsset.url;
-void keyHeroAsset;
+const bgImg = menuHeroAsset.url;
 
 import type { GameMode } from "@/game/types";
 import type { CharacterId } from "@/game/characters";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "WarDogs — Batalhas táticas entre pelotões caninos" },
+      { name: "description", content: "Entre no campo de guerra de WarDogs e comande esquadrões táticos em batalhas por turnos com cenários destrutíveis, campanha, partidas online e duelos locais." },
+      { property: "og:title", content: "WarDogs — Batalhas táticas entre pelotões caninos" },
+      { property: "og:description", content: "Entre no campo de guerra de WarDogs e comande esquadrões táticos em batalhas por turnos com cenários destrutíveis, campanha, partidas online e duelos locais." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "WarDogs — Batalhas táticas entre pelotões caninos" },
+      { name: "twitter:description", content: "Entre no campo de guerra de WarDogs e comande esquadrões táticos em batalhas por turnos com cenários destrutíveis, campanha, partidas online e duelos locais." },
+    ],
+  }),
   component: Home,
 });
 
