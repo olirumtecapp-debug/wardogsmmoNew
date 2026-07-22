@@ -2,7 +2,7 @@ import type { TeamSkin } from "./skins";
 import { RANGER, BRUTUS } from "./skins";
 import rangerPortrait from "@/assets/wardogs-ranger-front-v2.png.asset.json";
 import brutusPortrait from "@/assets/wardogs-brutus-front-v2.png.asset.json";
-import musaPortrait from "@/assets/wardogs-musa-original-edit.png.asset.json";
+import musaPortrait from "@/assets/wardogs-musa-original-edit-v2.png.asset.json";
 import ozzyPortrait from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
 import negaoPortrait from "@/assets/corso-front-v5.png.asset.json";
 import miuPortrait from "@/assets/miu-front-v6.png.asset.json";
@@ -118,7 +118,7 @@ const MIU_SKIN: TeamSkin = {
 const SIZING: Record<CharacterId, CharacterSizing> = {
   ranger: { spriteScale: 1.02, portraitScale: 1.00, spriteBottomPad: 0.139 },
   brutus: { spriteScale: 1.02, portraitScale: 1.02, spriteBottomPad: 0.050 },
-  musa:   { spriteScale: 1.05, portraitScale: 1.08, spriteBottomPad: 0.071 },
+  musa:   { spriteScale: 1.00, portraitScale: 1.00, spriteBottomPad: 0.071 },
   ozzy:   { spriteScale: 0.86, portraitScale: 0.88, spriteBottomPad: 0.128 },
   negao:  { spriteScale: 1.06, portraitScale: 1.06, spriteBottomPad: 0.044 },
   miu:    { spriteScale: 0.78, portraitScale: 0.82, spriteBottomPad: 0.051 },
