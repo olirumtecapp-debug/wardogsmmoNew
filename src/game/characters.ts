@@ -112,6 +112,18 @@ const MIU_SKIN: TeamSkin = {
   badgeGlyph: "✦",
 };
 
+// Sizing calibration — derived from measured bounding boxes of each PNG so that
+// all six characters appear at a coherent scale both in menus and in-game.
+// Species factor keeps a natural size hierarchy (Corso biggest, Miu smallest).
+const SIZING: Record<CharacterId, CharacterSizing> = {
+  ranger: { spriteScale: 1.05, portraitScale: 0.98, spriteBottomPad: 0.139 },
+  brutus: { spriteScale: 1.02, portraitScale: 1.13, spriteBottomPad: 0.050 },
+  musa:   { spriteScale: 0.95, portraitScale: 1.15, spriteBottomPad: 0.071 },
+  ozzy:   { spriteScale: 0.87, portraitScale: 0.94, spriteBottomPad: 0.128 },
+  negao:  { spriteScale: 1.07, portraitScale: 1.20, spriteBottomPad: 0.044 },
+  miu:    { spriteScale: 0.84, portraitScale: 0.99, spriteBottomPad: 0.051 },
+};
+
 export const CHARACTERS: Record<CharacterId, Character> = {
   ranger: {
     id: "ranger",
@@ -123,6 +135,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     stats: { hp: 100, mobility: 120, jump: 1.0, defense: 1.0 },
     skin: RANGER,
     tier: "standard",
+    sizing: SIZING.ranger,
   },
   brutus: {
     id: "brutus",
@@ -134,6 +147,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     stats: { hp: 130, mobility: 80, jump: 0.8, defense: 0.75 },
     skin: BRUTUS,
     tier: "standard",
+    sizing: SIZING.brutus,
   },
   musa: {
     id: "musa",
@@ -145,6 +159,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     stats: { hp: 115, mobility: 105, jump: 1.05, defense: 0.9 },
     skin: MUSA_SKIN,
     tier: "standard",
+    sizing: SIZING.musa,
   },
   ozzy: {
     id: "ozzy",
@@ -156,6 +171,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     stats: { hp: 85, mobility: 150, jump: 1.35, defense: 1.2 },
     skin: OZZY_SKIN,
     tier: "standard",
+    sizing: SIZING.ozzy,
   },
   negao: {
     id: "negao",
@@ -167,6 +183,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     stats: { hp: 150, mobility: 90, jump: 0.9, defense: 0.7 },
     skin: NEGAO_SKIN,
     tier: "elite",
+    sizing: SIZING.negao,
   },
   miu: {
     id: "miu",
@@ -178,6 +195,7 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     stats: { hp: 95, mobility: 170, jump: 1.5, defense: 1.0 },
     skin: MIU_SKIN,
     tier: "elite",
+    sizing: SIZING.miu,
   },
 };
 
