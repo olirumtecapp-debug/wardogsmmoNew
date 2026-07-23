@@ -239,6 +239,8 @@ class AudioManager {
       case "barrage":         this.sfxBarrage(t0, mul); break;
       case "teleport":        this.sfxTeleport(t0, mul); break;
       case "rage":            this.sfxRage(t0, mul); break;
+      case "shield_activate": this.sfxShieldActivate(t0, mul); break;
+      case "shield_hit":      this.sfxShieldHit(t0, mul); break;
     }
   }
 
