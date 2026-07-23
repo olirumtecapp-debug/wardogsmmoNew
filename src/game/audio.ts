@@ -704,6 +704,7 @@ class AudioManager {
     this.stopMusic();
     this.musicTrack = track;
     this.musicBarIdx = 0;
+    this.musicNextBarTime = this.now() + 0.1;
     this.scheduleMusicBar();
   }
 
@@ -718,7 +719,11 @@ class AudioManager {
     const bpm = isCombat ? 112 : 100;
     const beat = 60 / bpm;
     const bar = beat * 4;
-    const t0 = this.now() + 0.05;
+    // Lookahead scheduler: schedule bars whose start is <= now + 0.3s ahead.
+    // Immune to setTimeout drift and background-tab throttling.
+    const lookahead = 0.3;
+    while (this.musicNextBarTime < this.now() + lookahead) {
+      const t0 = this.musicNextBarTime;
 
     // C major key — I-IV-V-I (menu) / I-vi-IV-V (combat). Roots in Hz (C2, F2, G2, A2).
     const C2 = 65.41, D2 = 73.42, E2 = 82.41, F2 = 87.31, G2 = 98.0, A2 = 110.0;
@@ -765,7 +770,11 @@ class AudioManager {
     // Silence unused vars warnings (kept for API compatibility)
     void D2; void E2;
 
-    this.musicTimer = setTimeout(() => this.scheduleMusicBar(), Math.max(200, bar * 1000 - 30));
+      this.musicNextBarTime += bar;
+    }
+    // Silence unused vars warnings (kept for API compatibility)
+    // Re-check ~40ms before next bar-window edge
+    this.musicTimer = setTimeout(() => this.scheduleMusicBar(), 100);
   }
 
   private padNote(start: number, freq: number, dur: number, vol: number) {
