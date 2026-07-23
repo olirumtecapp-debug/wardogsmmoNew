@@ -36,33 +36,55 @@ export interface MatchPlayerRow {
 
 export async function createMatch(opts: { nickname: string; charId: string; scenario: string; difficulty: string; maxPlayers?: number; matchDuration?: number }) {
   const s = await ensureAnonSession();
-  if (!s) throw new Error("Sem sessão");
+  if (!s) throw new Error("Sem sessão — recarregue a página e tente novamente");
+
+  // Revalida uid diretamente do servidor para evitar cache stale logo após signup anônimo.
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  const uid = userData?.user?.id ?? s.userId;
+  if (userErr) console.warn("[createMatch] getUser warn:", userErr);
+  if (!uid) throw new Error("Sessão inválida");
+
   const seed = Math.floor(Math.random() * 0x7fffffff);
   const maxPlayers = opts.maxPlayers ?? 4;
 
   // try a few codes on collision
   let code = "";
   let match: MatchRow | null = null;
+  let lastError: unknown = null;
   for (let i = 0; i < 5; i++) {
     code = genCode();
     const { data, error } = await supabase.from("matches").insert({
-      code, host_id: s.userId, seed, scenario: opts.scenario, difficulty: opts.difficulty, max_players: maxPlayers,
+      code, host_id: uid, seed, scenario: opts.scenario, difficulty: opts.difficulty, max_players: maxPlayers,
     }).select().single();
     if (!error && data) { match = data as MatchRow; break; }
-    if (error && !`${error.message}`.toLowerCase().includes("duplicate")) throw error;
+    lastError = error;
+    if (error) {
+      const msg = `${error.message}`.toLowerCase();
+      const isDup = msg.includes("duplicate") || error.code === "23505";
+      if (!isDup) {
+        console.error("[createMatch] insert matches falhou:", error);
+        throw new Error(`Falha ao criar sala: ${error.message}${error.hint ? ` (${error.hint})` : ""}`);
+      }
+    }
   }
-  if (!match) throw new Error("Não foi possível gerar código único");
+  if (!match) {
+    console.error("[createMatch] esgotou tentativas de código:", lastError);
+    throw new Error("Não foi possível gerar código único");
+  }
 
   // Persist chosen duration client-side (schema não tem coluna dedicada).
-  // Guests recebem via snapshot do host durante a partida.
   if (typeof sessionStorage !== "undefined" && opts.matchDuration !== undefined) {
     try { sessionStorage.setItem(`wardogs.dur.${match.code}`, String(opts.matchDuration)); } catch { /* ignore */ }
   }
 
   const { error: pErr } = await supabase.from("match_players").insert({
-    match_id: match.id, user_id: s.userId, slot: 0, nickname: opts.nickname, char_id: opts.charId,
+    match_id: match.id, user_id: uid, slot: 0, nickname: opts.nickname, char_id: opts.charId,
   });
-  if (pErr) throw pErr;
+  if (pErr) {
+    console.error("[createMatch] insert match_players falhou, revertendo sala:", pErr);
+    await supabase.from("matches").delete().eq("id", match.id);
+    throw new Error(`Falha ao registrar jogador: ${pErr.message}${pErr.hint ? ` (${pErr.hint})` : ""}`);
+  }
 
   return match;
 }
