@@ -4,7 +4,7 @@ import { RANGER, BRUTUS } from "./skins";
 // (In-game os sprites laterais v7 são carregados diretamente em render.ts.)
 import rangerFront from "@/assets/wardogs-ranger-front-v2.png.asset.json";
 import brutusFront from "@/assets/wardogs-brutus-front-v2.png.asset.json";
-import musaFront from "@/assets/wardogs-musa-front-v7.png.asset.json";
+import musaFront from "@/assets/wardogs-musa-front-v8.png.asset.json";
 import ozzyFront from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
 import corsoFront from "@/assets/corso-front-v5.png.asset.json";
 import miuFront from "@/assets/miu-front-v6.png.asset.json";
