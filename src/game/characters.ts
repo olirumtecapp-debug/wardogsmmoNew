@@ -6,6 +6,14 @@ import musaAsset from "@/assets/characters/musa-v7.png.asset.json";
 import ozzyAsset from "@/assets/characters/ozzy-v7.png.asset.json";
 import corsoAsset from "@/assets/characters/corso-v7.png.asset.json";
 import miuAsset from "@/assets/characters/miu-v7.png.asset.json";
+// Frontal portraits — usados no menu de seleção, cards e quadrinhos.
+// (In-game os sprites laterais v7 acima continuam sendo usados via render.ts.)
+import rangerFront from "@/assets/wardogs-ranger-front-v2.png.asset.json";
+import brutusFront from "@/assets/wardogs-brutus-front-v2.png.asset.json";
+import musaFront from "@/assets/wardogs-musa-front-v7.png.asset.json";
+import ozzyFront from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
+import corsoFront from "@/assets/corso-front-v5.png.asset.json";
+import miuFront from "@/assets/miu-front-v6.png.asset.json";
 
 export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
 
