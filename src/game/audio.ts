@@ -657,6 +657,32 @@ class AudioManager {
     this.sfxBark(t0 + 0.35, mul, 1);
   }
 
+  private sfxShieldActivate(t0: number, mul: number) {
+    const ctx = this.ctx!;
+    // Rising shimmer + hum
+    for (let i = 0; i < 4; i++) {
+      const o = ctx.createOscillator();
+      o.type = i === 0 ? "sine" : "triangle";
+      const base = 320 + i * 90;
+      o.frequency.setValueAtTime(base, t0);
+      o.frequency.exponentialRampToValueAtTime(base * 2.4, t0 + 0.45);
+      const g = this.env(t0 + i * 0.03, 0.015, 0.5, 0.2 * mul);
+      o.connect(g); this.connectSfx(g);
+      o.start(t0 + i * 0.03); o.stop(t0 + 0.6);
+    }
+  }
+
+  private sfxShieldHit(t0: number, mul: number) {
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator();
+    o.type = "square";
+    o.frequency.setValueAtTime(880, t0);
+    o.frequency.exponentialRampToValueAtTime(220, t0 + 0.18);
+    const g = this.env(t0, 0.005, 0.22, 0.28 * mul);
+    o.connect(g); this.connectSfx(g);
+    o.start(t0); o.stop(t0 + 0.25);
+  }
+
   // ============ AMBIENT MUSIC ============
 
   playMusic(track: "menu" | "combat") {
