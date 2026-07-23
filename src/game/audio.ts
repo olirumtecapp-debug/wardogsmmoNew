@@ -309,16 +309,16 @@ class AudioManager {
     body.connect(bodyLP).connect(bodyG); this.connectSfx(bodyG);
     body.start(t0); body.stop(t0 + dur + 0.1);
 
-    // 4) Debris tail — bandpass noise, longer
+    // 4) Debris tail — bandpass noise, longer (softer to avoid crackle)
     if (!small) {
       const debris = this.noiseSource(); if (!debris) return;
       const bp = ctx.createBiquadFilter();
       bp.type = "bandpass";
-      bp.frequency.value = 600;
-      bp.Q.value = 2;
+      bp.frequency.value = 500;
+      bp.Q.value = 1.6;
       const dG = ctx.createGain();
-      dG.gain.setValueAtTime(0.0001, t0 + 0.15);
-      dG.gain.exponentialRampToValueAtTime(0.25 * mul, t0 + 0.25);
+      dG.gain.setValueAtTime(0, t0 + 0.15);
+      dG.gain.linearRampToValueAtTime(0.18 * mul, t0 + 0.25);
       dG.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.4);
       debris.connect(bp).connect(dG); this.connectSfx(dG);
       debris.start(t0 + 0.15); debris.stop(t0 + dur + 0.5);
