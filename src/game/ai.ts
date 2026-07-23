@@ -28,6 +28,9 @@ export function aiTakeTurn(state: GameState) {
     if (sosOk || (fullOk && hpRatio < 0.65)) {
       activateShield(state);
     }
+  }
+
+
 
   const diff = getAIDifficulty();
 
