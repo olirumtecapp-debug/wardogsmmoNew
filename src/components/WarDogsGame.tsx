@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameMode, GameState, WeaponId } from "@/game/types";
-import { activateRage, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, setTeleportTarget, clearTeleportTarget, confirmTeleport, TELEPORT_CONFIRM_TOL, TELEPORT_MAX_RANGE, TELEPORT_HP_COST } from "@/game/engine";
+import { activateRage, activateShield, createGame, fire, jumpDog, moveDog, RAGE_READY_THRESHOLD, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, SHIELD_READY_THRESHOLD, SHIELD_SOS_HP_RATIO, SHIELD_SOS_MIN_CHARGE, setTeleportTarget, clearTeleportTarget, confirmTeleport, TELEPORT_CONFIRM_TOL, TELEPORT_MAX_RANGE, TELEPORT_HP_COST } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
@@ -426,6 +426,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
           });
         }
       }
+      else if (e.code === "KeyG") {
+        e.preventDefault();
+        const dog = s.dogs[s.currentPlayer];
+        const r = activateShield(s);
+        if (r === "low") {
+          s.floatingTexts.push({
+            id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+            life: 1.4, maxLife: 1.4,
+            value: `Escudo ${Math.floor(dog.shieldCharge)}/${SHIELD_READY_THRESHOLD}`,
+            color: "#7ee8ff", size: 18,
+          });
+        }
+      }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -739,6 +752,47 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                             boxShadow: ready ? "0 0 8px rgba(255,200,60,0.7)" : undefined,
                           }}
                         />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const dog = s.dogs[s.currentPlayer];
+                  const pct = Math.max(0, Math.min(100, dog.shieldCharge));
+                  const hpRatio = dog.hp / dog.maxHp;
+                  const sosOk = hpRatio <= SHIELD_SOS_HP_RATIO && pct >= SHIELD_SOS_MIN_CHARGE;
+                  const fullOk = pct >= SHIELD_READY_THRESHOLD;
+                  const ready = (fullOk || sosOk) && !dog.shieldActive;
+                  const active = dog.shieldActive;
+                  return (
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                      <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Escudo</span>
+                      <button
+                        disabled={isAiTurn || active || !ready || s.phase !== "aiming"}
+                        onClick={() => activateShield(s)}
+                        className={`relative w-full py-1.5 rounded text-[11px] stencil tracking-widest border transition ${
+                          active
+                            ? "border-cyan-200 text-cyan-100 bg-cyan-500/25 shadow-[0_0_10px_rgba(120,220,255,0.7)]"
+                            : ready
+                            ? "border-cyan-300 text-cyan-100 bg-cyan-500/20 hover:bg-cyan-500/30 animate-pulse shadow-[0_0_10px_rgba(120,220,255,0.55)]"
+                            : "border-white/15 text-muted-foreground/80 bg-white/5"
+                        } disabled:cursor-not-allowed`}
+                        aria-label="Campo de Força"
+                        title={active ? "Escudo ativo" : ready ? (sosOk && !fullOk ? "SOS disponível (HP baixo)" : "Escudo pronto") : "Recebendo dano carrega a barra"}
+                      >
+                        {active ? "🛡️ ON" : ready ? "🛡️ GO" : `🛡️ ${Math.floor(pct)}%`}
+                      </button>
+                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5 relative">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-150"
+                          style={{
+                            width: `${pct}%`,
+                            background: ready ? "linear-gradient(90deg,#7ee8ff,#38a8ff)" : "linear-gradient(90deg,#1a4a6a,#7ee8ff)",
+                            boxShadow: ready ? "0 0 8px rgba(120,220,255,0.7)" : undefined,
+                          }}
+                        />
+                        <div className="absolute top-0 h-full w-px bg-white/60" style={{ left: `${SHIELD_READY_THRESHOLD}%` }} />
                       </div>
                     </div>
                   );

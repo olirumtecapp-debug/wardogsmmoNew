@@ -11,6 +11,11 @@ const RAGE_TURN_BONUS = 10; // segundos extras no turno em Fúria
 const RAGE_DAMAGE_MULT = 1.4;
 const RAGE_WIND_MULT = 0.5;
 export const RAGE_READY_THRESHOLD = 60; // barra pronta para ativação
+export const SHIELD_READY_THRESHOLD = 55; // Campo de Força pronto
+export const SHIELD_SOS_HP_RATIO = 0.35;   // até 35% HP: ativação SOS mesmo sem barra cheia
+export const SHIELD_SOS_MIN_CHARGE = 25;   // barra mínima para SOS
+const SHIELD_DAMAGE_REDUCTION = 0.6;
+const SHIELD_ABSORB_CAP = 80;
 export const MATCH_DURATION_DEFAULT = 300; // 5 minutos
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
 const MOVE_SPEED = 95; // px/s
@@ -276,6 +281,7 @@ function placeDogs(
       charId, hasJumped: false,
       rageCharge: 0, rageActive: false,
       specialCharge: 0,
+      shieldCharge: 0, shieldActive: false, shieldAbsorbed: 0,
     };
   };
 
@@ -449,7 +455,28 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < radius + 14) {
       const falloff = Math.max(0, 1 - dist / (radius + 14));
-      const dmg = Math.round(damage * dmgMult * falloff * dog.defense);
+      let dmg = Math.round(damage * dmgMult * falloff * dog.defense);
+      const rawDmg = dmg;
+      // Campo de Força: reduz 60% do dano até um limite de 80 HP absorvidos por ativação
+      let absorbed = 0;
+      if (dog.shieldActive && dmg > 0) {
+        const remaining = Math.max(0, SHIELD_ABSORB_CAP - dog.shieldAbsorbed);
+        const potential = Math.round(dmg * SHIELD_DAMAGE_REDUCTION);
+        absorbed = Math.min(potential, remaining);
+        dmg = Math.max(0, dmg - absorbed);
+        dog.shieldAbsorbed += absorbed;
+        if (absorbed > 0) {
+          state.floatingTexts.push({
+            id: Math.random(), x: dog.x, y: dog.y - 50, vx: 0, vy: -60,
+            life: 1.2, maxLife: 1.2, value: `ESCUDO -${absorbed}`,
+            color: "#7ee8ff", size: 20,
+          });
+          playSfx("shield_hit", 0.7);
+        }
+        if (dog.shieldAbsorbed >= SHIELD_ABSORB_CAP) {
+          dog.shieldActive = false;
+        }
+      }
       dog.hp = Math.max(0, dog.hp - dmg);
       const push = falloff * 180;
       dog.vy = -Math.abs(push * 0.6) - 40;
@@ -468,6 +495,10 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         value: dmg > 0 ? `-${dmg}` : "0",
         color, size,
       });
+      // Escudo: quem toma dano bruto carrega o Campo de Força (mesmo se absorvido)
+      if (rawDmg > 0 && !dog.shieldActive) {
+        dog.shieldCharge = Math.min(100, dog.shieldCharge + Math.min(45, 10 + rawDmg * 0.6));
+      }
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
@@ -1010,6 +1041,13 @@ export function endTurn(state: GameState) {
     prev.rageCharge = 0;
   }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
+  // Expira Campo de Força do jogador que volta ao turno (durou o turno do adversário)
+  const nextDog = state.dogs[state.currentPlayer];
+  if (nextDog.shieldActive) {
+    nextDog.shieldActive = false;
+    nextDog.shieldAbsorbed = 0;
+    nextDog.shieldCharge = 0;
+  }
   state.phase = "aiming";
   state.teleportAiming = null;
   state.turnTimer = state.turnTimeLimit ?? MAX_TURN_TIME;
@@ -1059,6 +1097,28 @@ export function activateRage(state: GameState): "activated" | "queued" | "low" |
     life: 1.6, maxLife: 1.6, value: "FÚRIA!", color: "#ff3838", size: 30,
   });
   playSfx("rage");
+  return "activated";
+}
+
+export function activateShield(state: GameState): "activated" | "already" | "low" | "unavailable" {
+  if (state.winner !== null) return "unavailable";
+  const dog = state.dogs[state.currentPlayer];
+  if (!dog || dog.hp <= 0) return "unavailable";
+  if (dog.shieldActive) return "already";
+  if (state.phase !== "aiming") return "unavailable";
+  const hpRatio = dog.hp / dog.maxHp;
+  const sosOk = hpRatio <= SHIELD_SOS_HP_RATIO && dog.shieldCharge >= SHIELD_SOS_MIN_CHARGE;
+  const fullOk = dog.shieldCharge >= SHIELD_READY_THRESHOLD;
+  if (!fullOk && !sosOk) return "low";
+  dog.shieldActive = true;
+  dog.shieldAbsorbed = 0;
+  dog.shieldCharge = 0;
+  state.message = sosOk && !fullOk ? "CAMPO DE FORÇA — SOS" : "CAMPO DE FORÇA ATIVADO";
+  state.floatingTexts.push({
+    id: Math.random(), x: dog.x, y: dog.y - 42, vx: 0, vy: -60,
+    life: 1.6, maxLife: 1.6, value: "ESCUDO!", color: "#7ee8ff", size: 28,
+  });
+  playSfx("shield_activate");
   return "activated";
 }
 

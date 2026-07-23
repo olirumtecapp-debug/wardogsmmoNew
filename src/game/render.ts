@@ -398,6 +398,27 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.stroke();
       ctx.restore();
     }
+    // Campo de Força — bolha cyan pulsante
+    if (dog.shieldActive && dog.hp > 0) {
+      const pulse = 1 + Math.sin(now * 6) * 0.08;
+      ctx.save();
+      const grad = ctx.createRadialGradient(dog.x, dog.y - 6, 8, dog.x, dog.y - 6, 44 * pulse);
+      grad.addColorStop(0, "rgba(126,232,255,0.05)");
+      grad.addColorStop(0.75, "rgba(126,232,255,0.25)");
+      grad.addColorStop(1, "rgba(60,180,255,0.65)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(dog.x, dog.y - 6, 44 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(180,240,255,0.9)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.lineDashOffset = -now * 20;
+      ctx.beginPath();
+      ctx.arc(dog.x, dog.y - 6, 42 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     // Soft rim glow to lift the silhouette off the terrain
     ctx.save();
     ctx.shadowColor = dog.rageActive ? "#ff3838" : skin.teamColor;

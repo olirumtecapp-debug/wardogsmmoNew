@@ -71,6 +71,9 @@ export interface Dog {
   rageActive: boolean;  // ativo durante 1 turno
   rageQueued?: boolean; // ativação pedida fora da fase de mira; consome no início do próximo turno
   specialCharge: number;  // 0..100 — Bombardeio Canino
+  shieldCharge: number;   // 0..100 — Campo de Força
+  shieldActive: boolean;  // escudo ativo durante o próximo turno do adversário
+  shieldAbsorbed: number; // HP já absorvido pelo escudo ativo (cap por ativação)
 }
 
 
