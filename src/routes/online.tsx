@@ -34,8 +34,16 @@ function OnlineHome() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
-  useEffect(() => { ensureAnonSession(); }, []);
+  useEffect(() => {
+    ensureAnonSession()
+      .then(s => {
+        if (s) setSessionReady(true);
+        else setError("Não foi possível criar sessão. Recarregue a página.");
+      })
+      .catch(e => setError(e instanceof Error ? e.message : "Falha de sessão"));
+  }, []);
 
   const onCreate = async () => {
     setError(null); setBusy("create");
