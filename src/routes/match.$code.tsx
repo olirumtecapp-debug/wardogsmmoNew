@@ -8,6 +8,18 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/match/$code")({
   component: MatchPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4">
+      <div className="panel p-4 max-w-md text-center space-y-3">
+        <div className="stencil text-warn text-sm uppercase">Falha na partida</div>
+        <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
+        <div className="flex gap-2 justify-center">
+          <button onClick={reset} className="btn-hud text-xs">Tentar novamente</button>
+          <Link to="/" className="btn-hud text-xs inline-flex items-center gap-1"><ArrowLeft size={14} /> Base</Link>
+        </div>
+      </div>
+    </div>
+  ),
   head: () => ({
     meta: [
       { title: "WarDogs — Combate online" },
@@ -19,6 +31,7 @@ export const Route = createFileRoute("/match/$code")({
     ],
   }),
 });
+
 
 function MatchPage() {
   const { code } = Route.useParams();
