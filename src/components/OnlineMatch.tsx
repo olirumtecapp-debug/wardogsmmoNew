@@ -254,17 +254,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     );
   }
 
-  if (showIntro) {
-    const sc = SCENARIOS.find(x => x.id === (match.scenario as ScenarioId));
-    return (
-      <ComicIntro
-        chars={chars}
-        scenarioLabel={sc?.label}
-        bgImage={sc?.bgImage}
-        onDone={() => setShowIntro(false)}
-      />
-    );
-  }
+  const sc = SCENARIOS.find(x => x.id === (match.scenario as ScenarioId));
+
+
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
