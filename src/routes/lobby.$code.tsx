@@ -180,11 +180,18 @@ function Lobby() {
                 )}
               </div>
               {p ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center stencil text-lg">{p.nickname[0]?.toUpperCase() ?? "?"}</div>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded bg-secondary/60 border border-border/60 overflow-hidden flex items-center justify-center">
+                    <img
+                      src={CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.portraitUrl}
+                      alt={CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.name ?? p.char_id}
+                      className="w-full h-full object-contain"
+                      draggable={false}
+                    />
+                  </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{p.nickname}{p.user_id === userId ? " (você)" : ""}{p.user_id === match.host_id ? " ⚑" : ""}</div>
-                    <div className="text-[10px] text-muted-foreground">{CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.name ?? p.char_id}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.name ?? p.char_id}</div>
                   </div>
                 </div>
               ) : (
@@ -194,14 +201,29 @@ function Lobby() {
           ))}
         </div>
 
+
         <section className="panel p-3 space-y-2">
           <div className="stencil text-xs uppercase tracking-widest text-muted-foreground">Seu personagem</div>
-          <div className="flex flex-wrap gap-1">
-            {CHAR_IDS.map(id => (
-              <button key={id} onClick={() => onPickChar(id)}
-                className={`btn-hud text-[11px] px-2 py-1 ${me.char_id === id ? "is-selected" : ""}`}>{CHARACTERS[id].name}</button>
-            ))}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {CHAR_IDS.map(id => {
+              const c = CHARACTERS[id];
+              const active = me.char_id === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => onPickChar(id)}
+                  className={`btn-hud p-1.5 flex flex-col items-center gap-1 ${active ? "is-selected" : ""}`}
+                  title={c.name}
+                >
+                  <div className="w-full aspect-square rounded bg-secondary/60 border border-border/50 overflow-hidden flex items-center justify-center">
+                    <img src={c.portraitUrl} alt={c.name} className="w-full h-full object-contain" draggable={false} />
+                  </div>
+                  <div className="text-[10px] stencil uppercase tracking-wider truncate w-full text-center">{c.name}</div>
+                </button>
+              );
+            })}
           </div>
+
           <div className="flex flex-wrap gap-2 pt-2">
             <button onClick={onToggleReady} className={`btn-hud text-xs px-3 py-1.5 ${me.ready ? "btn-primary" : ""}`}>
               {me.ready ? "Cancelar pronto" : "Marcar pronto"}

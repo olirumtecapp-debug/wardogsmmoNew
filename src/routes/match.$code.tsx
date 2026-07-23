@@ -8,6 +8,18 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/match/$code")({
   component: MatchPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4">
+      <div className="panel p-4 max-w-md text-center space-y-3">
+        <div className="stencil text-warn text-sm uppercase">Falha na partida</div>
+        <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
+        <div className="flex gap-2 justify-center">
+          <button onClick={reset} className="btn-hud text-xs">Tentar novamente</button>
+          <Link to="/" className="btn-hud text-xs inline-flex items-center gap-1"><ArrowLeft size={14} /> Base</Link>
+        </div>
+      </div>
+    </div>
+  ),
   head: () => ({
     meta: [
       { title: "WarDogs — Combate online" },
@@ -19,6 +31,7 @@ export const Route = createFileRoute("/match/$code")({
     ],
   }),
 });
+
 
 function MatchPage() {
   const { code } = Route.useParams();
@@ -39,12 +52,18 @@ function MatchPage() {
       if (cancelled) return;
       if (!m) { setError("Sala não encontrada"); return; }
       setMatch(m);
-      const ps = await fetchPlayers(m.id);
-      if (cancelled) return;
-      setPlayers(ps);
+      // Retry fetching players — right after host starts, replication can lag
+      for (let i = 0; i < 8; i++) {
+        const ps = await fetchPlayers(m.id);
+        if (cancelled) return;
+        if (ps.length >= 2) { setPlayers(ps); return; }
+        setPlayers(ps);
+        await new Promise(r => setTimeout(r, 400));
+      }
     })().catch(e => setError(e instanceof Error ? e.message : "Erro"));
     return () => { cancelled = true; };
   }, [code]);
+
 
   useEffect(() => {
     if (!match) return;
@@ -72,13 +91,16 @@ function MatchPage() {
     );
   }
 
-  if (!match || !userId || players.length === 0) {
+  const fighterCount = players.filter(p => p.slot < 2).length;
+  if (!match || !userId || fighterCount < 2) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex flex-col items-center justify-center bg-background gap-3">
         <Loader2 className="animate-spin text-muted-foreground" />
+        <div className="text-xs text-muted-foreground stencil uppercase tracking-widest">Sincronizando combatentes…</div>
       </div>
     );
   }
+
 
   if (match.status !== "playing" && match.status !== "ended") {
     return (
