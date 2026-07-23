@@ -49,8 +49,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   // Init canvas + state (host runs sim, guest mirrors)
   useEffect(() => {
     if (fighters.length < 2) return;
-    const canvas = canvasRef.current!;
-    const parent = canvas.parentElement!.parentElement!;
+    const canvas = canvasRef.current;
+    const parent = canvas?.parentElement?.parentElement;
+    if (!canvas || !parent) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
 
     const rect = parent.getBoundingClientRect();
@@ -64,6 +65,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const ctx = canvas.getContext("2d")!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const storedDur = getStoredMatchDuration(match.code);
+
     try {
       stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
     } catch (err) {
@@ -252,17 +254,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     );
   }
 
-  if (showIntro) {
-    const sc = SCENARIOS.find(x => x.id === (match.scenario as ScenarioId));
-    return (
-      <ComicIntro
-        chars={chars}
-        scenarioLabel={sc?.label}
-        bgImage={sc?.bgImage}
-        onDone={() => setShowIntro(false)}
-      />
-    );
-  }
+  const sc = SCENARIOS.find(x => x.id === (match.scenario as ScenarioId));
+
+
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
@@ -335,8 +329,19 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
           )}
         </div>
       </div>
+      {showIntro && (
+        <div className="fixed inset-0 z-50">
+          <ComicIntro
+            chars={chars}
+            scenarioLabel={sc?.label}
+            bgImage={sc?.bgImage}
+            onDone={() => setShowIntro(false)}
+          />
+        </div>
+      )}
     </div>
   );
+
 }
 
 // --- helpers -----------------------------------------------------------
