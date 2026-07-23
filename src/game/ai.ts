@@ -20,6 +20,15 @@ export function aiTakeTurn(state: GameState) {
     activateRage(state);
   }
 
+  // Escudo defensivo: HP baixo ou barra cheia + inimigo perigoso próximo
+  if (!me.shieldActive) {
+    const hpRatio = me.hp / me.maxHp;
+    const sosOk = hpRatio <= SHIELD_SOS_HP_RATIO && me.shieldCharge >= SHIELD_SOS_MIN_CHARGE;
+    const fullOk = me.shieldCharge >= SHIELD_READY_THRESHOLD;
+    if (sosOk || (fullOk && hpRatio < 0.65)) {
+      activateShield(state);
+    }
+
   const diff = getAIDifficulty();
 
   // ------- Reposicionamento tático (andar + pular) -------
