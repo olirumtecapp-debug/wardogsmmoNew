@@ -426,6 +426,19 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
           });
         }
       }
+      else if (e.code === "KeyG") {
+        e.preventDefault();
+        const dog = s.dogs[s.currentPlayer];
+        const r = activateShield(s);
+        if (r === "low") {
+          s.floatingTexts.push({
+            id: Math.random(), x: dog.x, y: dog.y - 34, vx: 0, vy: -60,
+            life: 1.4, maxLife: 1.4,
+            value: `Escudo ${Math.floor(dog.shieldCharge)}/${SHIELD_READY_THRESHOLD}`,
+            color: "#7ee8ff", size: 18,
+          });
+        }
+      }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
