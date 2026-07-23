@@ -91,13 +91,16 @@ function MatchPage() {
     );
   }
 
-  if (!match || !userId || players.length === 0) {
+  const fighterCount = players.filter(p => p.slot < 2).length;
+  if (!match || !userId || fighterCount < 2) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex flex-col items-center justify-center bg-background gap-3">
         <Loader2 className="animate-spin text-muted-foreground" />
+        <div className="text-xs text-muted-foreground stencil uppercase tracking-widest">Sincronizando combatentes…</div>
       </div>
     );
   }
+
 
   if (match.status !== "playing" && match.status !== "ended") {
     return (
