@@ -329,8 +329,19 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
           )}
         </div>
       </div>
+      {showIntro && (
+        <div className="fixed inset-0 z-50">
+          <ComicIntro
+            chars={chars}
+            scenarioLabel={sc?.label}
+            bgImage={sc?.bgImage}
+            onDone={() => setShowIntro(false)}
+          />
+        </div>
+      )}
     </div>
   );
+
 }
 
 // --- helpers -----------------------------------------------------------
