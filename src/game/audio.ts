@@ -23,7 +23,9 @@ type SfxId =
   | "defeat"
   | "barrage"
   | "teleport"
-  | "rage";
+  | "rage"
+  | "shield_activate"
+  | "shield_hit";
 
 export interface AudioSettings {
   masterVolume: number;
