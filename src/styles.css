@@ -167,6 +167,22 @@
     cursor: not-allowed;
     filter: grayscale(0.4);
   }
+  &.is-selected {
+    border-color: color-mix(in oklch, var(--accent) 80%, transparent);
+    background: linear-gradient(180deg, oklch(1 0 0 / 0.1), oklch(0 0 0 / 0.18)), var(--glass-bg);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: var(--hud-ring), var(--hud-bevel), var(--shadow-glow-amber), 0 6px 18px -6px oklch(0 0 0 / 0.6);
+  }
+  &.is-selected::after {
+    content: "✓";
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    text-shadow: 0 0 4px var(--accent);
+  }
 }
 
 @utility btn-hud-ghost {
