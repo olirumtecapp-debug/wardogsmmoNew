@@ -52,12 +52,18 @@ function MatchPage() {
       if (cancelled) return;
       if (!m) { setError("Sala não encontrada"); return; }
       setMatch(m);
-      const ps = await fetchPlayers(m.id);
-      if (cancelled) return;
-      setPlayers(ps);
+      // Retry fetching players — right after host starts, replication can lag
+      for (let i = 0; i < 8; i++) {
+        const ps = await fetchPlayers(m.id);
+        if (cancelled) return;
+        if (ps.length >= 2) { setPlayers(ps); return; }
+        setPlayers(ps);
+        await new Promise(r => setTimeout(r, 400));
+      }
     })().catch(e => setError(e instanceof Error ? e.message : "Erro"));
     return () => { cancelled = true; };
   }, [code]);
+
 
   useEffect(() => {
     if (!match) return;
