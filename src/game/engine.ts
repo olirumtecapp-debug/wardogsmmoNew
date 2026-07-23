@@ -1041,6 +1041,13 @@ export function endTurn(state: GameState) {
     prev.rageCharge = 0;
   }
   state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
+  // Expira Campo de Força do jogador que volta ao turno (durou o turno do adversário)
+  const nextDog = state.dogs[state.currentPlayer];
+  if (nextDog.shieldActive) {
+    nextDog.shieldActive = false;
+    nextDog.shieldAbsorbed = 0;
+    nextDog.shieldCharge = 0;
+  }
   state.phase = "aiming";
   state.teleportAiming = null;
   state.turnTimer = state.turnTimeLimit ?? MAX_TURN_TIME;
