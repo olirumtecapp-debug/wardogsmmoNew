@@ -180,11 +180,18 @@ function Lobby() {
                 )}
               </div>
               {p ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center stencil text-lg">{p.nickname[0]?.toUpperCase() ?? "?"}</div>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded bg-secondary/60 border border-border/60 overflow-hidden flex items-center justify-center">
+                    <img
+                      src={CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.portraitUrl}
+                      alt={CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.name ?? p.char_id}
+                      className="w-full h-full object-contain"
+                      draggable={false}
+                    />
+                  </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{p.nickname}{p.user_id === userId ? " (você)" : ""}{p.user_id === match.host_id ? " ⚑" : ""}</div>
-                    <div className="text-[10px] text-muted-foreground">{CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.name ?? p.char_id}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{CHARACTERS[(p.char_id as CharacterId) ?? "ranger"]?.name ?? p.char_id}</div>
                   </div>
                 </div>
               ) : (
@@ -193,6 +200,7 @@ function Lobby() {
             </div>
           ))}
         </div>
+
 
         <section className="panel p-3 space-y-2">
           <div className="stencil text-xs uppercase tracking-widest text-muted-foreground">Seu personagem</div>
