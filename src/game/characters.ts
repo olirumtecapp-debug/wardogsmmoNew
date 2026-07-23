@@ -1,11 +1,7 @@
 import type { TeamSkin } from "./skins";
 import { RANGER, BRUTUS } from "./skins";
-import rangerAsset from "@/assets/characters/ranger-v7.png.asset.json";
-import brutusAsset from "@/assets/characters/brutus-v7.png.asset.json";
-import musaAsset from "@/assets/characters/musa-v7.png.asset.json";
-import ozzyAsset from "@/assets/characters/ozzy-v7.png.asset.json";
-import corsoAsset from "@/assets/characters/corso-v7.png.asset.json";
-import miuAsset from "@/assets/characters/miu-v7.png.asset.json";
+// Frontal portraits — usados no menu de seleção, cards e quadrinhos.
+// (In-game os sprites laterais v7 são carregados diretamente em render.ts.)
 // Frontal portraits — usados no menu de seleção, cards e quadrinhos.
 // (In-game os sprites laterais v7 acima continuam sendo usados via render.ts.)
 import rangerFront from "@/assets/wardogs-ranger-front-v2.png.asset.json";
