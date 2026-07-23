@@ -64,9 +64,15 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const ctx = canvas.getContext("2d")!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const storedDur = getStoredMatchDuration(match.code);
-    stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
+    try {
+      stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
+    } catch (err) {
+      console.error("[OnlineMatch] createGame failed", err);
+      throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
+    }
 
     markTerrainDirty();
+
 
     const adapt = () => {
       const s = stateRef.current;
