@@ -2,8 +2,6 @@ import type { TeamSkin } from "./skins";
 import { RANGER, BRUTUS } from "./skins";
 // Frontal portraits — usados no menu de seleção, cards e quadrinhos.
 // (In-game os sprites laterais v7 são carregados diretamente em render.ts.)
-// Frontal portraits — usados no menu de seleção, cards e quadrinhos.
-// (In-game os sprites laterais v7 acima continuam sendo usados via render.ts.)
 import rangerFront from "@/assets/wardogs-ranger-front-v2.png.asset.json";
 import brutusFront from "@/assets/wardogs-brutus-front-v2.png.asset.json";
 import musaFront from "@/assets/wardogs-musa-front-v7.png.asset.json";
