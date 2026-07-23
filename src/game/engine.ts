@@ -450,7 +450,28 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < radius + 14) {
       const falloff = Math.max(0, 1 - dist / (radius + 14));
-      const dmg = Math.round(damage * dmgMult * falloff * dog.defense);
+      let dmg = Math.round(damage * dmgMult * falloff * dog.defense);
+      const rawDmg = dmg;
+      // Campo de Força: reduz 60% do dano até um limite de 80 HP absorvidos por ativação
+      let absorbed = 0;
+      if (dog.shieldActive && dmg > 0) {
+        const remaining = Math.max(0, SHIELD_ABSORB_CAP - dog.shieldAbsorbed);
+        const potential = Math.round(dmg * SHIELD_DAMAGE_REDUCTION);
+        absorbed = Math.min(potential, remaining);
+        dmg = Math.max(0, dmg - absorbed);
+        dog.shieldAbsorbed += absorbed;
+        if (absorbed > 0) {
+          state.floatingTexts.push({
+            id: Math.random(), x: dog.x, y: dog.y - 50, vx: 0, vy: -60,
+            life: 1.2, maxLife: 1.2, value: `ESCUDO -${absorbed}`,
+            color: "#7ee8ff", size: 20,
+          });
+          playSfx("shield_hit", 0.7);
+        }
+        if (dog.shieldAbsorbed >= SHIELD_ABSORB_CAP) {
+          dog.shieldActive = false;
+        }
+      }
       dog.hp = Math.max(0, dog.hp - dmg);
       const push = falloff * 180;
       dog.vy = -Math.abs(push * 0.6) - 40;
@@ -469,6 +490,10 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
         value: dmg > 0 ? `-${dmg}` : "0",
         color, size,
       });
+      // Escudo: quem toma dano bruto carrega o Campo de Força (mesmo se absorvido)
+      if (rawDmg > 0 && !dog.shieldActive) {
+        dog.shieldCharge = Math.min(100, dog.shieldCharge + Math.min(45, 10 + rawDmg * 0.6));
+      }
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
