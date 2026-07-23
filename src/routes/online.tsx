@@ -172,10 +172,10 @@ function OnlineHome() {
                 </div>
               </div>
 
-              <button onClick={onCreate} disabled={busy !== null || !nickname}
+              <button onClick={onCreate} disabled={busy !== null || !nickname || !sessionReady}
                 className="btn-hud btn-primary w-full inline-flex items-center justify-center gap-2">
-                {busy === "create" ? <Loader2 size={14} className="animate-spin" /> : null}
-                Abrir sala
+                {busy === "create" || !sessionReady ? <Loader2 size={14} className="animate-spin" /> : null}
+                {sessionReady ? "Abrir sala" : "Conectando..."}
               </button>
             </div>
 
