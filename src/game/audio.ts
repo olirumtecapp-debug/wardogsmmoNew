@@ -79,6 +79,9 @@ class AudioManager {
   private musicTrack: "menu" | "combat" | null = null;
   private musicTimer: ReturnType<typeof setTimeout> | null = null;
   private musicBarIdx = 0;
+  private musicNextBarTime = 0;
+  private activeVoices = 0;
+  private readonly MAX_VOICES = 14;
   private ready = false;
 
   getSettings(): AudioSettings { return { ...this.settings }; }
@@ -119,12 +122,13 @@ class AudioManager {
 
       // ==== Master chain: [srcs] → sfx/music gains → masterComp → masterGain → dest
       this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = 0.75; // headroom
       this.masterComp = this.ctx.createDynamicsCompressor();
-      this.masterComp.threshold.value = -14;
-      this.masterComp.knee.value = 8;
-      this.masterComp.ratio.value = 3.5;
-      this.masterComp.attack.value = 0.005;
-      this.masterComp.release.value = 0.15;
+      this.masterComp.threshold.value = -12;
+      this.masterComp.knee.value = 6;
+      this.masterComp.ratio.value = 4;
+      this.masterComp.attack.value = 0.003;
+      this.masterComp.release.value = 0.12;
 
       this.sfxGain = this.ctx.createGain();
       this.musicGain = this.ctx.createGain();
@@ -201,8 +205,8 @@ class AudioManager {
     if (!buf) return null;
     const s = this.ctx.createBufferSource();
     s.buffer = buf;
-    s.loop = true;
-    // Random start offset for variety
+    // No loop — 2s buffer is longer than any SFX. Looping caused wrap clicks.
+    s.loop = false;
     s.playbackRate.value = 0.95 + Math.random() * 0.1;
     return s;
   }
@@ -215,6 +219,12 @@ class AudioManager {
   play(id: SfxId, opts?: { gain?: number }) {
     if (!this.ready || !this.ctx) return;
     if (this.settings.muted) return;
+    // Voice cap: drop new SFX if too many overlap (prevents clipping/crackle)
+    if (this.activeVoices >= this.MAX_VOICES) return;
+    this.activeVoices++;
+    const release = () => { this.activeVoices = Math.max(0, this.activeVoices - 1); };
+    // Auto-release after ~1.5s (longest SFX). Simpler than tracking each source.
+    setTimeout(release, 1500);
     const t0 = this.now();
     const mul = opts?.gain ?? 1;
     switch (id) {
@@ -248,11 +258,14 @@ class AudioManager {
 
   private env(t0: number, attack: number, decay: number, peak: number, sustain = 0, sustainDur = 0): GainNode {
     const g = this.ctx!.createGain();
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), t0 + attack);
+    const p = Math.max(0.0001, peak);
+    // Linear attack from 0 avoids click; exponential decay for natural tail
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(p, t0 + Math.max(0.002, attack));
     if (sustain > 0 && sustainDur > 0) {
-      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain), t0 + attack + 0.03);
-      g.gain.setValueAtTime(Math.max(0.0001, sustain), t0 + attack + sustainDur);
+      const s = Math.max(0.0001, sustain);
+      g.gain.linearRampToValueAtTime(s, t0 + attack + 0.03);
+      g.gain.setValueAtTime(s, t0 + attack + sustainDur);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + sustainDur + decay);
     } else {
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay);
