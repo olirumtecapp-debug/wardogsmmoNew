@@ -276,6 +276,7 @@ function placeDogs(
       charId, hasJumped: false,
       rageCharge: 0, rageActive: false,
       specialCharge: 0,
+      shieldCharge: 0, shieldActive: false, shieldAbsorbed: 0,
     };
   };
 
