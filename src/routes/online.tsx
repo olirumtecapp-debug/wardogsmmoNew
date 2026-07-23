@@ -185,10 +185,10 @@ function OnlineHome() {
               <input value={code} onChange={e => setCode(e.target.value.toUpperCase().slice(0, 6))}
                 placeholder="EX: 7KDXA" maxLength={6}
                 className="w-full text-center tracking-[0.3em] font-mono bg-secondary/70 border border-border/60 rounded px-2 py-3 text-xl uppercase" />
-              <button onClick={onJoin} disabled={busy !== null || code.length < 4 || !nickname}
+              <button onClick={onJoin} disabled={busy !== null || code.length < 4 || !nickname || !sessionReady}
                 className="btn-hud w-full inline-flex items-center justify-center gap-2">
-                {busy === "join" ? <Loader2 size={14} className="animate-spin" /> : null}
-                Entrar na sala
+                {busy === "join" || !sessionReady ? <Loader2 size={14} className="animate-spin" /> : null}
+                {sessionReady ? "Entrar na sala" : "Conectando..."}
               </button>
             </div>
           </section>
