@@ -4,21 +4,29 @@ let pending: Promise<{ userId: string } | null> | null = null;
 
 /**
  * Garante uma sessão Supabase (anônima se não houver login).
- * Retorna o user_id da sessão.
+ * Retorna o user_id da sessão. Em caso de erro, limpa o cache para permitir retry.
  */
 export async function ensureAnonSession(): Promise<{ userId: string } | null> {
   if (pending) return pending;
-  pending = (async () => {
-    const { data: session } = await supabase.auth.getSession();
-    if (session.session?.user?.id) return { userId: session.session.user.id };
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error || !data.user) {
-      console.error("[anon-auth] falhou", error);
+  const p = (async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session.session?.user?.id) return { userId: session.session.user.id };
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error || !data.user) {
+        console.error("[anon-auth] signInAnonymously falhou:", error);
+        return null;
+      }
+      return { userId: data.user.id };
+    } catch (e) {
+      console.error("[anon-auth] exceção:", e);
       return null;
     }
-    return { userId: data.user.id };
   })();
-  return pending;
+  pending = p;
+  const result = await p;
+  if (!result) pending = null; // permite retry na próxima chamada
+  return result;
 }
 
 export function randomNickname(): string {
