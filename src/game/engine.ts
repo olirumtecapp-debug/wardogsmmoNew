@@ -1100,6 +1100,28 @@ export function activateRage(state: GameState): "activated" | "queued" | "low" |
   return "activated";
 }
 
+export function activateShield(state: GameState): "activated" | "already" | "low" | "unavailable" {
+  if (state.winner !== null) return "unavailable";
+  const dog = state.dogs[state.currentPlayer];
+  if (!dog || dog.hp <= 0) return "unavailable";
+  if (dog.shieldActive) return "already";
+  if (state.phase !== "aiming") return "unavailable";
+  const hpRatio = dog.hp / dog.maxHp;
+  const sosOk = hpRatio <= SHIELD_SOS_HP_RATIO && dog.shieldCharge >= SHIELD_SOS_MIN_CHARGE;
+  const fullOk = dog.shieldCharge >= SHIELD_READY_THRESHOLD;
+  if (!fullOk && !sosOk) return "low";
+  dog.shieldActive = true;
+  dog.shieldAbsorbed = 0;
+  dog.shieldCharge = 0;
+  state.message = sosOk && !fullOk ? "CAMPO DE FORÇA — SOS" : "CAMPO DE FORÇA ATIVADO";
+  state.floatingTexts.push({
+    id: Math.random(), x: dog.x, y: dog.y - 42, vx: 0, vy: -60,
+    life: 1.6, maxLife: 1.6, value: "ESCUDO!", color: "#7ee8ff", size: 28,
+  });
+  playSfx("shield_activate");
+  return "activated";
+}
+
 
 export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
   if (state.phase !== "aiming" || state.winner !== null) return;
