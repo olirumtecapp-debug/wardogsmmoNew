@@ -319,6 +319,13 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
             updateMatch(match.id, { current_slot: s.currentPlayer, turn_slot: s.currentPlayer }).catch(() => {});
           }
+          // Heartbeat de turno: reenvia a cada ~1s enquanto está mirando —
+          // se o guest entrou depois ou perdeu o broadcast, converge rápido.
+          if (s.phase === "aiming" && now - lastTurnBeatRef.current > 1000) {
+            lastTurnBeatRef.current = now;
+            netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
+          }
+
         } else {
           advanceCosmetic(s, dt);
         }
