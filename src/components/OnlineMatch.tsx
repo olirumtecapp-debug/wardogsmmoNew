@@ -41,6 +41,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const lastMoveSendRef = useRef(0);
   const localEditUntilRef = useRef(0);
   const lastBroadcastTurnRef = useRef<number>(-1);
+  const pendingSnapshotRef = useRef<Snapshot | null>(null);
+  const pendingTurnRef = useRef<{ slot: number; wind: number } | null>(null);
+  const lastTurnBeatRef = useRef(0);
+
+
 
 
   const [, setTick] = useState(0);
@@ -100,7 +105,29 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
       }
       markTerrainDirty();
+      // Drena eventos que chegaram antes do state existir (guest que abriu
+      // canal antes do canvas medir).
+      const pendSnap = pendingSnapshotRef.current;
+      if (pendSnap && !isHost) {
+        apply(stateRef.current!, pendSnap, false);
+        pendingSnapshotRef.current = null;
+      }
+      const pendTurn = pendingTurnRef.current;
+      if (pendTurn && !isHost && stateRef.current) {
+        stateRef.current.currentPlayer = pendTurn.slot === 0 ? 0 : 1;
+        stateRef.current.wind = pendTurn.wind;
+        stateRef.current.phase = "aiming";
+        pendingTurnRef.current = null;
+      }
+      // Host: se o canal já estava subscrito, reenvia snapshot inicial agora
+      // que o state existe (o onSubscribed rodou antes do createGame).
+      if (isHost && netRef.current && stateRef.current) {
+        netRef.current.send({ t: "snapshot", state: serialize(stateRef.current) });
+        netRef.current.send({ t: "turn", slot: stateRef.current.currentPlayer, wind: stateRef.current.wind });
+        lastBroadcastTurnRef.current = stateRef.current.currentPlayer;
+      }
     };
+
 
     const adapt = () => {
       initIfNeeded();
@@ -205,14 +232,27 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   }, [iAmFighter, mySlot]);
 
 
-  // Realtime channel
+  // Realtime channel — abre assim que match.id/myUserId existirem. NÃO depende
+  // de stateRef.current (ref não é reativa; dependeria disso quebraria o guest
+  // quando o layout inicializasse depois do primeiro render).
   useEffect(() => {
-    if (!stateRef.current) return;
-    const ch = openMatchChannel(match.id, myUserId, (ev) => onNetEvent(ev));
+    const emitInitialHostState = () => {
+      if (!isHost) return;
+      const s = stateRef.current;
+      if (!s) return;
+      netRef.current?.send({ t: "snapshot", state: serialize(s) });
+      netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
+      lastBroadcastTurnRef.current = s.currentPlayer;
+    };
+    const ch = openMatchChannel(match.id, myUserId, (ev) => onNetEvent(ev), {
+      onSubscribed: emitInitialHostState,
+      onPeerJoin: () => emitInitialHostState(),
+    });
     netRef.current = ch;
     return () => { ch.close(); netRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.id, myUserId, stateRef.current]);
+  }, [match.id, myUserId, isHost]);
+
 
   // Host: broadcast explosions
   useEffect(() => {
@@ -279,6 +319,13 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
             updateMatch(match.id, { current_slot: s.currentPlayer, turn_slot: s.currentPlayer }).catch(() => {});
           }
+          // Heartbeat de turno: reenvia a cada ~1s enquanto está mirando —
+          // se o guest entrou depois ou perdeu o broadcast, converge rápido.
+          if (s.phase === "aiming" && now - lastTurnBeatRef.current > 1000) {
+            lastTurnBeatRef.current = now;
+            netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
+          }
+
         } else {
           advanceCosmetic(s, dt);
         }
@@ -307,7 +354,13 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
   function onNetEvent(ev: NetEvent) {
     const s = stateRef.current;
-    if (!s) return;
+    // State ainda não pronto (canvas mediu 0px etc.) — guarda último snapshot/turn
+    // para reaplicar assim que createGame terminar.
+    if (!s) {
+      if (ev.t === "snapshot") pendingSnapshotRef.current = ev.state as Snapshot;
+      else if (ev.t === "turn") pendingTurnRef.current = { slot: ev.slot, wind: ev.wind };
+      return;
+    }
     if (ev.t === "snapshot" && !isHost) {
       const skipAim = iAmFighter && (ev.state as Snapshot).currentPlayer === mySlot && performance.now() < localEditUntilRef.current;
       apply(s, ev.state as Snapshot, skipAim);
@@ -330,6 +383,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       applyAction(s, ev.action);
     }
   }
+
 
 
   function applyAction(s: GameState, a: InputAction) {
@@ -413,7 +467,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
       <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
         <div className="relative" style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}>
-          <canvas ref={canvasRef} className="block" />
+          <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} />
 
           {s && (
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
