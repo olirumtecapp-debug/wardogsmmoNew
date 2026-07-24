@@ -58,7 +58,7 @@ interface Props {
 }
 
 
-function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
+export function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
   const cls = className ?? "w-7 h-7";
   switch (id) {
     case "bazooka":
