@@ -1030,7 +1030,7 @@ function MoveHoldButton({ children, onHold, onRelease, disabled, label }: {
 }
 
 
-function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSelect, disabled }: {
+export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSelect, disabled }: {
   open: boolean;
   onToggle: () => void;
   current: WeaponId;
