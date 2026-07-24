@@ -731,10 +731,27 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
           )}
 
           {s?.phase === "gameover" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 pointer-events-auto">
-              <div className="panel p-5 text-center space-y-3">
-                <div className="stencil text-lg uppercase">{s.message}</div>
-                <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md pointer-events-auto p-4 animate-fade-in">
+              <div className="panel p-6 sm:p-8 text-center max-w-sm space-y-4">
+                <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Fim de combate</div>
+                <h2 className="stencil text-2xl leading-tight">{s.message}</h2>
+                {iAmFighter && rematchSlots.has(mySlot) && (
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    {rematchSlots.size >= 2 ? "Voltando ao lobby…" : "Aguardando outro jogador…"}
+                  </div>
+                )}
+                {rematchError && <div className="text-xs text-warn">{rematchError}</div>}
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  {iAmFighter && !rematchSlots.has(mySlot) && (
+                    <button className="btn-hud btn-primary" onClick={requestRematch}>Pedir revanche</button>
+                  )}
+                  <button className="btn-hud" onClick={onExit}>Voltar à base</button>
+                </div>
+                {iAmFighter && (
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                    No lobby dá pra trocar de guerreiro antes de reiniciar
+                  </div>
+                )}
               </div>
             </div>
           )}
