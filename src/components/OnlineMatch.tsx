@@ -579,11 +579,12 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && iAmFighter && currentWeapon && (
             <div
-              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
+              className="absolute inset-x-0 bottom-0 px-1.5 pb-1.5 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end justify-center"
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+              <div className="w-full" style={{ transform: "scale(var(--hud-scale, 1))", transformOrigin: "bottom center" }}>
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full overflow-x-auto no-scrollbar">
 
                 <div className="shrink-0 [&>button]:!px-1.5 [&>button]:!text-[10px] sm:[&>button]:!px-3 sm:[&>button]:!text-xs">
                 <ArsenalPopup
