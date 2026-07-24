@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ensureAnonSession, randomNickname } from "@/lib/anonAuth";
 import { createMatch, joinMatchByCode } from "@/lib/matchApi";
+import { getDeviceKind, deviceLabel, DeviceMismatchError, type DeviceKind } from "@/lib/device";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
 import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
 import { SCENARIOS } from "@/game/scenarios";
-import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2, Monitor, Smartphone, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/online")({
   component: OnlineHome,
