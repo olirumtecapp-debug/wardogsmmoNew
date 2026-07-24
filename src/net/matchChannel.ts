@@ -7,7 +7,8 @@ export type NetEvent =
   | { t: "snapshot"; state: unknown }
   | { t: "explosion"; x: number; y: number; r: number }
   | { t: "turn"; slot: number; wind: number }
-  | { t: "chat"; slot: number; text: string };
+  | { t: "chat"; slot: number; text: string }
+  | { t: "rematch-req"; slot: number };
 
 export type InputAction =
   | { k: "angle"; v: number }

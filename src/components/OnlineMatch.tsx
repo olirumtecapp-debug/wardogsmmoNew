@@ -53,6 +53,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const [showIntro, setShowIntro] = useState(true);
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
+  const [rematchSlots, setRematchSlots] = useState<Set<number>>(() => new Set());
+  const [rematchError, setRematchError] = useState<string | null>(null);
+  const rematchTriggeredRef = useRef(false);
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
     try { return localStorage.getItem("wardogs.aimAssist") !== "0"; } catch { return true; }
   });
@@ -354,7 +357,47 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     return () => clearInterval(iv);
   }, [isHost, match.id, match.status]);
 
+  function maybeTriggerRematchReset(slots: Set<number>) {
+    if (!isHost || rematchTriggeredRef.current) return;
+    if (!slots.has(0) || !slots.has(1)) return;
+    rematchTriggeredRef.current = true;
+    const newSeed = Math.floor(Math.random() * 0x7fffffff);
+    updateMatch(match.id, {
+      status: "lobby",
+      seed: newSeed,
+      started_at: null,
+      ended_at: null,
+      turn_slot: 0,
+      current_slot: 0,
+    }).catch((err) => {
+      rematchTriggeredRef.current = false;
+      setRematchError(err instanceof Error ? err.message : String(err));
+    });
+  }
+
+  function requestRematch() {
+    if (mySlot !== 0 && mySlot !== 1) return;
+    setRematchError(null);
+    setRematchSlots((prev) => {
+      const next = new Set(prev);
+      next.add(mySlot);
+      maybeTriggerRematchReset(next);
+      return next;
+    });
+    netRef.current?.send({ t: "rematch-req", slot: mySlot });
+  }
+
   function onNetEvent(ev: NetEvent) {
+    if (ev.t === "rematch-req") {
+      setRematchSlots((prev) => {
+        if (prev.has(ev.slot)) return prev;
+        const next = new Set(prev);
+        next.add(ev.slot);
+        maybeTriggerRematchReset(next);
+        return next;
+      });
+      return;
+    }
     const s = stateRef.current;
     // State ainda não pronto (canvas mediu 0px etc.) — guarda último snapshot/turn
     // para reaplicar assim que createGame terminar.
@@ -385,6 +428,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       applyAction(s, ev.action);
     }
   }
+
 
 
 
@@ -474,7 +518,21 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
-      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
+      {sc?.bgImage && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${sc.bgImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(18px) brightness(0.55) saturate(1.05)",
+            transform: "scale(1.08)",
+            zIndex: 0,
+          }}
+          aria-hidden
+        />
+      )}
+      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center" style={{ zIndex: 1 }}>
         <div className="relative" style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}>
           <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} />
 
@@ -673,10 +731,27 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
           )}
 
           {s?.phase === "gameover" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 pointer-events-auto">
-              <div className="panel p-5 text-center space-y-3">
-                <div className="stencil text-lg uppercase">{s.message}</div>
-                <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md pointer-events-auto p-4 animate-fade-in">
+              <div className="panel p-6 sm:p-8 text-center max-w-sm space-y-4">
+                <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Fim de combate</div>
+                <h2 className="stencil text-2xl leading-tight">{s.message}</h2>
+                {iAmFighter && rematchSlots.has(mySlot) && (
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    {rematchSlots.size >= 2 ? "Voltando ao lobby…" : "Aguardando outro jogador…"}
+                  </div>
+                )}
+                {rematchError && <div className="text-xs text-warn">{rematchError}</div>}
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  {iAmFighter && !rematchSlots.has(mySlot) && (
+                    <button className="btn-hud btn-primary" onClick={requestRematch}>Pedir revanche</button>
+                  )}
+                  <button className="btn-hud" onClick={onExit}>Voltar à base</button>
+                </div>
+                {iAmFighter && (
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                    No lobby dá pra trocar de guerreiro antes de reiniciar
+                  </div>
+                )}
               </div>
             </div>
           )}

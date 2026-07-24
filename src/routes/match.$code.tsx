@@ -103,6 +103,10 @@ function MatchPage() {
 
 
   if (match.status !== "playing" && match.status !== "ended") {
+    // Rematch reset — host set status back to 'lobby'; take both players there.
+    if (match.status === "lobby") {
+      void navigate({ to: "/lobby/$code", params: { code } });
+    }
     return (
       <div className="min-h-dvh flex items-center justify-center bg-background p-4">
         <div className="panel p-4 max-w-md text-center space-y-3">

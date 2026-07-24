@@ -5,6 +5,7 @@ import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
+import { getActiveScenario } from "@/game/scenarios";
 import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { audio } from "@/game/audio";
 
@@ -55,6 +56,8 @@ interface Props {
   onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
   matchDuration?: number; // segundos; 0 = sem limite
   rageEnabled?: boolean;  // Modo Fúria (Campanha)
+  onRematch?: () => void;        // reinicia com mesmos guerreiros
+  onChangeFighter?: () => void;  // volta pra seleção de guerreiro
 }
 
 
@@ -167,7 +170,7 @@ export function WeaponIcon({ id, className }: { id: WeaponId; className?: string
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled, onRematch, onChangeFighter }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -506,9 +509,24 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   });
 
 
+  const scenarioBg = getActiveScenario()?.bgImage;
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
+      {scenarioBg && (
+        <div
+          className="absolute inset-0 -z-10 pointer-events-none"
+          style={{
+            backgroundImage: `url(${scenarioBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(18px) brightness(0.55) saturate(1.05)",
+            transform: "scale(1.08)",
+          }}
+          aria-hidden
+        />
+      )}
       <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
+
         <div
           className="relative"
           style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}
@@ -848,10 +866,32 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
                 </h2>
 
-                <div className="flex gap-2 mt-6 justify-center">
-                  <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
+                <div className="flex flex-col sm:flex-row gap-2 mt-6 justify-center">
+                  <button
+                    className="btn-hud btn-primary"
+                    onClick={() => {
+                      if (onRematch) { stateRef.current = null; onRematch(); }
+                      else { stateRef.current = null; location.reload(); }
+                    }}
+                  >
+                    Revanche
+                  </button>
+                  <button
+                    className="btn-hud"
+                    onClick={() => {
+                      if (onChangeFighter) { stateRef.current = null; onChangeFighter(); }
+                      else onExit();
+                    }}
+                  >
+                    Trocar guerreiro
+                  </button>
                   <button className="btn-hud" onClick={onExit}>Menu</button>
                 </div>
+                {!onChangeFighter && (
+                  <div className="text-[10px] text-muted-foreground mt-3 uppercase tracking-widest">
+                    Escolha novo pelotão no menu principal
+                  </div>
+                )}
               </div>
             </div>
           )}
