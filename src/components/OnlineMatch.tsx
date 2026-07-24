@@ -657,10 +657,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   disabled={!myTurn}
                   onClick={() => sendInput({ k: "fire" })}
                   aria-label="Atirar"
-                  className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                  className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
                 >
                   FOGO
                 </button>
+
 
               </div>
             </div>
