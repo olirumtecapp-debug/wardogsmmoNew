@@ -1,15 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState, WeaponId } from "@/game/types";
 import { createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
-import { render, markTerrainDirty } from "@/game/render";
-import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
+import { render, markTerrainDirty, setAimAssist } from "@/game/render";
+import { WEAPONS } from "@/game/weapons";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
 import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios";
 import { openMatchChannel, type MatchChannel, type NetEvent, type InputAction } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
-import { updateMatch, updateSelfPlayer, getStoredMatchDuration } from "@/lib/matchApi";
+import { updateMatch, getStoredMatchDuration } from "@/lib/matchApi";
 import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
-import { WeaponIcon, WEAPON_SHORT } from "@/components/WarDogsGame";
+import {
+  ArsenalPopup,
+  HoldButton,
+  MatchCountdown,
+  MiniPlayer,
+  MobilityBar,
+  WindGauge,
+} from "@/components/WarDogsGame";
 
 interface Props {
   match: MatchRow;
@@ -31,11 +38,19 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const lastAimSendRef = useRef(0);
   const lastMoveSendRef = useRef(0);
-  const localEditUntilRef = useRef(0); // ignore host snapshot angle/power/weapon while user editing
+  const localEditUntilRef = useRef(0);
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
   const [showIntro, setShowIntro] = useState(() => !shouldSkipIntro());
   const [arsenalOpen, setArsenalOpen] = useState(false);
+  const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
+  const [aimAssist, setAimAssistState] = useState<boolean>(() => {
+    try { return localStorage.getItem("wardogs.aimAssist") !== "0"; } catch { return true; }
+  });
+  useEffect(() => {
+    setAimAssist(aimAssist);
+    try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
+  }, [aimAssist]);
 
   const fighters = players.filter(p => p.slot < 2).sort((a, b) => a.slot - b.slot);
   const me = players.find(p => p.user_id === myUserId) ?? null;
@@ -51,7 +66,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     setActiveScenario(match.scenario as ScenarioId);
   }, [match.scenario]);
 
-  // Init canvas + state
+  // Init canvas + state (mirrors WarDogsGame reserves so terrain sits above HUD).
   useEffect(() => {
     if (fighters.length < 2) return;
     const canvas = canvasRef.current;
@@ -61,9 +76,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
     const rect = parent.getBoundingClientRect();
     const w = Math.max(320, Math.floor(rect.width));
-    const h = Math.max(240, Math.floor(rect.height));
-    const hudReserve = 8;
-    const topReserve = window.matchMedia("(min-width: 640px)").matches && h >= 480 ? 88 : 104;
+    const h = Math.max(280, Math.floor(rect.height));
+    const shortLandscape = h < 460;
+    const isTablet = window.matchMedia("(min-width: 640px)").matches && h >= 520;
+    const hudReserve = isTablet ? 112 : shortLandscape ? 156 : 148;
+    const topReserve = isTablet ? 90 : shortLandscape ? 140 : 110;
 
     canvas.width = w * dpr;
     canvas.height = h * dpr;
@@ -133,7 +150,6 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       last = now;
       const s = stateRef.current;
       if (s) {
-        // Local optimistic hold-controls (only during my turn)
         const myTurnLocal = iAmFighter && s.currentPlayer === mySlot && s.phase === "aiming" && s.winner === null;
         if (myTurnLocal) {
           if (angleHoldRef.current) {
@@ -141,7 +157,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             localEditUntilRef.current = now + 250;
             if (now - lastAimSendRef.current > 60) {
               lastAimSendRef.current = now;
-              sendInput({ k: "angle", v: s.angle }, /*localAlreadyApplied*/ true);
+              sendInput({ k: "angle", v: s.angle }, true);
             }
           }
           if (powerHoldRef.current) {
@@ -153,12 +169,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             }
           }
           if (moveHoldRef.current) {
-            // apply locally for feedback
             moveDog(s, moveHoldRef.current.dir, dt);
             if (now - lastMoveSendRef.current > 50) {
+              const elapsed = (now - lastMoveSendRef.current) / 1000;
               lastMoveSendRef.current = now;
-              const elapsed = (now - (lastMoveSendRef.current - 50)) / 1000;
-              sendInput({ k: "move", dir: moveHoldRef.current.dir, dt: elapsed }, true);
+              sendInput({ k: "move", dir: moveHoldRef.current.dir, dt: Math.min(0.2, elapsed) }, true);
             }
           }
         }
@@ -226,9 +241,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const s = stateRef.current;
     if (!s) return;
     if (s.currentPlayer !== mySlot) return;
-    // Optimistic local apply (unless already applied by hold loop)
     if (!localAlreadyApplied) {
-      // For move/jump only apply locally if non-host to avoid double
       if (action.k === "angle" || action.k === "power" || action.k === "weapon") {
         applyAction(s, action);
         localEditUntilRef.current = performance.now() + 250;
@@ -241,7 +254,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     if (!isHost) netRef.current?.send({ t: "input", slot: mySlot, action });
   };
 
-  // Keyboard bindings
+  // Keyboard bindings for desktop
   useEffect(() => {
     if (!iAmFighter) return;
     const onDown = (e: KeyboardEvent) => {
@@ -275,6 +288,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const myTurn = !!(s && iAmFighter && s.currentPlayer === mySlot && s.phase === "aiming" && s.winner === null);
   const currentName = s ? CHARACTERS[s.dogs[s.currentPlayer].charId].name : "";
   const currentWeapon = s ? WEAPONS[s.weapon] : null;
+  const hudVisible = !!(s && s.phase === "aiming" && s.winner === null);
+  const hudReserve = s?.hudReserve ?? 148;
+  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+
+  useEffect(() => { if (!myTurn && arsenalOpen) setArsenalOpen(false); }, [myTurn, arsenalOpen]);
 
   if (fighters.length < 2) {
     return (
@@ -288,41 +306,120 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const sc = SCENARIOS.find(x => x.id === (match.scenario as ScenarioId));
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background select-none">
-      {/* Game frame — canvas + top overlay only */}
-      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center touch-none">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
+      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
         <div className="relative" style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}>
           <canvas ref={canvasRef} className="block" />
 
           {s && (
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
               <div className="flex flex-col gap-1.5 pointer-events-auto">
-                {fighters.map((p, i) => (
-                  <div key={p.id} className={`panel px-2 py-1 text-[10px] ${s.currentPlayer === i ? "border-[color:var(--accent)]" : ""}`}>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${s.currentPlayer === i ? "bg-[color:var(--accent)]" : "bg-muted"}`} />
-                      <span className="stencil truncate max-w-[80px]">{p.nickname}</span>
-                      <span className="text-muted-foreground ml-1">HP {Math.max(0, s.dogs[i].hp)}</span>
-                    </div>
+                <MiniPlayer dog={s.dogs[0]} active={s.currentPlayer === 0} />
+                <MiniPlayer dog={s.dogs[1]} active={s.currentPlayer === 1} />
+              </div>
+
+              <div className="flex flex-col items-center gap-1 justify-self-center min-w-0 max-w-full pointer-events-auto">
+                <MatchCountdown matchDuration={s.matchDuration} matchTimer={s.matchTimer} />
+                <div className="panel px-2 py-1.5 sm:px-3 text-center min-w-0 max-w-full">
+                  <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
+                    {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentName}`}
                   </div>
-                ))}
+                  <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">
+                    {iAmFighter && s.currentPlayer === mySlot ? `Sua vez — ${currentName}` : `Vez de ${currentName}`}
+                  </div>
+                  {s.phase === "aiming" && s.winner === null && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {iAmFighter && s.currentPlayer !== mySlot ? "Aguardando oponente…" : `Turno ${Math.max(0, Math.ceil(s.turnTimer))}s`}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="panel px-2 py-1.5 sm:px-3 pointer-events-auto text-center min-w-0 justify-self-center">
-                <div className="stencil text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
-                  {s.phase === "gameover" ? "Fim de combate" : `Turno ${currentName}`}
+              <div className="flex flex-col items-end gap-1.5 pointer-events-auto min-w-0 justify-self-end">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setAimAssistState(v => !v)}
+                    className={`btn-hud text-[10px] px-2 py-1 ${aimAssist ? "is-selected" : "opacity-70"}`}
+                    aria-pressed={aimAssist}
+                    title="Mira assistida"
+                  >
+                    🎯 {aimAssist ? "Mira ON" : "Mira OFF"}
+                  </button>
+                  <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
                 </div>
-                <div className="text-xs sm:text-sm font-semibold mt-0.5 leading-tight">{s.message}</div>
-                {iAmFighter && s.currentPlayer !== mySlot && s.phase === "aiming" && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Aguardando oponente...</div>
-                )}
+                <WindGauge wind={s.wind} />
               </div>
+            </div>
+          )}
 
-              <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
-                <button onClick={onExit} className="btn-hud text-[10px] px-2 py-1">Sair</button>
-                <div className="panel px-2 py-1 text-[10px]">
-                  Vento {(s.wind * 10).toFixed(1)}
+          {s && s.phase !== "gameover" && hudCssPx > 0 && iAmFighter && currentWeapon && (
+            <div
+              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
+              style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
+              aria-hidden={!hudVisible}
+            >
+              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+                <ArsenalPopup
+                  open={arsenalOpen}
+                  onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
+                  current={s.weapon}
+                  ammo={s.ammo}
+                  hovered={hoveredWeapon}
+                  setHovered={setHoveredWeapon}
+                  disabled={!myTurn}
+                  onSelect={(id) => { sendInput({ k: "weapon", v: id }); setArsenalOpen(false); setHoveredWeapon(null); }}
+                />
+
+                <MobilityBar
+                  dog={s.dogs[s.currentPlayer]}
+                  disabled={!myTurn}
+                  onHold={(dir) => { moveHoldRef.current = { dir }; }}
+                  onRelease={() => { moveHoldRef.current = null; }}
+                  onJump={() => sendInput({ k: "jump" })}
+                />
+
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <HoldButton disabled={!myTurn} onHold={dir => { angleHoldRef.current = { dir }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>−</HoldButton>
+                    <div className="flex flex-col items-center min-w-[38px]">
+                      <span className="stencil text-[9px] text-muted-foreground leading-none">ÂNG</span>
+                      <span className="stencil text-base leading-tight" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
+                    </div>
+                    <HoldButton disabled={!myTurn} onHold={dir => { angleHoldRef.current = { dir }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>+</HoldButton>
+                  </div>
+
+                  <div className="hud-divider" />
+
+                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                    <HoldButton disabled={!myTurn} onHold={dir => { powerHoldRef.current = { dir }; }} onRelease={() => (powerHoldRef.current = null)} dir={-1}>−</HoldButton>
+                    <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+                      <div className="flex justify-between items-baseline">
+                        <span className="stencil text-[9px] text-muted-foreground leading-none">FORÇA</span>
+                        <span className="stencil text-xs leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.power)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
+                        <div
+                          className="h-full transition-[width] duration-75 rounded-full"
+                          style={{
+                            width: `${s.power}%`,
+                            background: `linear-gradient(90deg, var(--team-green), var(--accent) 60%, var(--destructive))`,
+                            boxShadow: "0 0 8px rgba(255,180,80,0.5)",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <HoldButton disabled={!myTurn} onHold={dir => { powerHoldRef.current = { dir }; }} onRelease={() => (powerHoldRef.current = null)} dir={1}>+</HoldButton>
+                  </div>
                 </div>
+
+                <button
+                  disabled={!myTurn}
+                  onClick={() => sendInput({ k: "fire" })}
+                  aria-label="Atirar"
+                  className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                >
+                  FOGO
+                </button>
               </div>
             </div>
           )}
@@ -338,86 +435,6 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         </div>
       </div>
 
-      {/* Bottom HUD — OUTSIDE canvas frame */}
-      {s && iAmFighter && currentWeapon && (
-        <div className="shrink-0 border-t border-white/10 bg-background/95 backdrop-blur px-2 py-2 sm:px-3 sm:py-2.5">
-          <div className="max-w-[720px] mx-auto flex items-stretch gap-1.5 sm:gap-2 relative">
-            {/* Mobility */}
-            <div className="panel px-1.5 py-1 flex items-center gap-1 shrink-0">
-              <HoldButton disabled={!myTurn} onHold={() => (moveHoldRef.current = { dir: -1 })} onRelease={() => (moveHoldRef.current = null)}>◀</HoldButton>
-              <button disabled={!myTurn} onClick={() => sendInput({ k: "jump" })}
-                className="btn-hud text-[11px] px-2 py-1 disabled:opacity-40">⇧</button>
-              <HoldButton disabled={!myTurn} onHold={() => (moveHoldRef.current = { dir: 1 })} onRelease={() => (moveHoldRef.current = null)}>▶</HoldButton>
-            </div>
-
-            {/* Arsenal */}
-            <div className="relative">
-              {arsenalOpen && (
-                <div className="absolute left-0 bottom-full mb-2 panel p-2 z-30 shadow-2xl w-[280px] sm:w-[380px]">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="stencil text-[10px] uppercase tracking-widest text-muted-foreground">Arsenal</div>
-                    <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={() => setArsenalOpen(false)}>✕</button>
-                  </div>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-1">
-                    {WEAPON_ORDER.map(id => {
-                      const w = WEAPONS[id];
-                      const a = s.ammo[id];
-                      const empty = a === 0;
-                      const active = s.weapon === id;
-                      return (
-                        <button key={id} disabled={empty || !myTurn}
-                          onClick={() => { sendInput({ k: "weapon", v: id }); setArsenalOpen(false); }}
-                          className={`btn-hud flex-col items-center !px-1 py-1 min-w-0 ${active ? "is-selected" : ""} ${empty ? "opacity-40" : ""}`}
-                          style={active ? { borderColor: w.color, boxShadow: `0 0 12px ${w.color}55` } : undefined}>
-                          <WeaponIcon id={id} className="w-5 h-5" />
-                          <span className="stencil text-[9px] leading-tight truncate w-full text-center">{WEAPON_SHORT[id]}</span>
-                          <span className="text-[9px] opacity-70 tabular-nums">{a === -1 ? "∞" : `×${a}`}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              <button type="button" disabled={!myTurn} onClick={() => setArsenalOpen(v => !v)}
-                className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1 min-w-[110px] sm:min-w-[140px] ${arsenalOpen ? "is-selected" : ""}`}
-                style={{ borderColor: currentWeapon.color }}>
-                <WeaponIcon id={s.weapon} className="w-5 h-5" />
-                <span className="flex flex-col items-start min-w-0 flex-1">
-                  <span className="stencil text-[8px] uppercase tracking-widest text-muted-foreground leading-none">Arma</span>
-                  <span className="stencil text-[11px] truncate" style={{ color: currentWeapon.color }}>{WEAPON_SHORT[s.weapon]}</span>
-                </span>
-                <span className="text-[10px] tabular-nums shrink-0 opacity-80">{s.ammo[s.weapon] === -1 ? "∞" : `×${s.ammo[s.weapon]}`}</span>
-                <span className="text-[10px] opacity-70">{arsenalOpen ? "▾" : "▸"}</span>
-              </button>
-            </div>
-
-            {/* Angle */}
-            <div className="panel px-1.5 py-1 flex items-center gap-1 shrink-0">
-              <HoldButton disabled={!myTurn} onHold={() => (angleHoldRef.current = { dir: -1 })} onRelease={() => (angleHoldRef.current = null)}>−</HoldButton>
-              <div className="flex flex-col items-center min-w-[34px]">
-                <span className="stencil text-[8px] text-muted-foreground leading-none">ÂNG</span>
-                <span className="stencil text-sm leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.angle)}°</span>
-              </div>
-              <HoldButton disabled={!myTurn} onHold={() => (angleHoldRef.current = { dir: 1 })} onRelease={() => (angleHoldRef.current = null)}>+</HoldButton>
-            </div>
-
-            {/* Power */}
-            <div className="panel px-1.5 py-1 flex items-center gap-1 shrink-0">
-              <HoldButton disabled={!myTurn} onHold={() => (powerHoldRef.current = { dir: -1 })} onRelease={() => (powerHoldRef.current = null)}>−</HoldButton>
-              <div className="flex flex-col items-center min-w-[38px]">
-                <span className="stencil text-[8px] text-muted-foreground leading-none">FORÇA</span>
-                <span className="stencil text-sm leading-none" style={{ color: "var(--accent)" }}>{Math.round(s.power)}</span>
-              </div>
-              <HoldButton disabled={!myTurn} onHold={() => (powerHoldRef.current = { dir: 1 })} onRelease={() => (powerHoldRef.current = null)}>+</HoldButton>
-            </div>
-
-            {/* Fire */}
-            <button disabled={!myTurn} onClick={() => sendInput({ k: "fire" })}
-              className="fire-btn fire-btn-compact ml-auto shrink-0 disabled:opacity-40">FOGO</button>
-          </div>
-        </div>
-      )}
-
       {showIntro && (
         <div className="fixed inset-0 z-50">
           <ComicIntro
@@ -429,32 +446,6 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         </div>
       )}
     </div>
-  );
-}
-
-// --- touch button -----------------------------------------------------
-
-function HoldButton({ children, onHold, onRelease, disabled }: { children: React.ReactNode; onHold: () => void; onRelease: () => void; disabled?: boolean }) {
-  const [held, setHeld] = useState(false);
-  const start = (e: React.PointerEvent) => {
-    if (disabled) return;
-    e.preventDefault();
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    setHeld(true);
-    onHold();
-  };
-  const stop = () => { setHeld(false); onRelease(); };
-  return (
-    <button
-      disabled={disabled}
-      onPointerDown={start}
-      onPointerUp={stop}
-      onPointerLeave={stop}
-      onPointerCancel={stop}
-      className={`btn-hud !px-2 !py-1 !text-sm leading-none min-w-[34px] min-h-[34px] ${held ? "hold-active" : ""} disabled:opacity-40 disabled:cursor-not-allowed`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -472,7 +463,7 @@ function serialize(s: GameState) {
     projectiles: s.projectiles.map(p => ({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, weapon: p.weapon, age: p.age, ownerTeam: p.ownerTeam, isSub: !!p.isSub, trail: p.trail.slice(-12) })),
     currentPlayer: s.currentPlayer, wind: s.wind, angle: s.angle, power: s.power,
     weapon: s.weapon, phase: s.phase, message: s.message, winner: s.winner,
-    ammo: s.ammo, turnTimer: s.turnTimer,
+    ammo: s.ammo, turnTimer: s.turnTimer, matchTimer: s.matchTimer,
   };
 }
 
@@ -500,6 +491,7 @@ function apply(s: GameState, snap: Snapshot, skipAim = false) {
   s.winner = snap.winner as GameState["winner"];
   s.ammo = snap.ammo as GameState["ammo"];
   s.turnTimer = snap.turnTimer;
+  s.matchTimer = snap.matchTimer;
 }
 
 function advanceCosmetic(s: GameState, dt: number) {
@@ -526,4 +518,4 @@ function advanceCosmetic(s: GameState, dt: number) {
   }
 }
 
-void endTurn; void updateSelfPlayer;
+void endTurn;
