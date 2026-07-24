@@ -4,7 +4,7 @@ import { activateRage, activateShield, createGame, fire, jumpDog, moveDog, RAGE_
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
-import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
+import { CHARACTERS, CHARACTER_LIST, characterSkin, type CharacterId } from "@/game/characters";
 import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { audio } from "@/game/audio";
 
@@ -167,7 +167,7 @@ export function WeaponIcon({ id, className }: { id: WeaponId; className?: string
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
+export function WarDogsGame({ mode, onExit, chars: initialChars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -188,6 +188,10 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const [charsState, setCharsState] = useState<[CharacterId, CharacterId]>(initialChars);
+  const chars = charsState;
+  const [matchNonce, setMatchNonce] = useState(0);
+  const [swapOpen, setSwapOpen] = useState<null | 0 | 1>(null);
   const aimAssistLocked = !!missionConfig?.disableAimAssist;
   const hidePower = !!missionConfig?.hidePower;
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
@@ -323,7 +327,8 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, matchNonce]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -841,18 +846,95 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
 
           {s?.phase === "gameover" && !onGameOver && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-              <div className="panel p-6 sm:p-8 text-center max-w-sm">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in overflow-auto">
+              <div className="panel p-5 sm:p-7 text-center max-w-md w-full">
                 <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
-                <h2 className="stencil text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
+                <h2 className="stencil text-2xl sm:text-3xl mt-2" style={{ color: s.winner === 0 ? teamA.teamColor : s.winner === 1 ? teamB.teamColor : undefined }}>
                   {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
                 </h2>
 
-                <div className="flex gap-2 mt-6 justify-center">
-                  <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {([0, 1] as const).map(slot => {
+                    const c = CHARACTERS[chars[slot]];
+                    return (
+                      <button
+                        key={slot}
+                        onClick={() => setSwapOpen(slot)}
+                        className="panel px-2 py-2 flex flex-col items-center gap-1 hover:brightness-110 transition"
+                        title="Trocar guerreiro"
+                      >
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-white/15 bg-black/30 flex items-center justify-center">
+                          <img src={c.portraitUrl} alt={c.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="stencil text-[10px] tracking-widest text-muted-foreground">P{slot + 1}</div>
+                        <div className="stencil text-xs">{c.name}</div>
+                        <div className="text-[9px] text-[color:var(--accent)] uppercase tracking-widest">Trocar</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-2 mt-5 justify-center flex-wrap">
+                  <button
+                    className="btn-hud btn-primary"
+                    onClick={() => {
+                      stateRef.current = null;
+                      gameOverFiredRef.current = false;
+                      aiTriggeredRef.current = false;
+                      setMatchNonce(n => n + 1);
+                    }}
+                  >
+                    🔁 Revanche
+                  </button>
                   <button className="btn-hud" onClick={onExit}>Menu</button>
                 </div>
               </div>
+
+              {swapOpen !== null && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-black/80 p-4"
+                  onClick={() => setSwapOpen(null)}
+                >
+                  <div className="panel p-4 sm:p-5 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="stencil text-sm uppercase tracking-widest">
+                        Escolher guerreiro — P{(swapOpen ?? 0) + 1}
+                      </div>
+                      <button className="text-muted-foreground px-2" onClick={() => setSwapOpen(null)}>✕</button>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                      {CHARACTER_LIST.map(c => {
+                        const active = chars[swapOpen ?? 0] === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              const next: [CharacterId, CharacterId] = [chars[0], chars[1]];
+                              next[swapOpen ?? 0] = c.id;
+                              setCharsState(next);
+                              setSwapOpen(null);
+                              stateRef.current = null;
+                              gameOverFiredRef.current = false;
+                              aiTriggeredRef.current = false;
+                              setMatchNonce(n => n + 1);
+                            }}
+                            className={`btn-hud !p-1.5 flex flex-col items-center gap-1 ${active ? "is-selected" : ""}`}
+                            title={c.name}
+                          >
+                            <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-black/30 flex items-center justify-center">
+                              <img src={c.portraitUrl} alt={c.name} className="w-full h-full object-contain" />
+                            </div>
+                            <div className="stencil text-[10px]">{c.name}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-3 text-center">
+                      Trocar já reinicia a partida com o novo guerreiro.
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

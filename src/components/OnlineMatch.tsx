@@ -3,7 +3,7 @@ import type { GameState, WeaponId } from "@/game/types";
 import { activateShield, createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, SHIELD_READY_THRESHOLD, SHIELD_SOS_HP_RATIO, SHIELD_SOS_MIN_CHARGE } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { WEAPONS } from "@/game/weapons";
-import { CHARACTERS, type CharacterId } from "@/game/characters";
+import { CHARACTERS, CHARACTER_LIST, type CharacterId } from "@/game/characters";
 import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios";
 import { openMatchChannel, type MatchChannel, type NetEvent, type InputAction } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
@@ -61,15 +61,23 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
   }, [aimAssist]);
 
+  // Revanche — coordenação pós-partida sem tocar em lógica de simulação.
+  const [rematchNonce, setRematchNonce] = useState(0);
+  const [overrideSeed, setOverrideSeed] = useState<number | null>(null);
+  const [overrideChars, setOverrideChars] = useState<[CharacterId, CharacterId] | null>(null);
+  const [rematchVotes, setRematchVotes] = useState<{ 0?: CharacterId; 1?: CharacterId }>({});
+  const [rematchSwapOpen, setRematchSwapOpen] = useState(false);
+
   const fighters = players.filter(p => p.slot < 2).sort((a, b) => a.slot - b.slot);
   const me = players.find(p => p.user_id === myUserId) ?? null;
   const mySlot = me?.slot ?? -1;
   const isHost = match.host_id === myUserId;
   const iAmFighter = mySlot === 0 || mySlot === 1;
-  const chars: [CharacterId, CharacterId] = useMemo(() => [
+  const baseChars: [CharacterId, CharacterId] = useMemo(() => [
     (fighters[0]?.char_id as CharacterId) ?? "ranger",
     (fighters[1]?.char_id as CharacterId) ?? "brutus",
   ], [fighters]);
+  const chars: [CharacterId, CharacterId] = overrideChars ?? baseChars;
 
   useEffect(() => {
     setActiveScenario(match.scenario as ScenarioId);
@@ -83,6 +91,16 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const canvas = canvasRef.current;
     const parent = frameRef.current;
     if (!canvas || !parent) return;
+    // Reinicialização de revanche — limpa refs para permitir que initIfNeeded
+    // recrie o estado com novo seed/personagens.
+    if (rematchNonce > 0) {
+      stateRef.current = null;
+      seenExplosionsRef.current = new Set();
+      pendingSnapshotRef.current = null;
+      pendingTurnRef.current = null;
+      lastBroadcastTurnRef.current = -1;
+      lastSnapshotAtRef.current = 0;
+    }
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const storedDur = getStoredMatchDuration(match.code);
 
@@ -98,8 +116,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
     const initIfNeeded = () => {
       if (stateRef.current) return;
+      const activeSeed = overrideSeed ?? match.seed;
       try {
-        stateRef.current = createGame(WORLD_W, WORLD_H, "online", match.seed, HUD_RESERVE, chars, storedDur, false, TOP_RESERVE);
+        stateRef.current = createGame(WORLD_W, WORLD_H, "online", activeSeed, HUD_RESERVE, chars, storedDur, false, TOP_RESERVE);
       } catch (err) {
         console.error("[OnlineMatch] createGame failed", err);
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
@@ -167,7 +186,31 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
     return () => { ro.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.seed, match.id, match.world_w, match.world_h, fighters.length]);
+  }, [match.seed, match.id, match.world_w, match.world_h, fighters.length, rematchNonce, overrideSeed, overrideChars]);
+
+  // Rearma intro a cada revanche.
+  useEffect(() => {
+    if (rematchNonce > 0) setShowIntro(true);
+  }, [rematchNonce]);
+
+  // Host: quando ambos slots confirmaram, sorteia seed e dispara rematchStart.
+  useEffect(() => {
+    if (!isHost) return;
+    const v0 = rematchVotes[0];
+    const v1 = rematchVotes[1];
+    if (!v0 || !v1) return;
+    const newSeed = Math.floor(Math.random() * 0x7fffffff);
+    const startEv: NetEvent = { t: "rematchStart", seed: newSeed, chars: [v0, v1] };
+    netRef.current?.send(startEv);
+    // Aplica também localmente — reinicia partida.
+    setOverrideSeed(newSeed);
+    setOverrideChars([v0, v1]);
+    setRematchVotes({});
+    setRematchSwapOpen(false);
+    setRematchNonce(n => n + 1);
+    // Marca o match como live novamente para o painel de status ficar coerente.
+    updateMatch(match.id, { status: "playing", ended_at: null as unknown as string }).catch(() => {});
+  }, [isHost, rematchVotes, match.id]);
 
 
 
@@ -355,6 +398,23 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   }, [isHost, match.id, match.status]);
 
   function onNetEvent(ev: NetEvent) {
+    // Eventos de revanche não dependem do estado ativo — tratam antes.
+    if (ev.t === "rematchVote") {
+      setRematchVotes(prev => ({ ...prev, [ev.slot]: ev.charId as CharacterId }));
+      return;
+    }
+    if (ev.t === "rematchCancel") {
+      setRematchVotes(prev => { const n = { ...prev }; delete n[ev.slot as 0 | 1]; return n; });
+      return;
+    }
+    if (ev.t === "rematchStart") {
+      setOverrideSeed(ev.seed);
+      setOverrideChars(ev.chars as [CharacterId, CharacterId]);
+      setRematchVotes({});
+      setRematchSwapOpen(false);
+      setRematchNonce(n => n + 1);
+      return;
+    }
     const s = stateRef.current;
     // State ainda não pronto (canvas mediu 0px etc.) — guarda último snapshot/turn
     // para reaplicar assim que createGame terminar.
@@ -672,14 +732,110 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             </div>
           )}
 
-          {s?.phase === "gameover" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 pointer-events-auto">
-              <div className="panel p-5 text-center space-y-3">
-                <div className="stencil text-lg uppercase">{s.message}</div>
-                <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+          {s?.phase === "gameover" && (() => {
+            const c0 = CHARACTERS[rematchVotes[0] ?? chars[0]];
+            const c1 = CHARACTERS[rematchVotes[1] ?? chars[1]];
+            const myVote = iAmFighter ? rematchVotes[mySlot as 0 | 1] : undefined;
+            const otherSlot = mySlot === 0 ? 1 : 0;
+            const otherVote = iAmFighter ? rematchVotes[otherSlot as 0 | 1] : undefined;
+            const myPreferred: CharacterId = (myVote ?? chars[mySlot as 0 | 1] ?? "ranger") as CharacterId;
+            const sendVote = (charId: CharacterId) => {
+              if (!iAmFighter) return;
+              setRematchVotes(prev => ({ ...prev, [mySlot]: charId }));
+              netRef.current?.send({ t: "rematchVote", slot: mySlot, charId });
+            };
+            const cancelVote = () => {
+              if (!iAmFighter) return;
+              setRematchVotes(prev => { const n = { ...prev }; delete n[mySlot as 0 | 1]; return n; });
+              netRef.current?.send({ t: "rematchCancel", slot: mySlot });
+            };
+            return (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 pointer-events-auto overflow-auto">
+                <div className="panel p-5 sm:p-6 text-center max-w-md w-full space-y-4">
+                  <div className="stencil text-lg uppercase">{s.message}</div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { slot: 0, c: c0, voted: !!rematchVotes[0] },
+                      { slot: 1, c: c1, voted: !!rematchVotes[1] },
+                    ].map(({ slot, c, voted }) => (
+                      <div key={slot} className={`panel px-2 py-2 flex flex-col items-center gap-1 ${voted ? "ring-2 ring-[color:var(--accent)]" : ""}`}>
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-white/15 bg-black/30 flex items-center justify-center">
+                          <img src={c.portraitUrl} alt={c.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="stencil text-[10px] tracking-widest text-muted-foreground">P{slot + 1}</div>
+                        <div className="stencil text-xs">{c.name}</div>
+                        <div className="text-[9px] uppercase tracking-widest" style={{ color: voted ? "var(--accent)" : "var(--muted-foreground)" }}>
+                          {voted ? "✓ Pronto" : "Aguardando"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {iAmFighter && (
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <button
+                        className="btn-hud"
+                        onClick={() => setRematchSwapOpen(true)}
+                        title="Trocar guerreiro antes da revanche"
+                      >
+                        🔄 Trocar guerreiro
+                      </button>
+                      {myVote ? (
+                        <button className="btn-hud" onClick={cancelVote}>
+                          ✖ Cancelar
+                        </button>
+                      ) : (
+                        <button className="btn-hud btn-primary" onClick={() => sendVote(myPreferred)}>
+                          🔁 Confirmar revanche
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {iAmFighter && myVote && !otherVote && (
+                    <div className="text-[11px] text-muted-foreground">
+                      Aguardando adversário confirmar…
+                    </div>
+                  )}
+
+                  <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+                </div>
+
+                {rematchSwapOpen && iAmFighter && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4" onClick={() => setRematchSwapOpen(false)}>
+                    <div className="panel p-4 sm:p-5 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="stencil text-sm uppercase tracking-widest">Escolher guerreiro</div>
+                        <button className="text-muted-foreground px-2" onClick={() => setRematchSwapOpen(false)}>✕</button>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        {CHARACTER_LIST.map(cc => {
+                          const active = myPreferred === cc.id;
+                          return (
+                            <button
+                              key={cc.id}
+                              onClick={() => { sendVote(cc.id); setRematchSwapOpen(false); }}
+                              className={`btn-hud !p-1.5 flex flex-col items-center gap-1 ${active ? "is-selected" : ""}`}
+                              title={cc.name}
+                            >
+                              <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-black/30 flex items-center justify-center">
+                                <img src={cc.portraitUrl} alt={cc.name} className="w-full h-full object-contain" />
+                              </div>
+                              <div className="stencil text-[10px]">{cc.name}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-3 text-center">
+                        Escolher já registra sua confirmação de revanche.
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
 
