@@ -188,6 +188,10 @@ export function WarDogsGame({ mode, onExit, chars: initialChars = ["ranger", "br
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [rageHelpOpen, setRageHelpOpen] = useState(false);
+  const [charsState, setCharsState] = useState<[CharacterId, CharacterId]>(initialChars);
+  const chars = charsState;
+  const [matchNonce, setMatchNonce] = useState(0);
+  const [swapOpen, setSwapOpen] = useState<null | 0 | 1>(null);
   const aimAssistLocked = !!missionConfig?.disableAimAssist;
   const hidePower = !!missionConfig?.hidePower;
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
