@@ -3,7 +3,7 @@ import type { GameState, WeaponId } from "@/game/types";
 import { activateShield, createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, SHIELD_READY_THRESHOLD, SHIELD_SOS_HP_RATIO, SHIELD_SOS_MIN_CHARGE } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { WEAPONS } from "@/game/weapons";
-import { CHARACTERS, type CharacterId } from "@/game/characters";
+import { CHARACTERS, CHARACTER_LIST, type CharacterId } from "@/game/characters";
 import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios";
 import { openMatchChannel, type MatchChannel, type NetEvent, type InputAction } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
