@@ -152,10 +152,11 @@ export async function updateSelfPlayer(matchId: string, patch: Partial<Pick<Matc
   if (error) throw error;
 }
 
-export async function updateMatch(matchId: string, patch: Partial<Pick<MatchRow, "status" | "turn_slot" | "scenario" | "difficulty" | "started_at" | "ended_at">>) {
+export async function updateMatch(matchId: string, patch: Partial<Pick<MatchRow, "status" | "turn_slot" | "scenario" | "difficulty" | "started_at" | "ended_at" | "current_slot">>) {
   const { error } = await supabase.from("matches").update(patch).eq("id", matchId);
   if (error) throw error;
 }
+
 
 export async function leaveMatch(matchId: string) {
   const s = await ensureAnonSession();
