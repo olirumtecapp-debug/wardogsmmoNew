@@ -863,7 +863,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 }
 
 
-function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; matchTimer: number }) {
+export function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; matchTimer: number }) {
   if (matchDuration === 0) {
     return (
       <div className="panel px-2.5 py-1 flex items-center gap-1.5 shadow-lg">
