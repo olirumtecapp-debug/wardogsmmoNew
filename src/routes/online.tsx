@@ -61,7 +61,7 @@ function OnlineHome() {
 
 
   const onJoin = async () => {
-    setError(null); setBusy("join");
+    setError(null); setMismatch(null); setBusy("join");
     try {
       const clean = code.trim().toUpperCase();
       if (clean.length < 4) throw new Error("Digite o código da sala");
@@ -69,8 +69,11 @@ function OnlineHome() {
       void _mid;
       navigate({ to: "/lobby/$code", params: { code: clean } });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao entrar";
-      setError(msg);
+      if (e instanceof DeviceMismatchError) {
+        setMismatch({ host: e.hostDevice, local: e.localDevice });
+      } else {
+        setError(e instanceof Error ? e.message : "Erro ao entrar");
+      }
       setBusy(null);
     }
   };
