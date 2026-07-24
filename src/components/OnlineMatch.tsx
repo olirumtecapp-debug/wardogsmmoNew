@@ -521,7 +521,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+                <div className="shrink-0 [&>button]:!px-1.5 [&>button]:!text-[10px] sm:[&>button]:!px-3 sm:[&>button]:!text-xs">
                 <ArsenalPopup
                   open={arsenalOpen}
                   onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
@@ -532,6 +533,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   disabled={!myTurn}
                   onSelect={(id) => { sendInput({ k: "weapon", v: id }); setArsenalOpen(false); setHoveredWeapon(null); }}
                 />
+                </div>
+
 
                 <MobilityBar
                   dog={s.dogs[s.currentPlayer]}
@@ -541,7 +544,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   onJump={() => sendInput({ k: "jump" })}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[150px] sm:min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!myTurn} onHold={dir => { angleHoldRef.current = { dir }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>−</HoldButton>
                     <div className="flex flex-col items-center min-w-[38px]">
@@ -654,10 +657,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   disabled={!myTurn}
                   onClick={() => sendInput({ k: "fire" })}
                   aria-label="Atirar"
-                  className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                  className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
                 >
                   FOGO
                 </button>
+
 
               </div>
             </div>
