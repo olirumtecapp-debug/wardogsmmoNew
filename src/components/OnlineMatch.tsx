@@ -75,31 +75,37 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const parent = frameRef.current;
     if (!canvas || !parent) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-
-    const rect = parent.getBoundingClientRect();
-    const w = Math.max(320, Math.floor(rect.width));
-    const h = Math.max(280, Math.floor(rect.height));
-    const shortLandscape = h < 460;
-    const isTablet = window.matchMedia("(min-width: 640px)").matches && h >= 520;
-    const hudReserve = isTablet ? 112 : shortLandscape ? 156 : 148;
-    const topReserve = isTablet ? 90 : shortLandscape ? 140 : 110;
-
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    const ctx = canvas.getContext("2d")!;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const storedDur = getStoredMatchDuration(match.code);
 
-    try {
-      stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
-    } catch (err) {
-      console.error("[OnlineMatch] createGame failed", err);
-      throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
-    }
+    const initIfNeeded = () => {
+      if (stateRef.current) return;
+      const rect = parent.getBoundingClientRect();
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+      // Wait until parent has a real size (mobile browser chrome / orientation
+      // can produce a tiny first measurement that pushes terrain behind HUD).
+      if (w < 320 || h < 280) return;
+      const shortLandscape = h < 460;
+      const isTablet = window.matchMedia("(min-width: 640px)").matches && h >= 520;
+      const hudReserve = isTablet ? 112 : shortLandscape ? 156 : 148;
+      const topReserve = isTablet ? 90 : shortLandscape ? 140 : 110;
 
-    markTerrainDirty();
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      const ctx = canvas.getContext("2d")!;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      try {
+        stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
+      } catch (err) {
+        console.error("[OnlineMatch] createGame failed", err);
+        throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
+      }
+      markTerrainDirty();
+    };
 
     const adapt = () => {
+      initIfNeeded();
       const s = stateRef.current;
       if (!s) return;
       const r = parent.getBoundingClientRect();
@@ -118,6 +124,79 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     return () => { ro.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match.seed, match.id, fighters.length]);
+
+  // Pointer (mouse/touch) aim + tap-to-fire on the canvas — mirrors vs IA.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const toWorld = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const s = stateRef.current;
+      const sx = s ? s.width / Math.max(1, rect.width) : 1;
+      const sy = s ? s.height / Math.max(1, rect.height) : 1;
+      return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
+    };
+    const isMyTurn = () => {
+      const s = stateRef.current;
+      return !!(s && iAmFighter && s.currentPlayer === mySlot && s.phase === "aiming" && s.winner === null);
+    };
+    const onDown = (e: PointerEvent) => {
+      if (!isMyTurn()) return;
+      const { x, y } = toWorld(e);
+      dragRef.current = { startX: x, startY: y };
+    };
+    const onMove = (e: PointerEvent) => {
+      const s = stateRef.current;
+      const drag = dragRef.current;
+      if (!s || !drag || !isMyTurn()) return;
+      const { x: px, y: py } = toWorld(e);
+      const dog = s.dogs[s.currentPlayer];
+      const dx = (px - drag.startX) * -dog.facing;
+      const dy = drag.startY - py;
+      const mag = Math.hypot(px - drag.startX, py - drag.startY);
+      if (mag > 6) {
+        const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+        if (ang >= 0 && ang <= 90) {
+          s.angle = clamp(ang, 5, 88);
+        }
+        const pw = Math.min(100, mag * 1.2);
+        if (pw > 15) s.power = pw;
+        localEditUntilRef.current = performance.now() + 250;
+        const now = performance.now();
+        if (now - lastAimSendRef.current > 60) {
+          lastAimSendRef.current = now;
+          sendInput({ k: "angle", v: s.angle }, true);
+          sendInput({ k: "power", v: s.power }, true);
+        }
+      }
+    };
+    const onUp = (e: PointerEvent) => {
+      const drag = dragRef.current;
+      dragRef.current = null;
+      if (!drag || !isMyTurn()) return;
+      const { x: px, y: py } = toWorld(e);
+      const dist = Math.hypot(px - drag.startX, py - drag.startY);
+      if (dist <= 20) {
+        // tap = fire
+        sendInput({ k: "fire" });
+      } else {
+        // drag release also fires (matches vs IA behaviour)
+        sendInput({ k: "fire" });
+      }
+    };
+    canvas.addEventListener("pointerdown", onDown);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("pointercancel", onUp);
+    return () => {
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointercancel", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iAmFighter, mySlot]);
+
 
   // Realtime channel
   useEffect(() => {
