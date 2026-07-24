@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ensureAnonSession, randomNickname } from "@/lib/anonAuth";
 import { createMatch, joinMatchByCode } from "@/lib/matchApi";
+import { getDeviceKind, deviceLabel, DeviceMismatchError, type DeviceKind } from "@/lib/device";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
 import { CharacterInfoPopover } from "@/components/CharacterInfoPopover";
 import { SCENARIOS } from "@/game/scenarios";
-import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Loader2, CheckCircle2, Monitor, Smartphone, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/online")({
   component: OnlineHome,
@@ -34,7 +35,9 @@ function OnlineHome() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mismatch, setMismatch] = useState<{ host: DeviceKind; local: DeviceKind } | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const localDevice = useMemo<DeviceKind>(() => getDeviceKind(), []);
 
   useEffect(() => {
     ensureAnonSession()
@@ -58,7 +61,7 @@ function OnlineHome() {
 
 
   const onJoin = async () => {
-    setError(null); setBusy("join");
+    setError(null); setMismatch(null); setBusy("join");
     try {
       const clean = code.trim().toUpperCase();
       if (clean.length < 4) throw new Error("Digite o código da sala");
@@ -66,8 +69,11 @@ function OnlineHome() {
       void _mid;
       navigate({ to: "/lobby/$code", params: { code: clean } });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao entrar";
-      setError(msg);
+      if (e instanceof DeviceMismatchError) {
+        setMismatch({ host: e.hostDevice, local: e.localDevice });
+      } else {
+        setError(e instanceof Error ? e.message : "Erro ao entrar");
+      }
       setBusy(null);
     }
   };
@@ -129,6 +135,10 @@ function OnlineHome() {
             <div className="panel p-4 space-y-3">
               <div className="flex items-center gap-2"><Users size={16} /><div className="stencil text-xs uppercase tracking-widest">Criar sala</div></div>
               <div className="text-xs text-muted-foreground">Você é o anfitrião. Compartilhe o código com seus aliados.</div>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground border border-border/50 rounded px-2 py-1 bg-secondary/40">
+                {localDevice === "mobile" ? <Smartphone size={12} /> : <Monitor size={12} />}
+                <span>Sala marcada como <span className="text-foreground font-semibold">{deviceLabel(localDevice)}</span> — convide alguém do mesmo tipo de aparelho.</span>
+              </div>
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Cenário</div>
                 <div className="flex flex-wrap gap-1">
@@ -198,6 +208,43 @@ function OnlineHome() {
           )}
         </div>
       </main>
+
+      {mismatch && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="panel max-w-md w-full p-5 space-y-4 border-warn">
+            <div className="flex items-center gap-2 text-warn">
+              <AlertTriangle size={20} />
+              <div className="stencil uppercase tracking-widest text-sm">Dispositivos incompatíveis</div>
+            </div>
+            <div className="flex items-center justify-center gap-4 py-2">
+              <div className="flex flex-col items-center gap-1 text-xs">
+                {mismatch.host === "mobile" ? <Smartphone size={28} /> : <Monitor size={28} />}
+                <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Sala</span>
+                <span className="font-semibold">{deviceLabel(mismatch.host)}</span>
+              </div>
+              <div className="text-2xl text-warn">≠</div>
+              <div className="flex flex-col items-center gap-1 text-xs">
+                {mismatch.local === "mobile" ? <Smartphone size={28} /> : <Monitor size={28} />}
+                <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Você</span>
+                <span className="font-semibold">{deviceLabel(mismatch.local)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Esta sala foi criada em <span className="text-foreground font-semibold">{deviceLabel(mismatch.host)}</span>.
+              Para evitar problemas de tela, mira e sincronia entre PC e smartphone, entre por um
+              <span className="text-foreground font-semibold"> {deviceLabel(mismatch.host)} </span>
+              também.
+            </p>
+            <button
+              type="button"
+              onClick={() => setMismatch(null)}
+              className="btn-hud btn-primary w-full"
+            >
+              Voltar ao menu
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

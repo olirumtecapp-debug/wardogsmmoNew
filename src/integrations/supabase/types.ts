@@ -68,6 +68,7 @@ export type Database = {
           current_slot: number
           difficulty: string
           ended_at: string | null
+          host_device: string | null
           host_id: string
           id: string
           max_players: number
@@ -85,6 +86,7 @@ export type Database = {
           current_slot?: number
           difficulty?: string
           ended_at?: string | null
+          host_device?: string | null
           host_id: string
           id?: string
           max_players?: number
@@ -102,6 +104,7 @@ export type Database = {
           current_slot?: number
           difficulty?: string
           ended_at?: string | null
+          host_device?: string | null
           host_id?: string
           id?: string
           max_players?: number

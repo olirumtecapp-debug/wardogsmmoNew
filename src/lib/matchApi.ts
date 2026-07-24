@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAnonSession } from "./anonAuth";
+import { getDeviceKind, DeviceMismatchError, type DeviceKind } from "./device";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem 0/O/1/I
 function genCode(len = 5) {
@@ -23,6 +24,7 @@ export interface MatchRow {
   world_w: number;
   world_h: number;
   current_slot: number;
+  host_device: DeviceKind | null;
 }
 
 
@@ -74,7 +76,7 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
     code = genCode();
     const { data, error } = await supabase.from("matches").insert({
       code, host_id: uid, seed, scenario: opts.scenario, difficulty: opts.difficulty, max_players: maxPlayers,
-      world_w: worldW, world_h: worldH, current_slot: 0,
+      world_w: worldW, world_h: worldH, current_slot: 0, host_device: getDeviceKind(),
     }).select().single();
     if (!error && data) { match = data as MatchRow; break; }
     lastError = error;
@@ -121,7 +123,24 @@ export function getStoredMatchDuration(code: string): number | undefined {
 
 export async function joinMatchByCode(code: string, nickname: string, charId: string) {
   await ensureAnonSession();
-  const { data, error } = await supabase.rpc("join_match_by_code", { _code: code.trim().toUpperCase(), _nickname: nickname, _char_id: charId });
+  const cleanCode = code.trim().toUpperCase();
+
+  // Bloqueio duro: se o host criou a sala em tipo de dispositivo diferente,
+  // recusa antes de registrar o jogador. Salas antigas (host_device NULL)
+  // seguem normalmente.
+  const { data: pre, error: preErr } = await supabase
+    .from("matches")
+    .select("host_device")
+    .eq("code", cleanCode)
+    .maybeSingle();
+  if (preErr) throw preErr;
+  const hostDevice = (pre?.host_device ?? null) as DeviceKind | null;
+  if (hostDevice) {
+    const local = getDeviceKind();
+    if (hostDevice !== local) throw new DeviceMismatchError(hostDevice, local);
+  }
+
+  const { data, error } = await supabase.rpc("join_match_by_code", { _code: cleanCode, _nickname: nickname, _char_id: charId });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
   return { matchId: row.match_id as string, slot: row.slot as number };
