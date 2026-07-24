@@ -176,7 +176,20 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
     return () => { ro.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.seed, match.id, match.world_w, match.world_h, fighters.length]);
+  }, [match.seed, match.id, match.world_w, match.world_h, fighters.length, rematchNonce, overrideSeed, overrideChars]);
+
+  // Reset simulação a cada revanche — precede o init effect por depender do
+  // mesmo nonce, e limpa refs para initIfNeeded criar uma partida fresca.
+  useEffect(() => {
+    if (rematchNonce === 0) return;
+    stateRef.current = null;
+    seenExplosionsRef.current = new Set();
+    pendingSnapshotRef.current = null;
+    pendingTurnRef.current = null;
+    lastBroadcastTurnRef.current = -1;
+    lastSnapshotAtRef.current = 0;
+    setShowIntro(true);
+  }, [rematchNonce]);
 
 
 
