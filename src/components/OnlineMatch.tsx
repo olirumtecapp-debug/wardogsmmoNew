@@ -40,6 +40,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const lastAimSendRef = useRef(0);
   const lastMoveSendRef = useRef(0);
   const localEditUntilRef = useRef(0);
+  const lastBroadcastTurnRef = useRef<number>(-1);
+
 
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
