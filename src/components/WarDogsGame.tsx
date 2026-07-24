@@ -55,6 +55,8 @@ interface Props {
   onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
   matchDuration?: number; // segundos; 0 = sem limite
   rageEnabled?: boolean;  // Modo Fúria (Campanha)
+  onRematch?: () => void;        // reinicia com mesmos guerreiros
+  onChangeFighter?: () => void;  // volta pra seleção de guerreiro
 }
 
 
