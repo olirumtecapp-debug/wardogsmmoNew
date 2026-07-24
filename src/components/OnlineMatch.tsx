@@ -36,9 +36,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const angleHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const powerHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
   const moveHoldRef = useRef<{ dir: 1 | -1 } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number } | null>(null);
   const lastAimSendRef = useRef(0);
   const lastMoveSendRef = useRef(0);
   const localEditUntilRef = useRef(0);
+
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
   const [showIntro, setShowIntro] = useState(() => !shouldSkipIntro());
