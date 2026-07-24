@@ -167,7 +167,7 @@ export function WeaponIcon({ id, className }: { id: WeaponId; className?: string
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
+export function WarDogsGame({ mode, onExit, chars: initialChars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
