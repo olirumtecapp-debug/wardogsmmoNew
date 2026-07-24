@@ -106,8 +106,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
     const initIfNeeded = () => {
       if (stateRef.current) return;
+      const activeSeed = overrideSeed ?? match.seed;
       try {
-        stateRef.current = createGame(WORLD_W, WORLD_H, "online", match.seed, HUD_RESERVE, chars, storedDur, false, TOP_RESERVE);
+        stateRef.current = createGame(WORLD_W, WORLD_H, "online", activeSeed, HUD_RESERVE, chars, storedDur, false, TOP_RESERVE);
       } catch (err) {
         console.error("[OnlineMatch] createGame failed", err);
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
