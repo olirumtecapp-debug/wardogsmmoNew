@@ -453,7 +453,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const currentWeapon = s ? WEAPONS[s.weapon] : null;
   const hudVisible = !!(s && s.phase === "aiming" && s.winner === null);
   const hudReserve = s?.hudReserve ?? 148;
-  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+  const hudCssPxRaw = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+  // Escala o HUD conforme largura visível para caber em smartphones sem estourar.
+  const hudScale = displaySize.w > 0 ? Math.max(0.55, Math.min(1, displaySize.w / 1280)) : 1;
+  const hudCssPx = hudCssPxRaw * Math.max(hudScale, 0.75);
 
   useEffect(() => { if (!myTurn && arsenalOpen) setArsenalOpen(false); }, [myTurn, arsenalOpen]);
 
