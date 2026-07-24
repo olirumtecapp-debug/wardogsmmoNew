@@ -23,7 +23,7 @@ const WEAPON_DESC: Record<WeaponId, string> = {
 };
 
 // Short labels for the arsenal grid cells (avoid overflowing narrow columns on mobile).
-const WEAPON_SHORT: Record<WeaponId, string> = {
+export const WEAPON_SHORT: Record<WeaponId, string> = {
   bazooka: "Bazuca",
   grenade: "Granada",
   rpg: "RPG",
@@ -58,7 +58,7 @@ interface Props {
 }
 
 
-function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
+export function WeaponIcon({ id, className }: { id: WeaponId; className?: string }) {
   const cls = className ?? "w-7 h-7";
   switch (id) {
     case "bazooka":
