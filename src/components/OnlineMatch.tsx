@@ -91,6 +91,16 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const canvas = canvasRef.current;
     const parent = frameRef.current;
     if (!canvas || !parent) return;
+    // Reinicialização de revanche — limpa refs para permitir que initIfNeeded
+    // recrie o estado com novo seed/personagens.
+    if (rematchNonce > 0) {
+      stateRef.current = null;
+      seenExplosionsRef.current = new Set();
+      pendingSnapshotRef.current = null;
+      pendingTurnRef.current = null;
+      lastBroadcastTurnRef.current = -1;
+      lastSnapshotAtRef.current = 0;
+    }
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const storedDur = getStoredMatchDuration(match.code);
 
