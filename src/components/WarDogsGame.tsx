@@ -850,10 +850,32 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
                 </h2>
 
-                <div className="flex gap-2 mt-6 justify-center">
-                  <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
+                <div className="flex flex-col sm:flex-row gap-2 mt-6 justify-center">
+                  <button
+                    className="btn-hud btn-primary"
+                    onClick={() => {
+                      if (onRematch) { stateRef.current = null; onRematch(); }
+                      else { stateRef.current = null; location.reload(); }
+                    }}
+                  >
+                    Revanche
+                  </button>
+                  <button
+                    className="btn-hud"
+                    onClick={() => {
+                      if (onChangeFighter) { stateRef.current = null; onChangeFighter(); }
+                      else onExit();
+                    }}
+                  >
+                    Trocar guerreiro
+                  </button>
                   <button className="btn-hud" onClick={onExit}>Menu</button>
                 </div>
+                {!onChangeFighter && (
+                  <div className="text-[10px] text-muted-foreground mt-3 uppercase tracking-widest">
+                    Escolha novo pelotão no menu principal
+                  </div>
+                )}
               </div>
             </div>
           )}
