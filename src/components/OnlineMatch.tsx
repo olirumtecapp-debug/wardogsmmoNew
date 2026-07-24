@@ -266,21 +266,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   }, [match.id, myUserId, isHost]);
 
 
-  // Host: broadcast explosions
-  useEffect(() => {
-    const s = stateRef.current;
-    if (!s) return;
-    if (isHost) {
-      s.onExplosion = (x, y, r) => {
-        seenExplosionsRef.current.add(fp(x, y, r));
-        netRef.current?.send({ t: "explosion", x, y, r });
-      };
-    } else {
-      s.onExplosion = undefined;
-    }
-    return () => { if (s) s.onExplosion = undefined; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, stateRef.current]);
+  // Host explosion broadcast is wired inside initIfNeeded() (right after
+  // createGame) — a ref-dependent effect wouldn't re-run when stateRef gets
+  // populated, so onExplosion would never be attached and the guest would
+  // never receive terrain-destruction events.
+
 
   // Main loop
   useEffect(() => {
