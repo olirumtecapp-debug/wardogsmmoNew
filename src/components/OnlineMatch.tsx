@@ -210,14 +210,27 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   }, [iAmFighter, mySlot]);
 
 
-  // Realtime channel
+  // Realtime channel — abre assim que match.id/myUserId existirem. NÃO depende
+  // de stateRef.current (ref não é reativa; dependeria disso quebraria o guest
+  // quando o layout inicializasse depois do primeiro render).
   useEffect(() => {
-    if (!stateRef.current) return;
-    const ch = openMatchChannel(match.id, myUserId, (ev) => onNetEvent(ev));
+    const emitInitialHostState = () => {
+      if (!isHost) return;
+      const s = stateRef.current;
+      if (!s) return;
+      netRef.current?.send({ t: "snapshot", state: serialize(s) });
+      netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
+      lastBroadcastTurnRef.current = s.currentPlayer;
+    };
+    const ch = openMatchChannel(match.id, myUserId, (ev) => onNetEvent(ev), {
+      onSubscribed: emitInitialHostState,
+      onPeerJoin: () => emitInitialHostState(),
+    });
     netRef.current = ch;
     return () => { ch.close(); netRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.id, myUserId, stateRef.current]);
+  }, [match.id, myUserId, isHost]);
+
 
   // Host: broadcast explosions
   useEffect(() => {
