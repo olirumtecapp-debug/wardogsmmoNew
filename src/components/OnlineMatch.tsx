@@ -41,6 +41,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const lastMoveSendRef = useRef(0);
   const localEditUntilRef = useRef(0);
   const lastBroadcastTurnRef = useRef<number>(-1);
+  const pendingSnapshotRef = useRef<Snapshot | null>(null);
+  const pendingTurnRef = useRef<{ slot: number; wind: number } | null>(null);
+  const lastTurnBeatRef = useRef(0);
+
+
 
 
   const [, setTick] = useState(0);
