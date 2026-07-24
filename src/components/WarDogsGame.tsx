@@ -863,7 +863,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 }
 
 
-function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; matchTimer: number }) {
+export function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; matchTimer: number }) {
   if (matchDuration === 0) {
     return (
       <div className="panel px-2.5 py-1 flex items-center gap-1.5 shadow-lg">
@@ -896,7 +896,7 @@ function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: number; 
   );
 }
 
-function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").Dog; active: boolean; reinforced?: boolean }) {
+export function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").Dog; active: boolean; reinforced?: boolean }) {
   const char = CHARACTERS[dog.charId];
   const color = char.skin.teamColor;
   const portrait = char.portraitUrl;
@@ -930,7 +930,7 @@ function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").D
 }
 
 
-function WindGauge({ wind }: { wind: number }) {
+export function WindGauge({ wind }: { wind: number }) {
   const abs = Math.abs(wind);
   const rot = wind >= 0 ? 0 : 180;
   return (
@@ -946,7 +946,7 @@ function WindGauge({ wind }: { wind: number }) {
   );
 }
 
-function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1; disabled?: boolean }) {
+export function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1; disabled?: boolean }) {
   const [held, setHeld] = useState(false);
   const down = (e: React.PointerEvent) => { if (disabled) return; e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
   const up = () => { setHeld(false); onRelease(); };
@@ -967,7 +967,7 @@ function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: 
   );
 }
 
-function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
+export function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   dog: import("@/game/types").Dog;
   disabled: boolean;
   onHold: (dir: 1 | -1) => void;
@@ -1030,7 +1030,7 @@ function MoveHoldButton({ children, onHold, onRelease, disabled, label }: {
 }
 
 
-function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSelect, disabled }: {
+export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovered, onSelect, disabled }: {
   open: boolean;
   onToggle: () => void;
   current: WeaponId;
