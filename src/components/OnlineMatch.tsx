@@ -521,7 +521,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+                <div className="shrink-0 [&>button]:!px-1.5 [&>button]:!text-[10px] sm:[&>button]:!px-3 sm:[&>button]:!text-xs">
                 <ArsenalPopup
                   open={arsenalOpen}
                   onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
@@ -532,6 +533,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   disabled={!myTurn}
                   onSelect={(id) => { sendInput({ k: "weapon", v: id }); setArsenalOpen(false); setHoveredWeapon(null); }}
                 />
+                </div>
+
 
                 <MobilityBar
                   dog={s.dogs[s.currentPlayer]}
