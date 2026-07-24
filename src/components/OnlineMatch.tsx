@@ -453,7 +453,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const currentWeapon = s ? WEAPONS[s.weapon] : null;
   const hudVisible = !!(s && s.phase === "aiming" && s.winner === null);
   const hudReserve = s?.hudReserve ?? 148;
-  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+  const hudCssPxRaw = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+  // Escala o HUD conforme largura visível para caber em smartphones sem estourar.
+  const hudScale = displaySize.w > 0 ? Math.max(0.55, Math.min(1, displaySize.w / 1280)) : 1;
+  const hudCssPx = hudCssPxRaw * Math.max(hudScale, 0.75);
 
   useEffect(() => { if (!myTurn && arsenalOpen) setArsenalOpen(false); }, [myTurn, arsenalOpen]);
 
@@ -521,7 +524,14 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+              <div
+                className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap"
+                style={{
+                  transform: `scale(${hudScale})`,
+                  transformOrigin: "bottom center",
+                  width: `${100 / hudScale}%`,
+                }}
+              >
                 <div className="shrink-0 [&>button]:!px-1.5 [&>button]:!text-[10px] sm:[&>button]:!px-3 sm:[&>button]:!text-xs">
                 <ArsenalPopup
                   open={arsenalOpen}
