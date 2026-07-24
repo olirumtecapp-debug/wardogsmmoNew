@@ -7,7 +7,11 @@ export type NetEvent =
   | { t: "snapshot"; state: unknown }
   | { t: "explosion"; x: number; y: number; r: number }
   | { t: "turn"; slot: number; wind: number }
-  | { t: "chat"; slot: number; text: string };
+  | { t: "chat"; slot: number; text: string }
+  // Revanche — coordenação após "gameover" (não afeta física/turnos)
+  | { t: "rematchVote"; slot: number; charId: string }
+  | { t: "rematchCancel"; slot: number }
+  | { t: "rematchStart"; seed: number; chars: [string, string] };
 
 export type InputAction =
   | { k: "angle"; v: number }
