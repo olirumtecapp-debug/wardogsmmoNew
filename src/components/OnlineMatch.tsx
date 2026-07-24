@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState, WeaponId } from "@/game/types";
-import { createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step } from "@/game/engine";
+import { activateShield, createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, SHIELD_READY_THRESHOLD, SHIELD_SOS_HP_RATIO, SHIELD_SOS_MIN_CHARGE } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { WEAPONS } from "@/game/weapons";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
