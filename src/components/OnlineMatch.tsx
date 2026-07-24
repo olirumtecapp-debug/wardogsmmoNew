@@ -61,6 +61,13 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     try { localStorage.setItem("wardogs.aimAssist", aimAssist ? "1" : "0"); } catch {}
   }, [aimAssist]);
 
+  // Revanche — coordenação pós-partida sem tocar em lógica de simulação.
+  const [rematchNonce, setRematchNonce] = useState(0);
+  const [overrideSeed, setOverrideSeed] = useState<number | null>(null);
+  const [overrideChars, setOverrideChars] = useState<[CharacterId, CharacterId] | null>(null);
+  const [rematchVotes, setRematchVotes] = useState<{ 0?: CharacterId; 1?: CharacterId }>({});
+  const [rematchSwapOpen, setRematchSwapOpen] = useState(false);
+
   const fighters = players.filter(p => p.slot < 2).sort((a, b) => a.slot - b.slot);
   const me = players.find(p => p.user_id === myUserId) ?? null;
   const mySlot = me?.slot ?? -1;
