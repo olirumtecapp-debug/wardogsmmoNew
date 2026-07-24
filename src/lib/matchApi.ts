@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAnonSession } from "./anonAuth";
+import { getDeviceKind, DeviceMismatchError, type DeviceKind } from "./device";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem 0/O/1/I
 function genCode(len = 5) {
