@@ -76,7 +76,7 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
     code = genCode();
     const { data, error } = await supabase.from("matches").insert({
       code, host_id: uid, seed, scenario: opts.scenario, difficulty: opts.difficulty, max_players: maxPlayers,
-      world_w: worldW, world_h: worldH, current_slot: 0,
+      world_w: worldW, world_h: worldH, current_slot: 0, host_device: getDeviceKind(),
     }).select().single();
     if (!error && data) { match = data as MatchRow; break; }
     lastError = error;
