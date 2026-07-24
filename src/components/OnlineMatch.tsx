@@ -467,7 +467,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
       <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
         <div className="relative" style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}>
-          <canvas ref={canvasRef} className="block" />
+          <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} />
 
           {s && (
             <div className="absolute top-0 left-0 right-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start p-2 sm:p-3 gap-2 pointer-events-none">
