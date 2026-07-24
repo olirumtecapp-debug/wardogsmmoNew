@@ -105,6 +105,17 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
       }
       markTerrainDirty();
+      // Wire host explosion broadcast IMMEDIATELY after state exists. Doing this
+      // in a separate effect that depends on stateRef.current is unreliable
+      // because refs don't trigger re-renders — the effect would run once with
+      // stateRef.current === null and never re-run, so onExplosion would never
+      // be attached and the guest would never see terrain destruction.
+      if (isHost && stateRef.current) {
+        stateRef.current.onExplosion = (x, y, r) => {
+          seenExplosionsRef.current.add(fp(x, y, r));
+          netRef.current?.send({ t: "explosion", x, y, r });
+        };
+      }
       // Drena eventos que chegaram antes do state existir (guest que abriu
       // canal antes do canvas medir).
       const pendSnap = pendingSnapshotRef.current;
@@ -127,6 +138,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         lastBroadcastTurnRef.current = stateRef.current.currentPlayer;
       }
     };
+
 
 
     const adapt = () => {
