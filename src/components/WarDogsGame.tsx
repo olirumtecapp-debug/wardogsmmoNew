@@ -327,7 +327,8 @@ export function WarDogsGame({ mode, onExit, chars: initialChars = ["ranger", "br
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, matchNonce]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
