@@ -65,6 +65,7 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          current_slot: number
           difficulty: string
           ended_at: string | null
           host_id: string
@@ -75,10 +76,13 @@ export type Database = {
           started_at: string | null
           status: string
           turn_slot: number
+          world_h: number
+          world_w: number
         }
         Insert: {
           code: string
           created_at?: string
+          current_slot?: number
           difficulty?: string
           ended_at?: string | null
           host_id: string
@@ -89,10 +93,13 @@ export type Database = {
           started_at?: string | null
           status?: string
           turn_slot?: number
+          world_h?: number
+          world_w?: number
         }
         Update: {
           code?: string
           created_at?: string
+          current_slot?: number
           difficulty?: string
           ended_at?: string | null
           host_id?: string
@@ -103,6 +110,8 @@ export type Database = {
           started_at?: string | null
           status?: string
           turn_slot?: number
+          world_h?: number
+          world_w?: number
         }
         Relationships: []
       }
