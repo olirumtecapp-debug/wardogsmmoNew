@@ -379,6 +379,23 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   }, [isHost, match.id, match.status]);
 
   function onNetEvent(ev: NetEvent) {
+    // Eventos de revanche não dependem do estado ativo — tratam antes.
+    if (ev.t === "rematchVote") {
+      setRematchVotes(prev => ({ ...prev, [ev.slot]: ev.charId as CharacterId }));
+      return;
+    }
+    if (ev.t === "rematchCancel") {
+      setRematchVotes(prev => { const n = { ...prev }; delete n[ev.slot as 0 | 1]; return n; });
+      return;
+    }
+    if (ev.t === "rematchStart") {
+      setOverrideSeed(ev.seed);
+      setOverrideChars(ev.chars as [CharacterId, CharacterId]);
+      setRematchVotes({});
+      setRematchSwapOpen(false);
+      setRematchNonce(n => n + 1);
+      return;
+    }
     const s = stateRef.current;
     // State ainda não pronto (canvas mediu 0px etc.) — guarda último snapshot/turn
     // para reaplicar assim que createGame terminar.
