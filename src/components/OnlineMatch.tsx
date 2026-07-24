@@ -395,7 +395,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     else if (a.k === "move") moveDog(s, a.dir, a.dt);
     else if (a.k === "jump") jumpDog(s);
     else if (a.k === "fire") fire(s);
+    else if (a.k === "barrage") triggerCanineBarrage(s);
+    else if (a.k === "shield") activateShield(s);
   }
+
 
   const sendInput = (action: InputAction, localAlreadyApplied = false) => {
     const s = stateRef.current;
