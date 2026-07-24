@@ -896,7 +896,7 @@ export function MatchCountdown({ matchDuration, matchTimer }: { matchDuration: n
   );
 }
 
-function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").Dog; active: boolean; reinforced?: boolean }) {
+export function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/types").Dog; active: boolean; reinforced?: boolean }) {
   const char = CHARACTERS[dog.charId];
   const color = char.skin.teamColor;
   const portrait = char.portraitUrl;
