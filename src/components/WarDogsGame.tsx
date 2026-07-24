@@ -946,7 +946,7 @@ export function WindGauge({ wind }: { wind: number }) {
   );
 }
 
-function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1; disabled?: boolean }) {
+export function HoldButton({ children, onHold, onRelease, dir, disabled }: { children: React.ReactNode; onHold: (dir: 1 | -1) => void; onRelease: () => void; dir: 1 | -1; disabled?: boolean }) {
   const [held, setHeld] = useState(false);
   const down = (e: React.PointerEvent) => { if (disabled) return; e.preventDefault(); (e.target as Element).setPointerCapture?.(e.pointerId); setHeld(true); onHold(dir); };
   const up = () => { setHeld(false); onRelease(); };
