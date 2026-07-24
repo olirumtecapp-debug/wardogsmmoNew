@@ -193,6 +193,25 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     if (rematchNonce > 0) setShowIntro(true);
   }, [rematchNonce]);
 
+  // Host: quando ambos slots confirmaram, sorteia seed e dispara rematchStart.
+  useEffect(() => {
+    if (!isHost) return;
+    const v0 = rematchVotes[0];
+    const v1 = rematchVotes[1];
+    if (!v0 || !v1) return;
+    const newSeed = Math.floor(Math.random() * 0x7fffffff);
+    const startEv: NetEvent = { t: "rematchStart", seed: newSeed, chars: [v0, v1] };
+    netRef.current?.send(startEv);
+    // Aplica também localmente — reinicia partida.
+    setOverrideSeed(newSeed);
+    setOverrideChars([v0, v1]);
+    setRematchVotes({});
+    setRematchSwapOpen(false);
+    setRematchNonce(n => n + 1);
+    // Marca o match como live novamente para o painel de status ficar coerente.
+    updateMatch(match.id, { status: "live", ended_at: null as unknown as string }).catch(() => {});
+  }, [isHost, rematchVotes, match.id]);
+
 
 
   // Pointer (mouse/touch) aim + tap-to-fire on the canvas — mirrors vs IA.
