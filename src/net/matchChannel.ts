@@ -23,7 +23,17 @@ export interface MatchChannel {
   close(): Promise<void>;
 }
 
-export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: NetEvent, from: string) => void): MatchChannel {
+export interface OpenMatchChannelOpts {
+  onSubscribed?: () => void;
+  onPeerJoin?: (userId: string) => void;
+}
+
+export function openMatchChannel(
+  matchId: string,
+  userId: string,
+  onEvent: (ev: NetEvent, from: string) => void,
+  opts: OpenMatchChannelOpts = {},
+): MatchChannel {
   const channel = supabase.channel(`match:${matchId}`, {
     config: { broadcast: { self: false, ack: false }, presence: { key: userId } },
   });
@@ -37,6 +47,12 @@ export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: 
     onEvent(ev, from);
   });
 
+  channel.on("presence", { event: "join" }, ({ key }) => {
+    if (typeof key === "string" && key !== userId) {
+      try { opts.onPeerJoin?.(key); } catch { /* ignore */ }
+    }
+  });
+
   channel.subscribe(async (status) => {
     if (status === "SUBSCRIBED") {
       subscribed = true;
@@ -46,6 +62,7 @@ export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: 
         const ev = queue.shift()!;
         try { await channel.send({ type: "broadcast", event: "net", payload: ev }); } catch { /* ignore */ }
       }
+      try { opts.onSubscribed?.(); } catch { /* ignore */ }
     }
   });
 
@@ -61,4 +78,3 @@ export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: 
     },
   };
 }
-
