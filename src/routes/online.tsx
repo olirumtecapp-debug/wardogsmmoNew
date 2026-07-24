@@ -35,7 +35,9 @@ function OnlineHome() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mismatch, setMismatch] = useState<{ host: DeviceKind; local: DeviceKind } | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const localDevice = useMemo<DeviceKind>(() => getDeviceKind(), []);
 
   useEffect(() => {
     ensureAnonSession()
