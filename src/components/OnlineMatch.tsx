@@ -580,12 +580,12 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   const pct = Math.max(0, Math.min(100, dog.specialCharge));
                   const ready = pct >= SPECIAL_READY_THRESHOLD;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
-                      <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Bombardeio</span>
+                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[60px] sm:w-[74px] md:w-[86px]">
+                      <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center truncate">Bombardeio</span>
                       <button
                         disabled={!myTurn || !ready || s.phase !== "aiming"}
                         onClick={() => sendInput({ k: "barrage" })}
-                        className={`relative w-full py-1.5 rounded text-[11px] stencil tracking-widest border transition ${
+                        className={`relative w-full py-1 sm:py-1.5 rounded text-[9px] sm:text-[11px] stencil tracking-widest border transition ${
                           ready
                             ? "border-amber-300 text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(255,200,60,0.6)]"
                             : "border-white/15 text-muted-foreground/80 bg-white/5"
@@ -595,7 +595,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                       >
                         {ready ? "💣 GO" : `💣 ${Math.floor(pct)}%`}
                       </button>
-                      <div className="w-full h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5">
+                      <div className="w-full h-1 sm:h-1.5 rounded-full bg-black/50 overflow-hidden border border-white/5">
                         <div
                           className="h-full rounded-full transition-[width] duration-150"
                           style={{
