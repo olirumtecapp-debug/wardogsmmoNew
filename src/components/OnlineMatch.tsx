@@ -272,9 +272,17 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             lastSnapshotAtRef.current = now;
             netRef.current?.send({ t: "snapshot", state: serialize(s) });
           }
+          // Reinforce turn signalling — broadcast on flip AND persist so late
+          // joiners / snapshot drops still converge on the correct turn.
+          if (s.phase === "aiming" && s.currentPlayer !== lastBroadcastTurnRef.current) {
+            lastBroadcastTurnRef.current = s.currentPlayer;
+            netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
+            updateMatch(match.id, { current_slot: s.currentPlayer, turn_slot: s.currentPlayer }).catch(() => {});
+          }
         } else {
           advanceCosmetic(s, dt);
         }
+
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) render(ctx, s);
         setTick(t => (t + 1) % 1000);
