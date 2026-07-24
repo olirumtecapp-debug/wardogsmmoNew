@@ -608,7 +608,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   onJump={() => sendInput({ k: "jump" })}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[150px] sm:min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-1.5 py-1.5 sm:px-2 flex-1 min-w-[140px] sm:min-w-[200px] flex items-center gap-1 sm:gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!myTurn} onHold={dir => { angleHoldRef.current = { dir }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>−</HoldButton>
                     <div className="flex flex-col items-center min-w-[38px]">
