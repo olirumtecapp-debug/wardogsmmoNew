@@ -50,7 +50,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
-  const [showIntro, setShowIntro] = useState(() => !shouldSkipIntro());
+  const [showIntro, setShowIntro] = useState(true);
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
