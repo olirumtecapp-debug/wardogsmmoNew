@@ -357,7 +357,47 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     return () => clearInterval(iv);
   }, [isHost, match.id, match.status]);
 
+  function maybeTriggerRematchReset(slots: Set<number>) {
+    if (!isHost || rematchTriggeredRef.current) return;
+    if (!slots.has(0) || !slots.has(1)) return;
+    rematchTriggeredRef.current = true;
+    const newSeed = Math.floor(Math.random() * 0x7fffffff);
+    updateMatch(match.id, {
+      status: "lobby",
+      seed: newSeed,
+      started_at: null,
+      ended_at: null,
+      turn_slot: 0,
+      current_slot: 0,
+    }).catch((err) => {
+      rematchTriggeredRef.current = false;
+      setRematchError(err instanceof Error ? err.message : String(err));
+    });
+  }
+
+  function requestRematch() {
+    if (mySlot !== 0 && mySlot !== 1) return;
+    setRematchError(null);
+    setRematchSlots((prev) => {
+      const next = new Set(prev);
+      next.add(mySlot);
+      maybeTriggerRematchReset(next);
+      return next;
+    });
+    netRef.current?.send({ t: "rematch-req", slot: mySlot });
+  }
+
   function onNetEvent(ev: NetEvent) {
+    if (ev.t === "rematch-req") {
+      setRematchSlots((prev) => {
+        if (prev.has(ev.slot)) return prev;
+        const next = new Set(prev);
+        next.add(ev.slot);
+        maybeTriggerRematchReset(next);
+        return next;
+      });
+      return;
+    }
     const s = stateRef.current;
     // State ainda não pronto (canvas mediu 0px etc.) — guarda último snapshot/turn
     // para reaplicar assim que createGame terminar.
@@ -388,6 +428,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       applyAction(s, ev.action);
     }
   }
+
 
 
 
