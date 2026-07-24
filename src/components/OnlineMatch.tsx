@@ -325,7 +325,13 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
   function onNetEvent(ev: NetEvent) {
     const s = stateRef.current;
-    if (!s) return;
+    // State ainda não pronto (canvas mediu 0px etc.) — guarda último snapshot/turn
+    // para reaplicar assim que createGame terminar.
+    if (!s) {
+      if (ev.t === "snapshot") pendingSnapshotRef.current = ev.state as Snapshot;
+      else if (ev.t === "turn") pendingTurnRef.current = { slot: ev.slot, wind: ev.wind };
+      return;
+    }
     if (ev.t === "snapshot" && !isHost) {
       const skipAim = iAmFighter && (ev.state as Snapshot).currentPlayer === mySlot && performance.now() < localEditUntilRef.current;
       apply(s, ev.state as Snapshot, skipAim);
@@ -348,6 +354,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       applyAction(s, ev.action);
     }
   }
+
 
 
   function applyAction(s: GameState, a: InputAction) {
