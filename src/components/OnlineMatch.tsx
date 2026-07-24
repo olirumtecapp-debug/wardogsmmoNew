@@ -73,10 +73,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const mySlot = me?.slot ?? -1;
   const isHost = match.host_id === myUserId;
   const iAmFighter = mySlot === 0 || mySlot === 1;
-  const chars: [CharacterId, CharacterId] = useMemo(() => [
+  const baseChars: [CharacterId, CharacterId] = useMemo(() => [
     (fighters[0]?.char_id as CharacterId) ?? "ranger",
     (fighters[1]?.char_id as CharacterId) ?? "brutus",
   ], [fighters]);
+  const chars: [CharacterId, CharacterId] = overrideChars ?? baseChars;
 
   useEffect(() => {
     setActiveScenario(match.scenario as ScenarioId);
