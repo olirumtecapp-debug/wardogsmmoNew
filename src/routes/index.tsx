@@ -42,6 +42,7 @@ type Stage =
 
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
+  const [matchNonce, setMatchNonce] = useState(0);
   const [showHowTo, setShowHowTo] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
   const [muted, setMuted] = useState(() => audio.getSettings().muted);
