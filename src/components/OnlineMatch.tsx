@@ -53,6 +53,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const [showIntro, setShowIntro] = useState(true);
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
+  const [rematchSlots, setRematchSlots] = useState<Set<number>>(() => new Set());
+  const [rematchError, setRematchError] = useState<string | null>(null);
+  const rematchTriggeredRef = useRef(false);
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
     try { return localStorage.getItem("wardogs.aimAssist") !== "0"; } catch { return true; }
   });
