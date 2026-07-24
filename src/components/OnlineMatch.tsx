@@ -318,11 +318,19 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         destroyTerrain(s, ev.x, ev.y, ev.r);
         s.scorchMarks.push({ x: ev.x, y: ev.y, radius: ev.r * 1.05, life: 6, maxLife: 6 });
       }
+    } else if (ev.t === "turn" && !isHost) {
+      // Explicit turn signal — override snapshot lag so the guest never gets
+      // stuck unable to act on their own turn.
+      s.currentPlayer = (ev.slot === 0 ? 0 : 1);
+      s.wind = ev.wind;
+      s.phase = "aiming";
+      localEditUntilRef.current = 0;
     } else if (ev.t === "input" && isHost) {
       if (ev.slot !== s.currentPlayer) return;
       applyAction(s, ev.action);
     }
   }
+
 
   function applyAction(s: GameState, a: InputAction) {
     if (a.k === "angle") s.angle = clamp(a.v, 5, 88);
