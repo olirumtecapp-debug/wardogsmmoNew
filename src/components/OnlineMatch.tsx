@@ -518,7 +518,21 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background touch-none select-none">
-      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
+      {sc?.bgImage && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${sc.bgImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(18px) brightness(0.55) saturate(1.05)",
+            transform: "scale(1.08)",
+            zIndex: 0,
+          }}
+          aria-hidden
+        />
+      )}
+      <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center" style={{ zIndex: 1 }}>
         <div className="relative" style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}>
           <canvas ref={canvasRef} className="block" style={{ touchAction: "none" }} />
 
