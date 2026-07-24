@@ -732,14 +732,110 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             </div>
           )}
 
-          {s?.phase === "gameover" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 pointer-events-auto">
-              <div className="panel p-5 text-center space-y-3">
-                <div className="stencil text-lg uppercase">{s.message}</div>
-                <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+          {s?.phase === "gameover" && (() => {
+            const c0 = CHARACTERS[rematchVotes[0] ?? chars[0]];
+            const c1 = CHARACTERS[rematchVotes[1] ?? chars[1]];
+            const myVote = iAmFighter ? rematchVotes[mySlot as 0 | 1] : undefined;
+            const otherSlot = mySlot === 0 ? 1 : 0;
+            const otherVote = iAmFighter ? rematchVotes[otherSlot as 0 | 1] : undefined;
+            const myPreferred: CharacterId = (myVote ?? chars[mySlot as 0 | 1] ?? "ranger") as CharacterId;
+            const sendVote = (charId: CharacterId) => {
+              if (!iAmFighter) return;
+              setRematchVotes(prev => ({ ...prev, [mySlot]: charId }));
+              netRef.current?.send({ t: "rematchVote", slot: mySlot, charId });
+            };
+            const cancelVote = () => {
+              if (!iAmFighter) return;
+              setRematchVotes(prev => { const n = { ...prev }; delete n[mySlot as 0 | 1]; return n; });
+              netRef.current?.send({ t: "rematchCancel", slot: mySlot });
+            };
+            return (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 pointer-events-auto overflow-auto">
+                <div className="panel p-5 sm:p-6 text-center max-w-md w-full space-y-4">
+                  <div className="stencil text-lg uppercase">{s.message}</div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { slot: 0, c: c0, voted: !!rematchVotes[0] },
+                      { slot: 1, c: c1, voted: !!rematchVotes[1] },
+                    ].map(({ slot, c, voted }) => (
+                      <div key={slot} className={`panel px-2 py-2 flex flex-col items-center gap-1 ${voted ? "ring-2 ring-[color:var(--accent)]" : ""}`}>
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-white/15 bg-black/30 flex items-center justify-center">
+                          <img src={c.portraitUrl} alt={c.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="stencil text-[10px] tracking-widest text-muted-foreground">P{slot + 1}</div>
+                        <div className="stencil text-xs">{c.name}</div>
+                        <div className="text-[9px] uppercase tracking-widest" style={{ color: voted ? "var(--accent)" : "var(--muted-foreground)" }}>
+                          {voted ? "✓ Pronto" : "Aguardando"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {iAmFighter && (
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <button
+                        className="btn-hud"
+                        onClick={() => setRematchSwapOpen(true)}
+                        title="Trocar guerreiro antes da revanche"
+                      >
+                        🔄 Trocar guerreiro
+                      </button>
+                      {myVote ? (
+                        <button className="btn-hud" onClick={cancelVote}>
+                          ✖ Cancelar
+                        </button>
+                      ) : (
+                        <button className="btn-hud btn-primary" onClick={() => sendVote(myPreferred)}>
+                          🔁 Confirmar revanche
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {iAmFighter && myVote && !otherVote && (
+                    <div className="text-[11px] text-muted-foreground">
+                      Aguardando adversário confirmar…
+                    </div>
+                  )}
+
+                  <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+                </div>
+
+                {rematchSwapOpen && iAmFighter && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4" onClick={() => setRematchSwapOpen(false)}>
+                    <div className="panel p-4 sm:p-5 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="stencil text-sm uppercase tracking-widest">Escolher guerreiro</div>
+                        <button className="text-muted-foreground px-2" onClick={() => setRematchSwapOpen(false)}>✕</button>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        {CHARACTER_LIST.map(cc => {
+                          const active = myPreferred === cc.id;
+                          return (
+                            <button
+                              key={cc.id}
+                              onClick={() => { sendVote(cc.id); setRematchSwapOpen(false); }}
+                              className={`btn-hud !p-1.5 flex flex-col items-center gap-1 ${active ? "is-selected" : ""}`}
+                              title={cc.name}
+                            >
+                              <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-black/30 flex items-center justify-center">
+                                <img src={cc.portraitUrl} alt={cc.name} className="w-full h-full object-contain" />
+                              </div>
+                              <div className="stencil text-[10px]">{cc.name}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-3 text-center">
+                        Escolher já registra sua confirmação de revanche.
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
 
