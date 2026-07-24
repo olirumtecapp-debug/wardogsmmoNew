@@ -8,7 +8,7 @@ import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios"
 import { openMatchChannel, type MatchChannel, type NetEvent, type InputAction } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
 import { updateMatch, getStoredMatchDuration } from "@/lib/matchApi";
-import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
+import { ComicIntro } from "@/components/ComicIntro";
 import {
   ArsenalPopup,
   HoldButton,
@@ -50,7 +50,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
-  const [showIntro, setShowIntro] = useState(() => !shouldSkipIntro());
+  const [showIntro, setShowIntro] = useState(true);
   const [arsenalOpen, setArsenalOpen] = useState(false);
   const [hoveredWeapon, setHoveredWeapon] = useState<WeaponId | null>(null);
   const [aimAssist, setAimAssistState] = useState<boolean>(() => {
@@ -105,6 +105,17 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
       }
       markTerrainDirty();
+      // Wire host explosion broadcast IMMEDIATELY after state exists. Doing this
+      // in a separate effect that depends on stateRef.current is unreliable
+      // because refs don't trigger re-renders — the effect would run once with
+      // stateRef.current === null and never re-run, so onExplosion would never
+      // be attached and the guest would never see terrain destruction.
+      if (isHost && stateRef.current) {
+        stateRef.current.onExplosion = (x, y, r) => {
+          seenExplosionsRef.current.add(fp(x, y, r));
+          netRef.current?.send({ t: "explosion", x, y, r });
+        };
+      }
       // Drena eventos que chegaram antes do state existir (guest que abriu
       // canal antes do canvas medir).
       const pendSnap = pendingSnapshotRef.current;
@@ -127,6 +138,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         lastBroadcastTurnRef.current = stateRef.current.currentPlayer;
       }
     };
+
 
 
     const adapt = () => {
@@ -254,21 +266,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   }, [match.id, myUserId, isHost]);
 
 
-  // Host: broadcast explosions
-  useEffect(() => {
-    const s = stateRef.current;
-    if (!s) return;
-    if (isHost) {
-      s.onExplosion = (x, y, r) => {
-        seenExplosionsRef.current.add(fp(x, y, r));
-        netRef.current?.send({ t: "explosion", x, y, r });
-      };
-    } else {
-      s.onExplosion = undefined;
-    }
-    return () => { if (s) s.onExplosion = undefined; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, stateRef.current]);
+  // Host explosion broadcast is wired inside initIfNeeded() (right after
+  // createGame) — a ref-dependent effect wouldn't re-run when stateRef gets
+  // populated, so onExplosion would never be attached and the guest would
+  // never receive terrain-destruction events.
+
 
   // Main loop
   useEffect(() => {
