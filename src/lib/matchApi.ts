@@ -20,7 +20,11 @@ export interface MatchRow {
   max_players: number;
   started_at: string | null;
   ended_at: string | null;
+  world_w: number;
+  world_h: number;
+  current_slot: number;
 }
+
 
 export interface MatchPlayerRow {
   id: string;
