@@ -930,7 +930,7 @@ export function MiniPlayer({ dog, active, reinforced }: { dog: import("@/game/ty
 }
 
 
-function WindGauge({ wind }: { wind: number }) {
+export function WindGauge({ wind }: { wind: number }) {
   const abs = Math.abs(wind);
   const rot = wind >= 0 ? 0 : 180;
   return (
