@@ -85,10 +85,13 @@ function Home() {
       <OrientationGate>
         <div className="fixed inset-0">
           <WarDogsGame
+            key={`${stage.chars.join("-")}-${matchNonce}`}
             mode={stage.mode}
             chars={stage.chars}
             matchDuration={stage.matchDuration}
             onExit={() => setStage({ kind: "menu" })}
+            onRematch={() => setMatchNonce((n) => n + 1)}
+            onChangeFighter={() => setStage({ kind: "briefing", mode: stage.mode })}
           />
         </div>
       </OrientationGate>
