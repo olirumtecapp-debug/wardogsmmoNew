@@ -28,6 +28,9 @@ export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: 
     config: { broadcast: { self: false, ack: false }, presence: { key: userId } },
   });
 
+  let subscribed = false;
+  const queue: NetEvent[] = [];
+
   channel.on("broadcast", { event: "net" }, (payload) => {
     const ev = payload.payload as NetEvent;
     const from = (payload as { from?: string }).from ?? "";
@@ -36,13 +39,20 @@ export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: 
 
   channel.subscribe(async (status) => {
     if (status === "SUBSCRIBED") {
-      await channel.track({ user_id: userId, at: Date.now() });
+      subscribed = true;
+      try { await channel.track({ user_id: userId, at: Date.now() }); } catch { /* ignore */ }
+      // Flush any queued events sent before subscription completed.
+      while (queue.length > 0) {
+        const ev = queue.shift()!;
+        try { await channel.send({ type: "broadcast", event: "net", payload: ev }); } catch { /* ignore */ }
+      }
     }
   });
 
   return {
     channel,
     async send(ev: NetEvent) {
+      if (!subscribed) { queue.push(ev); return; }
       await channel.send({ type: "broadcast", event: "net", payload: ev });
     },
     async close() {
@@ -51,3 +61,4 @@ export function openMatchChannel(matchId: string, userId: string, onEvent: (ev: 
     },
   };
 }
+

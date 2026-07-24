@@ -40,6 +40,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const lastAimSendRef = useRef(0);
   const lastMoveSendRef = useRef(0);
   const localEditUntilRef = useRef(0);
+  const lastBroadcastTurnRef = useRef<number>(-1);
+
 
   const [, setTick] = useState(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
@@ -79,11 +81,15 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const storedDur = getStoredMatchDuration(match.code);
 
-    // Canonical world — identical on every client in an online match.
-    const WORLD_W = 1280;
-    const WORLD_H = 720;
-    const HUD_RESERVE = 148;
-    const TOP_RESERVE = 110;
+    // Canonical world — the HOST wrote world_w/world_h when creating the match
+    // (portrait dims for mobile host, landscape otherwise). Every client uses
+    // those exact numbers, guaranteeing identical simulation coordinates.
+    const WORLD_W = match.world_w || 1280;
+    const WORLD_H = match.world_h || 720;
+    // Reserve HUD/top space as a proportion of world height so portrait worlds
+    // don't crush the playfield.
+    const HUD_RESERVE = Math.round(WORLD_H * 0.20);
+    const TOP_RESERVE = Math.round(WORLD_H * 0.15);
 
     const initIfNeeded = () => {
       if (stateRef.current) return;
@@ -110,7 +116,6 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       canvas.width = Math.floor(cssW * dpr);
       canvas.height = Math.floor(cssH * dpr);
       const ctx = canvas.getContext("2d")!;
-      // Map world coords (s.width × s.height) → device pixels (cssW*dpr × cssH*dpr).
       const sx = (cssW * dpr) / s.width;
       const sy = (cssH * dpr) / s.height;
       ctx.setTransform(sx, 0, 0, sy, 0, 0);
@@ -123,7 +128,8 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
     return () => { ro.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.seed, match.id, fighters.length]);
+  }, [match.seed, match.id, match.world_w, match.world_h, fighters.length]);
+
 
 
   // Pointer (mouse/touch) aim + tap-to-fire on the canvas — mirrors vs IA.
@@ -266,9 +272,17 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
             lastSnapshotAtRef.current = now;
             netRef.current?.send({ t: "snapshot", state: serialize(s) });
           }
+          // Reinforce turn signalling — broadcast on flip AND persist so late
+          // joiners / snapshot drops still converge on the correct turn.
+          if (s.phase === "aiming" && s.currentPlayer !== lastBroadcastTurnRef.current) {
+            lastBroadcastTurnRef.current = s.currentPlayer;
+            netRef.current?.send({ t: "turn", slot: s.currentPlayer, wind: s.wind });
+            updateMatch(match.id, { current_slot: s.currentPlayer, turn_slot: s.currentPlayer }).catch(() => {});
+          }
         } else {
           advanceCosmetic(s, dt);
         }
+
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) render(ctx, s);
         setTick(t => (t + 1) % 1000);
@@ -304,11 +318,19 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         destroyTerrain(s, ev.x, ev.y, ev.r);
         s.scorchMarks.push({ x: ev.x, y: ev.y, radius: ev.r * 1.05, life: 6, maxLife: 6 });
       }
+    } else if (ev.t === "turn" && !isHost) {
+      // Explicit turn signal — override snapshot lag so the guest never gets
+      // stuck unable to act on their own turn.
+      s.currentPlayer = (ev.slot === 0 ? 0 : 1);
+      s.wind = ev.wind;
+      s.phase = "aiming";
+      localEditUntilRef.current = 0;
     } else if (ev.t === "input" && isHost) {
       if (ev.slot !== s.currentPlayer) return;
       applyAction(s, ev.action);
     }
   }
+
 
   function applyAction(s: GameState, a: InputAction) {
     if (a.k === "angle") s.angle = clamp(a.v, 5, 88);
