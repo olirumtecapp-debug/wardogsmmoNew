@@ -8,7 +8,7 @@ import { setActiveScenario, SCENARIOS, type ScenarioId } from "@/game/scenarios"
 import { openMatchChannel, type MatchChannel, type NetEvent, type InputAction } from "@/net/matchChannel";
 import type { MatchRow, MatchPlayerRow } from "@/lib/matchApi";
 import { updateMatch, getStoredMatchDuration } from "@/lib/matchApi";
-import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
+import { ComicIntro } from "@/components/ComicIntro";
 import {
   ArsenalPopup,
   HoldButton,
