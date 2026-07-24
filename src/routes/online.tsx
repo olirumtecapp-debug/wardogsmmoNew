@@ -208,6 +208,43 @@ function OnlineHome() {
           )}
         </div>
       </main>
+
+      {mismatch && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="panel max-w-md w-full p-5 space-y-4 border-warn">
+            <div className="flex items-center gap-2 text-warn">
+              <AlertTriangle size={20} />
+              <div className="stencil uppercase tracking-widest text-sm">Dispositivos incompatíveis</div>
+            </div>
+            <div className="flex items-center justify-center gap-4 py-2">
+              <div className="flex flex-col items-center gap-1 text-xs">
+                {mismatch.host === "mobile" ? <Smartphone size={28} /> : <Monitor size={28} />}
+                <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Sala</span>
+                <span className="font-semibold">{deviceLabel(mismatch.host)}</span>
+              </div>
+              <div className="text-2xl text-warn">≠</div>
+              <div className="flex flex-col items-center gap-1 text-xs">
+                {mismatch.local === "mobile" ? <Smartphone size={28} /> : <Monitor size={28} />}
+                <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Você</span>
+                <span className="font-semibold">{deviceLabel(mismatch.local)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Esta sala foi criada em <span className="text-foreground font-semibold">{deviceLabel(mismatch.host)}</span>.
+              Para evitar problemas de tela, mira e sincronia entre PC e smartphone, entre por um
+              <span className="text-foreground font-semibold"> {deviceLabel(mismatch.host)} </span>
+              também.
+            </p>
+            <button
+              type="button"
+              onClick={() => setMismatch(null)}
+              className="btn-hud btn-primary w-full"
+            >
+              Voltar ao menu
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
