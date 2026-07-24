@@ -524,7 +524,14 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+              <div
+                className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap"
+                style={{
+                  transform: `scale(${hudScale})`,
+                  transformOrigin: "bottom center",
+                  width: `${100 / hudScale}%`,
+                }}
+              >
                 <div className="shrink-0 [&>button]:!px-1.5 [&>button]:!text-[10px] sm:[&>button]:!px-3 sm:[&>button]:!text-xs">
                 <ArsenalPopup
                   open={arsenalOpen}
