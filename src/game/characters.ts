@@ -109,12 +109,12 @@ const MIU_SKIN: TeamSkin = {
 // Sizing — sprites are already normalized on a 1024 canvas with breed-accurate
 // height fractions, so runtime scale stays at 1.0 across the board.
 const SIZING: Record<CharacterId, CharacterSizing> = {
-  ranger: { spriteScale: 1.0, portraitScale: 1.0, spriteBottomPad: 0.01 },
-  brutus: { spriteScale: 1.0, portraitScale: 1.0, spriteBottomPad: 0.01 },
-  musa:   { spriteScale: 1.0, portraitScale: 1.0, spriteBottomPad: 0.01 },
-  ozzy:   { spriteScale: 1.0, portraitScale: 1.0, spriteBottomPad: 0.01 },
-  negao:  { spriteScale: 1.0, portraitScale: 1.0, spriteBottomPad: 0.01 },
-  miu:    { spriteScale: 1.0, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  ranger: { spriteScale: 1.18, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  brutus: { spriteScale: 1.20, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  musa:   { spriteScale: 1.18, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  ozzy:   { spriteScale: 1.28, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  negao:  { spriteScale: 1.20, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  miu:    { spriteScale: 1.32, portraitScale: 1.0, spriteBottomPad: 0.01 },
 };
 
 export const CHARACTERS: Record<CharacterId, Character> = {
