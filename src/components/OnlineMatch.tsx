@@ -454,9 +454,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
   const hudVisible = !!(s && s.phase === "aiming" && s.winner === null);
   const hudReserve = s?.hudReserve ?? 148;
   const hudCssPxRaw = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
-  // Escala o HUD conforme largura visível para caber em smartphones sem estourar.
-  const hudScale = displaySize.w > 0 ? Math.max(0.55, Math.min(1, displaySize.w / 1280)) : 1;
-  const hudCssPx = hudCssPxRaw * Math.max(hudScale, 0.75);
+  // HUD ocupa a largura visível toda; altura reservada responsiva sem depender de scale.
+  const isCompactHud = displaySize.w > 0 && displaySize.w < 720;
+  const hudMinPx = isCompactHud ? 76 : 92;
+  const hudCssPx = Math.max(hudCssPxRaw, hudMinPx);
 
   useEffect(() => { if (!myTurn && arsenalOpen) setArsenalOpen(false); }, [myTurn, arsenalOpen]);
 
