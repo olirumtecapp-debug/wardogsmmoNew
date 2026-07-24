@@ -24,6 +24,7 @@ export interface MatchRow {
   world_w: number;
   world_h: number;
   current_slot: number;
+  host_device: DeviceKind | null;
 }
 
 
