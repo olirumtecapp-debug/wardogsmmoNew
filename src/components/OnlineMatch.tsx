@@ -478,12 +478,7 @@ function serialize(s: GameState) {
 
 type Snapshot = ReturnType<typeof serialize>;
 
-function apply(s: GameState, snap: Snapshot) {
-  const now = performance.now();
-  const localEditing = now < (window as unknown as { __wdEditUntil?: number }).__wdEditUntil!;
-  // Note: localEditUntilRef is component-scoped; using module-safe fallback via closure not possible here.
-  // We compare against a per-instance ref in the OnlineMatch scope by passing via s.__ hack? Simpler: skip angle/power/weapon when snap.currentPlayer equals a marker only if the applying instance is the one editing. We defer that check in caller.
-  void localEditing;
+function apply(s: GameState, snap: Snapshot, skipAim = false) {
   for (let i = 0; i < s.dogs.length; i++) {
     const d = s.dogs[i]; const sd = snap.dogs[i];
     if (!sd) continue;
@@ -495,9 +490,11 @@ function apply(s: GameState, snap: Snapshot) {
   }));
   s.currentPlayer = snap.currentPlayer as 0 | 1;
   s.wind = snap.wind;
-  s.angle = snap.angle;
-  s.power = snap.power;
-  s.weapon = snap.weapon as WeaponId;
+  if (!skipAim) {
+    s.angle = snap.angle;
+    s.power = snap.power;
+    s.weapon = snap.weapon as WeaponId;
+  }
   s.phase = snap.phase as GameState["phase"];
   s.message = snap.message;
   s.winner = snap.winner as GameState["winner"];
