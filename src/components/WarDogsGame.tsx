@@ -4,7 +4,7 @@ import { activateRage, activateShield, createGame, fire, jumpDog, moveDog, RAGE_
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
-import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
+import { CHARACTERS, CHARACTER_LIST, characterSkin, type CharacterId } from "@/game/characters";
 import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { audio } from "@/game/audio";
 
