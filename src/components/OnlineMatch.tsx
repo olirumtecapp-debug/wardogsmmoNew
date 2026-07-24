@@ -105,7 +105,29 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
       }
       markTerrainDirty();
+      // Drena eventos que chegaram antes do state existir (guest que abriu
+      // canal antes do canvas medir).
+      const pendSnap = pendingSnapshotRef.current;
+      if (pendSnap && !isHost) {
+        apply(stateRef.current!, pendSnap, false);
+        pendingSnapshotRef.current = null;
+      }
+      const pendTurn = pendingTurnRef.current;
+      if (pendTurn && !isHost && stateRef.current) {
+        stateRef.current.currentPlayer = pendTurn.slot === 0 ? 0 : 1;
+        stateRef.current.wind = pendTurn.wind;
+        stateRef.current.phase = "aiming";
+        pendingTurnRef.current = null;
+      }
+      // Host: se o canal já estava subscrito, reenvia snapshot inicial agora
+      // que o state existe (o onSubscribed rodou antes do createGame).
+      if (isHost && netRef.current && stateRef.current) {
+        netRef.current.send({ t: "snapshot", state: serialize(stateRef.current) });
+        netRef.current.send({ t: "turn", slot: stateRef.current.currentPlayer, wind: stateRef.current.wind });
+        lastBroadcastTurnRef.current = stateRef.current.currentPlayer;
+      }
     };
+
 
     const adapt = () => {
       initIfNeeded();
