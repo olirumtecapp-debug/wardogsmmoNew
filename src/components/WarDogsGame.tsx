@@ -509,9 +509,24 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   });
 
 
+  const scenarioBg = getActiveScenario()?.bgImage;
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
+      {scenarioBg && (
+        <div
+          className="absolute inset-0 -z-10 pointer-events-none"
+          style={{
+            backgroundImage: `url(${scenarioBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(18px) brightness(0.55) saturate(1.05)",
+            transform: "scale(1.08)",
+          }}
+          aria-hidden
+        />
+      )}
       <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
+
         <div
           className="relative"
           style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}
