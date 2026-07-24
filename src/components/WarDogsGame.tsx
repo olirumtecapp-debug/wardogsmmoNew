@@ -967,7 +967,7 @@ export function HoldButton({ children, onHold, onRelease, dir, disabled }: { chi
   );
 }
 
-function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
+export function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   dog: import("@/game/types").Dog;
   disabled: boolean;
   onHold: (dir: 1 | -1) => void;
