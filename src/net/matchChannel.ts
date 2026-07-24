@@ -15,7 +15,10 @@ export type InputAction =
   | { k: "weapon"; v: string }
   | { k: "move"; dir: -1 | 1; dt: number }
   | { k: "jump" }
-  | { k: "fire" };
+  | { k: "fire" }
+  | { k: "barrage" }
+  | { k: "shield" };
+
 
 export interface MatchChannel {
   channel: RealtimeChannel;
