@@ -628,7 +628,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   onJump={() => jumpDog(s)}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-1.5 py-1.5 sm:px-2 flex-1 min-w-[140px] sm:min-w-[200px] flex items-center gap-1 sm:gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -681,7 +681,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                         ? "⚡ USAR"
                         : `⚡ ${Math.floor(pct)}%`;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[92px] relative">
+                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[68px] sm:w-[92px] relative">
                       <div className="flex items-center gap-1 w-full">
                         <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 flex-1">Fúria</span>
                         <button
@@ -750,7 +750,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const pct = Math.max(0, Math.min(100, dog.specialCharge));
                   const ready = pct >= SPECIAL_READY_THRESHOLD;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[62px] sm:w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Bombardeio</span>
                       <button
                         disabled={isAiTurn || !ready || s.phase !== "aiming"}
@@ -788,7 +788,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const ready = (fullOk || sosOk) && !dog.shieldActive;
                   const active = dog.shieldActive;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[62px] sm:w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Escudo</span>
                       <button
                         disabled={isAiTurn || active || !ready || s.phase !== "aiming"}
@@ -850,7 +850,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                     disabled={isAiTurn || s.phase !== "aiming"}
                     onClick={() => fire(s)}
                     aria-label="Atirar"
-                    className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                    className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
                   >
                     FOGO
                   </button>
@@ -1023,7 +1023,7 @@ export function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
   const canJump = !disabled && !dog.hasJumped && !dog.airborne;
   return (
-    <div className={`panel px-2 py-1.5 flex flex-col gap-1 shrink-0 w-[112px] sm:w-[124px] ${disabled ? "opacity-70" : ""}`}>
+    <div className={`panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col gap-1 shrink-0 w-[88px] sm:w-[124px] ${disabled ? "opacity-70" : ""}`}>
       <div className="flex items-center gap-1 justify-center">
         <MoveHoldButton disabled={!canMove} onHold={() => onHold(-1)} onRelease={onRelease} label="Andar esquerda">◀</MoveHoldButton>
         <button
@@ -1156,7 +1156,7 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
-        className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1.5 min-w-[128px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
+        className={`btn-hud h-full flex items-center gap-1.5 px-1.5 py-1.5 sm:px-2 min-w-[96px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
         style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
       >
         <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
