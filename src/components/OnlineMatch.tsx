@@ -209,7 +209,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     setRematchSwapOpen(false);
     setRematchNonce(n => n + 1);
     // Marca o match como live novamente para o painel de status ficar coerente.
-    updateMatch(match.id, { status: "live", ended_at: null as unknown as string }).catch(() => {});
+    updateMatch(match.id, { status: "playing", ended_at: null as unknown as string }).catch(() => {});
   }, [isHost, rematchVotes, match.id]);
 
 
