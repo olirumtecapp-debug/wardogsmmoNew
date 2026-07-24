@@ -68,7 +68,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     setActiveScenario(match.scenario as ScenarioId);
   }, [match.scenario]);
 
-  // Init canvas + state (mirrors WarDogsGame reserves so terrain sits above HUD).
+  // Init canvas + state. ONLINE uses a CANONICAL world size so host and guest
+  // simulate identical coordinates regardless of device — screen only scales
+  // the render, never the world.
   useEffect(() => {
     if (fighters.length < 2) return;
     const canvas = canvasRef.current;
@@ -77,26 +79,16 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const storedDur = getStoredMatchDuration(match.code);
 
+    // Canonical world — identical on every client in an online match.
+    const WORLD_W = 1280;
+    const WORLD_H = 720;
+    const HUD_RESERVE = 148;
+    const TOP_RESERVE = 110;
+
     const initIfNeeded = () => {
       if (stateRef.current) return;
-      const rect = parent.getBoundingClientRect();
-      const w = Math.floor(rect.width);
-      const h = Math.floor(rect.height);
-      // Wait until parent has a real size (mobile browser chrome / orientation
-      // can produce a tiny first measurement that pushes terrain behind HUD).
-      if (w < 320 || h < 280) return;
-      const shortLandscape = h < 460;
-      const isTablet = window.matchMedia("(min-width: 640px)").matches && h >= 520;
-      const hudReserve = isTablet ? 112 : shortLandscape ? 156 : 148;
-      const topReserve = isTablet ? 90 : shortLandscape ? 140 : 110;
-
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      const ctx = canvas.getContext("2d")!;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
       try {
-        stateRef.current = createGame(w, h, "online", match.seed, hudReserve, chars, storedDur, false, topReserve);
+        stateRef.current = createGame(WORLD_W, WORLD_H, "online", match.seed, HUD_RESERVE, chars, storedDur, false, TOP_RESERVE);
       } catch (err) {
         console.error("[OnlineMatch] createGame failed", err);
         throw err instanceof Error ? err : new Error("Falha ao iniciar simulação");
@@ -111,10 +103,18 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       const r = parent.getBoundingClientRect();
       if (r.width < 10 || r.height < 10) return;
       const scale = Math.min(r.width / s.width, r.height / s.height);
-      const cssW = Math.floor(s.width * scale);
-      const cssH = Math.floor(s.height * scale);
+      const cssW = Math.max(1, Math.floor(s.width * scale));
+      const cssH = Math.max(1, Math.floor(s.height * scale));
       canvas.style.width = `${cssW}px`;
       canvas.style.height = `${cssH}px`;
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      const ctx = canvas.getContext("2d")!;
+      // Map world coords (s.width × s.height) → device pixels (cssW*dpr × cssH*dpr).
+      const sx = (cssW * dpr) / s.width;
+      const sy = (cssH * dpr) / s.height;
+      ctx.setTransform(sx, 0, 0, sy, 0, 0);
+      markTerrainDirty();
       setDisplaySize(prev => (prev.w === cssW && prev.h === cssH ? prev : { w: cssW, h: cssH }));
     };
     adapt();
@@ -124,6 +124,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     return () => { ro.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match.seed, match.id, fighters.length]);
+
 
   // Pointer (mouse/touch) aim + tap-to-fire on the canvas — mirrors vs IA.
   useEffect(() => {
