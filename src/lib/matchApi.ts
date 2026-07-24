@@ -51,6 +51,21 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
   const seed = Math.floor(Math.random() * 0x7fffffff);
   const maxPlayers = opts.maxPlayers ?? 4;
 
+  // Decide canonical world dimensions from HOST device orientation so both
+  // players simulate the same world, and mobile-in-portrait gets a portrait
+  // playfield (no more tiny letterbox strip).
+  let worldW = 1280;
+  let worldH = 720;
+  try {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+    if (isCoarse && h > w) {
+      worldW = 900;
+      worldH = 1400;
+    }
+  } catch { /* ignore SSR */ }
+
   // try a few codes on collision
   let code = "";
   let match: MatchRow | null = null;
@@ -59,6 +74,7 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
     code = genCode();
     const { data, error } = await supabase.from("matches").insert({
       code, host_id: uid, seed, scenario: opts.scenario, difficulty: opts.difficulty, max_players: maxPlayers,
+      world_w: worldW, world_h: worldH, current_slot: 0,
     }).select().single();
     if (!error && data) { match = data as MatchRow; break; }
     lastError = error;
@@ -71,6 +87,7 @@ export async function createMatch(opts: { nickname: string; charId: string; scen
       }
     }
   }
+
   if (!match) {
     console.error("[createMatch] esgotou tentativas de código:", lastError);
     throw new Error("Não foi possível gerar código único");
