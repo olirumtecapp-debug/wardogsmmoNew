@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Volume2, VolumeX, X } from "lucide-react";
 import { audio, playSfx, type AudioSettings } from "@/game/audio";
+import { HudScaleSetting } from "@/components/HudScaleSetting";
 
 interface Props {
   onClose: () => void;
@@ -81,6 +82,9 @@ export function AudioSettingsPanel({ onClose }: Props) {
           >
             Testar explosão
           </button>
+        </div>
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <HudScaleSetting compact />
         </div>
       </div>
     </div>
