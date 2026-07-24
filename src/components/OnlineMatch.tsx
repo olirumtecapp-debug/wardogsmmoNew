@@ -579,11 +579,12 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && iAmFighter && currentWeapon && (
             <div
-              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
+              className="absolute inset-x-0 bottom-0 px-1.5 pb-1.5 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end justify-center"
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+              <div className="w-full" style={{ transform: "scale(var(--hud-scale, 1))", transformOrigin: "bottom center" }}>
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full overflow-x-auto no-scrollbar">
 
                 <div className="shrink-0 [&>button]:!px-1.5 [&>button]:!text-[10px] sm:[&>button]:!px-3 sm:[&>button]:!text-xs">
                 <ArsenalPopup
@@ -607,7 +608,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   onJump={() => sendInput({ k: "jump" })}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[150px] sm:min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-1.5 py-1.5 sm:px-2 flex-1 min-w-[140px] sm:min-w-[200px] flex items-center gap-1 sm:gap-2 ${hudVisible ? "" : "opacity-70"}`}>
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!myTurn} onHold={dir => { angleHoldRef.current = { dir }; }} onRelease={() => (angleHoldRef.current = null)} dir={-1}>−</HoldButton>
                     <div className="flex flex-col items-center min-w-[38px]">
@@ -726,6 +727,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                 </button>
 
 
+              </div>
               </div>
             </div>
           )}
