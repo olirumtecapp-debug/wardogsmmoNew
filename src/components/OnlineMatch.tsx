@@ -728,6 +728,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
 
               </div>
+              </div>
             </div>
           )}
 
