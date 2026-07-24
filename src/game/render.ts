@@ -226,7 +226,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     const dw = iw * scale;
     const dh = ih * scale;
     const fx = sc.bgFocus?.x ?? 0.5;
-    const fy = sc.bgFocus?.y ?? 0.5;
+    // Ancorar preferencialmente pela base — mantém o horizonte visível em
+    // qualquer aspect ratio (mobile landscape estreito ou desktop ultrawide)
+    // em vez de cortar equilibradamente topo+base como acontecia com 0.5.
+    const fy = sc.bgFocus?.y ?? 0.88;
     const px = Math.sin(now * 0.00006) * 3;
     const dx = (w - dw) * fx + px;
     const dy = (h - dh) * fy;
@@ -240,6 +243,15 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.fillRect(0, 0, w, h);
       ctx.restore();
     }
+
+    // Vinheta radial suave — disfarça cortes laterais/superiores em telas
+    // com aspect ratio bem diferente da arte original, sem escurecer o centro.
+    const vignette = ctx.createRadialGradient(w / 2, h * 0.55, Math.min(w, h) * 0.35, w / 2, h * 0.55, Math.max(w, h) * 0.75);
+    vignette.addColorStop(0, "rgba(0,0,0,0)");
+    vignette.addColorStop(0.7, "rgba(0,0,0,0.18)");
+    vignette.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
 
     // Bottom fade for terrain blend (softer so horizon doesn't disappear)
     const fade = ctx.createLinearGradient(0, h * 0.70, 0, h);
