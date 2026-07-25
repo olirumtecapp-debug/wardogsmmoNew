@@ -9,6 +9,11 @@ import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
 import ozzySideAsset from "@/assets/characters/ozzy-v7.png.asset.json";
 import negaoSideAsset from "@/assets/characters/corso-v7.png.asset.json";
 import miuSideAsset from "@/assets/characters/miu-v7.png.asset.json";
+import barConcrete from "@/assets/barricades/concrete.png.asset.json";
+import barSandbag from "@/assets/barricades/sandbag.png.asset.json";
+import barContainer from "@/assets/barricades/container.png.asset.json";
+import barMinitank from "@/assets/barricades/minitank.png.asset.json";
+import barBalloon from "@/assets/barricades/balloon.png.asset.json";
 
 // Image asset cache — loaded once
 function loadImg(src: string): HTMLImageElement {
@@ -24,6 +29,15 @@ const musaImg = typeof window !== "undefined" ? loadImg(musaSideAsset.url) : nul
 const ozzyImg = typeof window !== "undefined" ? loadImg(ozzySideAsset.url) : null;
 const negaoImg = typeof window !== "undefined" ? loadImg(negaoSideAsset.url) : null;
 const miuImg = typeof window !== "undefined" ? loadImg(miuSideAsset.url) : null;
+
+const barricadeImgs: Record<string, HTMLImageElement | null> = typeof window !== "undefined" ? {
+  concrete: loadImg(barConcrete.url),
+  sandbag: loadImg(barSandbag.url),
+  container: loadImg(barContainer.url),
+  minitank: loadImg(barMinitank.url),
+  balloon: loadImg(barBalloon.url),
+} : { concrete: null, sandbag: null, container: null, minitank: null, balloon: null };
+
 
 
 
@@ -1778,7 +1792,16 @@ function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
   const cx = c.getContext("2d");
   if (!cx) return;
   cx.clearRect(0, 0, c.width, c.height);
-  drawBarricadePattern(cx, b.kind, b.w0, b.h0);
+  const sprite = barricadeImgs[b.kind];
+  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingQuality = "high";
+    cx.drawImage(sprite, 0, 0, b.w0, b.h0);
+  } else {
+    drawBarricadePattern(cx, b.kind, b.w0, b.h0);
+    // Sprite still loading — force redraw next frame so the PNG replaces the fallback.
+    if (sprite) b._dirty = true;
+  }
   // Punch holes where mask=0 by zeroing the alpha channel.
   const img = cx.getImageData(0, 0, c.width, c.height);
   const data = img.data;
@@ -1788,8 +1811,11 @@ function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
   }
   cx.putImageData(img, 0, 0);
   b._canvas = c;
-  b._dirty = false;
+  if (!(sprite && !(sprite.complete && sprite.naturalWidth > 0))) {
+    b._dirty = false;
+  }
 }
+
 
 function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const b of state.barricades) {
