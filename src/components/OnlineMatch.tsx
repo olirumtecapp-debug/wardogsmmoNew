@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameState, WeaponId } from "@/game/types";
-import { activateShield, createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, SHIELD_READY_THRESHOLD, SHIELD_SOS_HP_RATIO, SHIELD_SOS_MIN_CHARGE } from "@/game/engine";
+import { activateShield, createGame, destroyTerrain, endTurn, fire, jumpDog, moveDog, setWeapon, step, triggerCanineBarrage, SPECIAL_READY_THRESHOLD, SHIELD_READY_THRESHOLD, SHIELD_SOS_HP_RATIO, SHIELD_SOS_MIN_CHARGE, setTeleportTarget, clearTeleportTarget, confirmTeleport, TELEPORT_CONFIRM_TOL } from "@/game/engine";
 import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { WEAPONS } from "@/game/weapons";
 import { CHARACTERS, type CharacterId } from "@/game/characters";
@@ -191,13 +191,31 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     };
     const onDown = (e: PointerEvent) => {
       if (!isMyTurn()) return;
+      const s = stateRef.current!;
       const { x, y } = toWorld(e);
+      // Teleport is tap-only: tap the mark to confirm, tap elsewhere to (re)position.
+      if (s.weapon === "teleport") {
+        const t = s.teleportAiming;
+        if (t && t.valid && Math.hypot(x - t.x, y - t.y) <= TELEPORT_CONFIRM_TOL) {
+          sendInput({ k: "tpConfirm" });
+        } else {
+          sendInput({ k: "tpAim", x, y });
+        }
+        return;
+      }
       dragRef.current = { startX: x, startY: y };
     };
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
+      if (!s || !isMyTurn()) return;
+      // Re-aim teleport while dragging with pointer down.
+      if (s.weapon === "teleport" && s.teleportAiming && e.buttons > 0) {
+        const { x, y } = toWorld(e);
+        sendInput({ k: "tpAim", x, y });
+        return;
+      }
       const drag = dragRef.current;
-      if (!s || !drag || !isMyTurn()) return;
+      if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
       const dx = (px - drag.startX) * -dog.facing;
@@ -222,7 +240,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const onUp = (e: PointerEvent) => {
       const drag = dragRef.current;
       dragRef.current = null;
-      if (!drag || !isMyTurn()) return;
+      const s = stateRef.current;
+      if (!s || !isMyTurn()) return;
+      if (s.weapon === "teleport") return; // teleport is confirmed by tapping the mark or CONFIRMAR
+      if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist <= 20) {
@@ -233,6 +254,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         sendInput({ k: "fire" });
       }
     };
+
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
@@ -441,7 +463,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     else if (a.k === "fire") fire(s);
     else if (a.k === "barrage") triggerCanineBarrage(s);
     else if (a.k === "shield") activateShield(s);
+    else if (a.k === "tpAim") setTeleportTarget(s, a.x, a.y);
+    else if (a.k === "tpConfirm") confirmTeleport(s);
+    else if (a.k === "tpCancel") clearTeleportTarget(s);
   }
+
 
 
   const sendInput = (action: InputAction, localAlreadyApplied = false) => {
@@ -452,7 +478,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       if (action.k === "angle" || action.k === "power" || action.k === "weapon") {
         applyAction(s, action);
         localEditUntilRef.current = performance.now() + 250;
-      } else if (!isHost && (action.k === "move" || action.k === "jump")) {
+      } else if (!isHost && (action.k === "move" || action.k === "jump" || action.k === "tpAim" || action.k === "tpCancel")) {
+        // Instant local echo on guest so the marker/mobility feels snappy;
+        // authoritative host snapshot converges shortly after.
         applyAction(s, action);
       } else if (isHost) {
         applyAction(s, action);
@@ -460,6 +488,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     }
     if (!isHost) netRef.current?.send({ t: "input", slot: mySlot, action });
   };
+
 
   // Keyboard bindings for desktop
   useEffect(() => {
@@ -576,6 +605,28 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
               </div>
             </div>
           )}
+
+          {s && s.phase === "aiming" && s.weapon === "teleport" && myTurn && (
+            <div className="absolute left-1/2 -translate-x-1/2 top-[76px] sm:top-[92px] pointer-events-none z-20 animate-fade-in">
+              <div
+                className="panel px-3 py-1.5 flex items-center gap-2 shadow-xl"
+                style={{
+                  borderColor: s.teleportAiming?.valid ? "#38f0ff" : s.teleportAiming ? "#ff5a5a" : "rgba(255,255,255,0.2)",
+                  boxShadow: s.teleportAiming?.valid ? "0 0 14px rgba(56,240,255,0.55)" : undefined,
+                }}
+              >
+                <span className="text-lg leading-none">🌀</span>
+                <div className="stencil text-[10px] sm:text-[11px] tracking-widest leading-tight text-center">
+                  {!s.teleportAiming
+                    ? <>TOQUE NO MAPA PARA MARCAR O DESTINO</>
+                    : s.teleportAiming.valid
+                      ? <span style={{ color: "#7ff0ff" }}>TOQUE NA MARCA OU EM CONFIRMAR</span>
+                      : <span style={{ color: "#ff9a9a" }}>PONTO INVÁLIDO — TENTE MAIS PERTO</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && iAmFighter && currentWeapon && (
             <div
@@ -717,14 +768,42 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   );
                 })()}
 
-                <button
-                  disabled={!myTurn}
-                  onClick={() => sendInput({ k: "fire" })}
-                  aria-label="Atirar"
-                  className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
-                >
-                  FOGO
-                </button>
+                {s.weapon === "teleport" ? (
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      disabled={!myTurn || !s.teleportAiming?.valid}
+                      onClick={() => sendInput({ k: "tpConfirm" })}
+                      aria-label="Confirmar teletransporte"
+                      className="px-3 h-9 sm:h-11 rounded-md stencil text-[11px] sm:text-xs tracking-widest border-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        borderColor: s.teleportAiming?.valid ? "#38f0ff" : "rgba(255,255,255,0.15)",
+                        color: s.teleportAiming?.valid ? "#0a1418" : "rgba(255,255,255,0.5)",
+                        background: s.teleportAiming?.valid ? "linear-gradient(180deg,#7ff0ff,#38c8e0)" : "rgba(255,255,255,0.05)",
+                        boxShadow: s.teleportAiming?.valid ? "0 0 12px rgba(56,240,255,0.55)" : undefined,
+                      }}
+                    >
+                      CONFIRMAR
+                    </button>
+                    <button
+                      disabled={!myTurn}
+                      onClick={() => { sendInput({ k: "tpCancel" }); sendInput({ k: "weapon", v: "bazooka" }); }}
+                      aria-label="Cancelar teletransporte"
+                      className="px-3 h-7 sm:h-8 rounded-md stencil text-[10px] tracking-widest border border-white/20 text-muted-foreground hover:bg-white/5"
+                    >
+                      CANCELAR
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    disabled={!myTurn}
+                    onClick={() => sendInput({ k: "fire" })}
+                    aria-label="Atirar"
+                    className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
+                  >
+                    FOGO
+                  </button>
+                )}
+
 
 
               </div>
@@ -784,11 +863,15 @@ function serialize(s: GameState) {
     dogs: s.dogs.map(d => ({
       x: d.x, y: d.y, vy: d.vy, hp: d.hp, facing: d.facing, airborne: !!d.airborne,
       moveBudget: d.moveBudget, hasJumped: d.hasJumped, aliveTicks: d.aliveTicks,
+      specialCharge: d.specialCharge, shieldCharge: d.shieldCharge, rageCharge: d.rageCharge,
+      shieldActive: !!d.shieldActive, shieldAbsorbed: d.shieldAbsorbed,
+      rageActive: !!d.rageActive, rageQueued: !!d.rageQueued,
     })),
     projectiles: s.projectiles.map(p => ({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, weapon: p.weapon, age: p.age, ownerTeam: p.ownerTeam, isSub: !!p.isSub, trail: p.trail.slice(-12) })),
     currentPlayer: s.currentPlayer, wind: s.wind, angle: s.angle, power: s.power,
     weapon: s.weapon, phase: s.phase, message: s.message, winner: s.winner,
     ammo: s.ammo, turnTimer: s.turnTimer, matchTimer: s.matchTimer,
+    teleportAiming: s.teleportAiming ?? null,
   };
 }
 
@@ -800,6 +883,13 @@ function apply(s: GameState, snap: Snapshot, skipAim = false) {
     if (!sd) continue;
     d.x = sd.x; d.y = sd.y; d.vy = sd.vy; d.hp = sd.hp; d.facing = sd.facing;
     d.airborne = sd.airborne; d.moveBudget = sd.moveBudget; d.hasJumped = sd.hasJumped; d.aliveTicks = sd.aliveTicks;
+    if (typeof sd.specialCharge === "number") d.specialCharge = sd.specialCharge;
+    if (typeof sd.shieldCharge === "number") d.shieldCharge = sd.shieldCharge;
+    if (typeof sd.rageCharge === "number") d.rageCharge = sd.rageCharge;
+    if (typeof sd.shieldAbsorbed === "number") d.shieldAbsorbed = sd.shieldAbsorbed;
+    d.shieldActive = !!sd.shieldActive;
+    d.rageActive = !!sd.rageActive;
+    d.rageQueued = !!sd.rageQueued;
   }
   s.projectiles = snap.projectiles.map(p => ({
     x: p.x, y: p.y, vx: p.vx, vy: p.vy, weapon: p.weapon as WeaponId, age: p.age, ownerTeam: p.ownerTeam as 0 | 1, trail: p.trail as Array<[number, number]>, isSub: p.isSub,
@@ -817,7 +907,9 @@ function apply(s: GameState, snap: Snapshot, skipAim = false) {
   s.ammo = snap.ammo as GameState["ammo"];
   s.turnTimer = snap.turnTimer;
   s.matchTimer = snap.matchTimer;
+  s.teleportAiming = snap.teleportAiming ?? null;
 }
+
 
 function advanceCosmetic(s: GameState, dt: number) {
   for (let i = s.explosions.length - 1; i >= 0; i--) {

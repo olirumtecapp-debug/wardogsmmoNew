@@ -1235,7 +1235,7 @@ export function isValidTeleportTarget(state: GameState, tx: number, ty: number):
   // ground column beneath target must be solid
   const sy = surfaceOrBarricadeY(state, tx);
   if (sy >= state.terrainBottom - 4) return false;
-  if (sy < 40) return false;
+  if (sy < 24) return false;
   // Reject if the drop point is inside a barricade body
   if (barricadeAt(state, tx, sy + 4)) return false;
   return true;
@@ -1253,7 +1253,7 @@ export function clearTeleportTarget(state: GameState) {
 
 // Tolerance (in world pixels) around the current teleport mark that a
 // second tap should treat as "confirm" instead of "move mark".
-export const TELEPORT_CONFIRM_TOL = 42;
+export const TELEPORT_CONFIRM_TOL = 64;
 
 // Confirm the current teleport target. Returns true when the teleport
 // actually executed. Callers should treat `false` as "keep aiming".
