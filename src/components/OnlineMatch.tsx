@@ -441,7 +441,11 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     else if (a.k === "fire") fire(s);
     else if (a.k === "barrage") triggerCanineBarrage(s);
     else if (a.k === "shield") activateShield(s);
+    else if (a.k === "tpAim") setTeleportTarget(s, a.x, a.y);
+    else if (a.k === "tpConfirm") confirmTeleport(s);
+    else if (a.k === "tpCancel") clearTeleportTarget(s);
   }
+
 
 
   const sendInput = (action: InputAction, localAlreadyApplied = false) => {
