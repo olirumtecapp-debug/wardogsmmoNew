@@ -589,7 +589,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               aria-hidden={!hudVisible}
             >
               <div className="w-full">
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full overflow-x-auto no-scrollbar">
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
 
                 <ArsenalPopup
                   open={arsenalOpen}
@@ -610,7 +610,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   onJump={() => jumpDog(s)}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[150px] sm:min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[120px] sm:min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -832,7 +832,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                     disabled={isAiTurn || s.phase !== "aiming"}
                     onClick={() => fire(s)}
                     aria-label="Atirar"
-                    className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                    className="fire-btn fire-btn-compact !w-12 sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
                   >
                     FOGO
                   </button>
@@ -1053,7 +1053,7 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
   return (
     <div className="relative shrink-0">
       {open && (
-        <div className="absolute left-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl w-[280px] sm:w-[420px]">
+        <div className="absolute left-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl w-[280px] sm:w-[420px] max-w-[calc(100vw-16px)]">
           <div className="flex items-center justify-between mb-2">
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
             <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
@@ -1116,14 +1116,15 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
-        className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1.5 min-w-[128px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
+        className={`btn-hud h-full flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1.5 min-w-0 sm:min-w-[150px] ${open ? "is-selected" : ""}`}
         style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
       >
         <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
-        <span className="flex flex-col items-start min-w-0 flex-1">
+        <span className="hidden sm:flex flex-col items-start min-w-0 flex-1">
           <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arma</span>
           <span className="stencil text-xs truncate max-w-full" style={{ color: currentW.color }}>{currentW.name.split(" ")[0]}</span>
         </span>
+        <span className="sm:hidden stencil text-[10px] truncate max-w-[52px]" style={{ color: currentW.color }}>{currentW.name.split(" ")[0]}</span>
         <span className="text-[10px] tabular-nums shrink-0 opacity-80">
           {currentAmmo === -1 ? "∞" : `×${currentAmmo}`}
         </span>
