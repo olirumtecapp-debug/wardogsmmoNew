@@ -466,7 +466,10 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const hudVisible = s?.phase === "aiming" && s?.winner === null;
 
   const hudReserve = s?.hudReserve ?? 148;
-  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
+  // Scale down the HUD row on narrow viewports so FIRE / teleport confirm
+  // never spill outside the screen on smartphones. Same idea as OnlineMatch.
+  const hudScale = displaySize.w > 0 ? Math.max(0.55, Math.min(1, displaySize.w / 1280)) : 1;
+  const hudCssPx = displaySize.h && s ? ((displaySize.h * hudReserve) / s.height) * hudScale : 0;
 
   const tryRage = () => {
     if (!s) return;
@@ -586,7 +589,15 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+              <div
+                className="w-full"
+                style={{
+                  transform: `scale(${hudScale})`,
+                  transformOrigin: "bottom center",
+                  width: `${100 / hudScale}%`,
+                }}
+              >
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
                 <ArsenalPopup
                   open={arsenalOpen}
                   onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
@@ -606,7 +617,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   onJump={() => jumpDog(s)}
                 />
 
-                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[150px] sm:min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -835,6 +846,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                 )}
 
 
+              </div>
               </div>
             </div>
           )}
