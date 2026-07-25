@@ -468,8 +468,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const hudReserve = s?.hudReserve ?? 148;
   // Scale down the HUD row on narrow viewports so FIRE / teleport confirm
   // never spill outside the screen on smartphones. Same idea as OnlineMatch.
-  const hudScale = displaySize.w > 0 ? Math.max(0.55, Math.min(1, displaySize.w / 1280)) : 1;
-  const hudCssPx = displaySize.h && s ? ((displaySize.h * hudReserve) / s.height) * hudScale : 0;
+  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
 
   const tryRage = () => {
     if (!s) return;
