@@ -192,7 +192,7 @@ function spawnFloatingObstacles(
     if (!ok) continue;
     const mask = new Uint8Array(bw * bh);
     // Máscara elíptica (formato balão) — o resto fica transparente e não colide.
-    const rx = bw / 2 - 1, ry = 12; // corpo do balão (elipse superior)
+    const rx = bw / 2 - 1, ry = 14; // corpo do balão (elipse superior) — um pouco maior para facilitar acertos
     const ecx = bw / 2, ecy = 12;
     for (let py = 0; py < bh; py++) {
       for (let px = 0; px < bw; px++) {
