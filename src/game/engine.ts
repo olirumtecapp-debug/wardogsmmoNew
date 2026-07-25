@@ -4,6 +4,8 @@ import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
 import { CHARACTERS, type CharacterId } from "./characters";
 import { playSfx, playFireSfx } from "./audio";
+import { isAdminOverride } from "@/lib/unlocks";
+
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
@@ -66,7 +68,13 @@ export function createGame(
     wind: (rng() - 0.5) * 2 * sc.windScale,
     angle: 45, power: 60,
     weapon: "bazooka",
-    ammo: initialAmmo(),
+    ammo: (() => {
+      const a = initialAmmo();
+      if (isAdminOverride()) {
+        for (const k of WEAPON_ORDER) a[k] = -1;
+      }
+      return a;
+    })(),
     phase: "aiming",
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
@@ -184,7 +192,7 @@ function spawnFloatingObstacles(
     if (!ok) continue;
     const mask = new Uint8Array(bw * bh);
     // Máscara elíptica (formato balão) — o resto fica transparente e não colide.
-    const rx = bw / 2 - 1, ry = 12; // corpo do balão (elipse superior)
+    const rx = bw / 2 - 1, ry = 14; // corpo do balão (elipse superior) — um pouco maior para facilitar acertos
     const ecx = bw / 2, ecy = 12;
     for (let py = 0; py < bh; py++) {
       for (let px = 0; px < bw; px++) {
@@ -617,6 +625,12 @@ function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
   for (let i = state.barricades.length - 1; i >= 0; i--) {
     const b = state.barricades[i];
     if (cx + rr < b.x0 || cx - rr > b.x0 + b.w0 || cy + rr < b.y0 || cy - rr > b.y0 + b.h0) continue;
+    // Balões estouram no primeiro contato com o raio de qualquer explosão.
+    if (b.kind === "balloon") {
+      state.barricades.splice(i, 1);
+      spawnExplosion(state, b.x0 + b.w0 / 2, b.y0 + 12, 18, "#ff9a3a");
+      continue;
+    }
     const lx0 = Math.max(0, Math.floor(cx - rr - b.x0));
     const lx1 = Math.min(b.w0 - 1, Math.ceil(cx + rr - b.x0));
     const ly0 = Math.max(0, Math.floor(cy - rr - b.y0));

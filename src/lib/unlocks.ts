@@ -41,7 +41,15 @@ export function setAdminOverride(v: boolean) {
   const s = loadUnlocks();
   s.adminOverride = v;
   saveUnlocks(s);
+  if (typeof window !== "undefined") {
+    try { window.dispatchEvent(new Event("wardogs:admin-override-changed")); } catch { /* ignore */ }
+  }
 }
+
+export function isAdminOverride(): boolean {
+  return !!loadUnlocks().adminOverride;
+}
+
 
 /**
  * Regras de desbloqueio:
