@@ -1116,14 +1116,15 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
-        className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1.5 min-w-[128px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
+        className={`btn-hud h-full flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1.5 min-w-0 sm:min-w-[150px] ${open ? "is-selected" : ""}`}
         style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
       >
         <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>
-        <span className="flex flex-col items-start min-w-0 flex-1">
+        <span className="hidden sm:flex flex-col items-start min-w-0 flex-1">
           <span className="stencil text-[9px] uppercase tracking-[0.2em] text-muted-foreground leading-none">Arma</span>
           <span className="stencil text-xs truncate max-w-full" style={{ color: currentW.color }}>{currentW.name.split(" ")[0]}</span>
         </span>
+        <span className="sm:hidden stencil text-[10px] truncate max-w-[52px]" style={{ color: currentW.color }}>{currentW.name.split(" ")[0]}</span>
         <span className="text-[10px] tabular-nums shrink-0 opacity-80">
           {currentAmmo === -1 ? "∞" : `×${currentAmmo}`}
         </span>
