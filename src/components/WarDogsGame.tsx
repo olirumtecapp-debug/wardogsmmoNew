@@ -663,7 +663,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                         ? "⚡ USAR"
                         : `⚡ ${Math.floor(pct)}%`;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[92px] relative">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[72px] sm:w-[92px] relative">
                       <div className="flex items-center gap-1 w-full">
                         <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 flex-1">Fúria</span>
                         <button
@@ -732,7 +732,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const pct = Math.max(0, Math.min(100, dog.specialCharge));
                   const ready = pct >= SPECIAL_READY_THRESHOLD;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[68px] sm:w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Bombardeio</span>
                       <button
                         disabled={isAiTurn || !ready || s.phase !== "aiming"}
@@ -770,7 +770,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const ready = (fullOk || sosOk) && !dog.shieldActive;
                   const active = dog.shieldActive;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[68px] sm:w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Escudo</span>
                       <button
                         disabled={isAiTurn || active || !ready || s.phase !== "aiming"}
