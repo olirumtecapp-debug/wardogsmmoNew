@@ -746,14 +746,42 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
                   );
                 })()}
 
-                <button
-                  disabled={!myTurn}
-                  onClick={() => sendInput({ k: "fire" })}
-                  aria-label="Atirar"
-                  className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
-                >
-                  FOGO
-                </button>
+                {s.weapon === "teleport" ? (
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      disabled={!myTurn || !s.teleportAiming?.valid}
+                      onClick={() => sendInput({ k: "tpConfirm" })}
+                      aria-label="Confirmar teletransporte"
+                      className="px-3 h-9 sm:h-11 rounded-md stencil text-[11px] sm:text-xs tracking-widest border-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        borderColor: s.teleportAiming?.valid ? "#38f0ff" : "rgba(255,255,255,0.15)",
+                        color: s.teleportAiming?.valid ? "#0a1418" : "rgba(255,255,255,0.5)",
+                        background: s.teleportAiming?.valid ? "linear-gradient(180deg,#7ff0ff,#38c8e0)" : "rgba(255,255,255,0.05)",
+                        boxShadow: s.teleportAiming?.valid ? "0 0 12px rgba(56,240,255,0.55)" : undefined,
+                      }}
+                    >
+                      CONFIRMAR
+                    </button>
+                    <button
+                      disabled={!myTurn}
+                      onClick={() => { sendInput({ k: "tpCancel" }); sendInput({ k: "weapon", v: "bazooka" }); }}
+                      aria-label="Cancelar teletransporte"
+                      className="px-3 h-7 sm:h-8 rounded-md stencil text-[10px] tracking-widest border border-white/20 text-muted-foreground hover:bg-white/5"
+                    >
+                      CANCELAR
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    disabled={!myTurn}
+                    onClick={() => sendInput({ k: "fire" })}
+                    aria-label="Atirar"
+                    className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
+                  >
+                    FOGO
+                  </button>
+                )}
+
 
 
               </div>
