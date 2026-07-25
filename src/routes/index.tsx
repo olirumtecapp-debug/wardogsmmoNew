@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { HelpCircle, X, Maximize2, Volume2, VolumeX } from "lucide-react";
+import { HelpCircle, X, Maximize2, Volume2, VolumeX, Heart } from "lucide-react";
 import { audio, playSfx } from "@/game/audio";
 import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { WarDogsGame } from "@/components/WarDogsGame";
@@ -221,6 +221,15 @@ function Home() {
               Tela cheia
             </button>
           )}
+          <button
+            onClick={() => { playSfx("click"); navigate({ to: "/doacao" }); }}
+            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
+            style={{ borderColor: "var(--warn)", color: "var(--warn)" }}
+            aria-label="Doação"
+          >
+            <Heart size={14} className="fill-current" />
+            Doação
+          </button>
         </div>
       </main>
 
