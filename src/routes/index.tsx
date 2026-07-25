@@ -42,7 +42,6 @@ type Stage =
 
 function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
-  const [matchNonce, setMatchNonce] = useState(0);
   const [showHowTo, setShowHowTo] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
   const [muted, setMuted] = useState(() => audio.getSettings().muted);
@@ -85,13 +84,10 @@ function Home() {
       <OrientationGate>
         <div className="fixed inset-0">
           <WarDogsGame
-            key={`${stage.chars.join("-")}-${matchNonce}`}
             mode={stage.mode}
             chars={stage.chars}
             matchDuration={stage.matchDuration}
             onExit={() => setStage({ kind: "menu" })}
-            onRematch={() => setMatchNonce((n) => n + 1)}
-            onChangeFighter={() => setStage({ kind: "briefing", mode: stage.mode })}
           />
         </div>
       </OrientationGate>

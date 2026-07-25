@@ -5,7 +5,6 @@ import { render, markTerrainDirty, setAimAssist } from "@/game/render";
 import { aiTakeTurn } from "@/game/ai";
 import { WEAPONS, WEAPON_ORDER } from "@/game/weapons";
 import { CHARACTERS, characterSkin, type CharacterId } from "@/game/characters";
-import { getActiveScenario } from "@/game/scenarios";
 import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { audio } from "@/game/audio";
 
@@ -56,8 +55,6 @@ interface Props {
   onGameOver?: (result: { winner: 0 | 1 | null; playerHpPct: number }) => void;
   matchDuration?: number; // segundos; 0 = sem limite
   rageEnabled?: boolean;  // Modo Fúria (Campanha)
-  onRematch?: () => void;        // reinicia com mesmos guerreiros
-  onChangeFighter?: () => void;  // volta pra seleção de guerreiro
 }
 
 
@@ -170,7 +167,7 @@ export function WeaponIcon({ id, className }: { id: WeaponId; className?: string
 }
 
 
-export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled, onRematch, onChangeFighter }: Props) {
+export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missionConfig, onGameOver, matchDuration, rageEnabled }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<GameState | null>(null);
@@ -509,24 +506,9 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   });
 
 
-  const scenarioBg = getActiveScenario()?.bgImage;
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-background touch-none select-none">
-      {scenarioBg && (
-        <div
-          className="absolute inset-0 -z-10 pointer-events-none"
-          style={{
-            backgroundImage: `url(${scenarioBg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "blur(18px) brightness(0.55) saturate(1.05)",
-            transform: "scale(1.08)",
-          }}
-          aria-hidden
-        />
-      )}
       <div ref={frameRef} className="relative flex-1 min-h-0 flex items-center justify-center">
-
         <div
           className="relative"
           style={displaySize.w > 0 ? { width: displaySize.w, height: displaySize.h } : undefined}
@@ -600,15 +582,11 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
           {s && s.phase !== "gameover" && hudCssPx > 0 && (
             <div
-              className="absolute inset-x-0 bottom-0 px-1.5 pb-1.5 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end justify-center"
+              className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-1 sm:px-3 sm:pb-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-end"
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div
-                className="w-full origin-bottom"
-                style={{ transform: "scale(var(--hud-scale, 1))", transformOrigin: "bottom center" }}
-              >
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full overflow-x-auto no-scrollbar">
+              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
                 <ArsenalPopup
                   open={arsenalOpen}
                   onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
@@ -628,7 +606,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   onJump={() => jumpDog(s)}
                 />
 
-                <div className={`panel px-1.5 py-1.5 sm:px-2 flex-1 min-w-[140px] sm:min-w-[200px] flex items-center gap-1 sm:gap-2 ${hudVisible ? "" : "opacity-70"}`}>
+                <div className={`panel px-2 py-1.5 flex-1 min-w-[200px] flex items-center gap-2 ${hudVisible ? "" : "opacity-70"}`}>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <HoldButton disabled={!hudVisible || isAiTurn} onHold={dir => { angleHoldRef.current = { dir, last: 0 }; }} onRelease={() => (angleHoldRef.current = null)} dir={1}>−</HoldButton>
@@ -681,7 +659,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                         ? "⚡ USAR"
                         : `⚡ ${Math.floor(pct)}%`;
                   return (
-                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[68px] sm:w-[92px] relative">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[92px] relative">
                       <div className="flex items-center gap-1 w-full">
                         <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 flex-1">Fúria</span>
                         <button
@@ -750,7 +728,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const pct = Math.max(0, Math.min(100, dog.specialCharge));
                   const ready = pct >= SPECIAL_READY_THRESHOLD;
                   return (
-                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[62px] sm:w-[86px]">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Bombardeio</span>
                       <button
                         disabled={isAiTurn || !ready || s.phase !== "aiming"}
@@ -788,7 +766,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const ready = (fullOk || sosOk) && !dog.shieldActive;
                   const active = dog.shieldActive;
                   return (
-                    <div className="panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col items-center gap-1 shrink-0 w-[62px] sm:w-[86px]">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Escudo</span>
                       <button
                         disabled={isAiTurn || active || !ready || s.phase !== "aiming"}
@@ -850,14 +828,13 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                     disabled={isAiTurn || s.phase !== "aiming"}
                     onClick={() => fire(s)}
                     aria-label="Atirar"
-                    className="fire-btn !w-11 !h-11 !min-h-[44px] !text-[10px] !rounded-full sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!text-[0.85rem] shrink-0"
+                    className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
                   >
                     FOGO
                   </button>
                 )}
 
 
-              </div>
               </div>
             </div>
           )}
@@ -871,32 +848,10 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   {s.winner === null ? "Empate" : `Vitória ${s.winner === 0 ? teamA.name : teamB.name}`}
                 </h2>
 
-                <div className="flex flex-col sm:flex-row gap-2 mt-6 justify-center">
-                  <button
-                    className="btn-hud btn-primary"
-                    onClick={() => {
-                      if (onRematch) { stateRef.current = null; onRematch(); }
-                      else { stateRef.current = null; location.reload(); }
-                    }}
-                  >
-                    Revanche
-                  </button>
-                  <button
-                    className="btn-hud"
-                    onClick={() => {
-                      if (onChangeFighter) { stateRef.current = null; onChangeFighter(); }
-                      else onExit();
-                    }}
-                  >
-                    Trocar guerreiro
-                  </button>
+                <div className="flex gap-2 mt-6 justify-center">
+                  <button className="btn-hud btn-primary" onClick={() => { stateRef.current = null; location.reload(); }}>Revanche</button>
                   <button className="btn-hud" onClick={onExit}>Menu</button>
                 </div>
-                {!onChangeFighter && (
-                  <div className="text-[10px] text-muted-foreground mt-3 uppercase tracking-widest">
-                    Escolha novo pelotão no menu principal
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -1023,7 +978,7 @@ export function MobilityBar({ dog, disabled, onHold, onRelease, onJump }: {
   const canMove = !disabled && dog.moveBudget > 0 && !dog.airborne;
   const canJump = !disabled && !dog.hasJumped && !dog.airborne;
   return (
-    <div className={`panel px-1.5 py-1 sm:px-2 sm:py-1.5 flex flex-col gap-1 shrink-0 w-[88px] sm:w-[124px] ${disabled ? "opacity-70" : ""}`}>
+    <div className={`panel px-2 py-1.5 flex flex-col gap-1 shrink-0 w-[112px] sm:w-[124px] ${disabled ? "opacity-70" : ""}`}>
       <div className="flex items-center gap-1 justify-center">
         <MoveHoldButton disabled={!canMove} onHold={() => onHold(-1)} onRelease={onRelease} label="Andar esquerda">◀</MoveHoldButton>
         <button
@@ -1156,7 +1111,7 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
         aria-expanded={open}
         aria-label={`Arsenal — ${currentW.name}`}
         disabled={disabled}
-        className={`btn-hud h-full flex items-center gap-1.5 px-1.5 py-1.5 sm:px-2 min-w-[96px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
+        className={`btn-hud h-full flex items-center gap-1.5 px-2 py-1.5 min-w-[128px] sm:min-w-[150px] ${open ? "is-selected" : ""}`}
         style={{ borderColor: currentW.color, boxShadow: open ? `0 0 18px ${currentW.color}77` : undefined }}
       >
         <span aria-hidden><WeaponIcon id={current} className="w-6 h-6" /></span>

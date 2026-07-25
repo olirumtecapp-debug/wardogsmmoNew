@@ -346,19 +346,11 @@ export function destroyTerrain(state: GameState, cx: number, cy: number, r: numb
   const x1 = Math.min(w - 1, Math.ceil(cx + r));
   const y0 = Math.max(0, Math.floor(cy - r));
   const y1 = Math.min(h - 1, Math.ceil(cy + r));
-  let removed = 0;
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const dx = x - cx, dy = y - cy;
-      if (dx * dx + dy * dy <= r2) {
-        if (terrain[y * w + x] === 1) removed++;
-        terrain[y * w + x] = 0;
-      }
+      if (dx * dx + dy * dy <= r2) terrain[y * w + x] = 0;
     }
-  }
-  // Cratera visível: registra um scorch mais forte quando pixels foram removidos.
-  if (removed > 0) {
-    state.scorchMarks.push({ x: cx, y: cy, radius: r * 1.15, life: 8, maxLife: 8 });
   }
   markTerrainDirty();
 }
@@ -1235,7 +1227,7 @@ export function isValidTeleportTarget(state: GameState, tx: number, ty: number):
   // ground column beneath target must be solid
   const sy = surfaceOrBarricadeY(state, tx);
   if (sy >= state.terrainBottom - 4) return false;
-  if (sy < 24) return false;
+  if (sy < 40) return false;
   // Reject if the drop point is inside a barricade body
   if (barricadeAt(state, tx, sy + 4)) return false;
   return true;
@@ -1253,7 +1245,7 @@ export function clearTeleportTarget(state: GameState) {
 
 // Tolerance (in world pixels) around the current teleport mark that a
 // second tap should treat as "confirm" instead of "move mark".
-export const TELEPORT_CONFIRM_TOL = 64;
+export const TELEPORT_CONFIRM_TOL = 42;
 
 // Confirm the current teleport target. Returns true when the teleport
 // actually executed. Callers should treat `false` as "keep aiming".

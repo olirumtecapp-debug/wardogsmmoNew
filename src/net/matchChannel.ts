@@ -7,8 +7,7 @@ export type NetEvent =
   | { t: "snapshot"; state: unknown }
   | { t: "explosion"; x: number; y: number; r: number }
   | { t: "turn"; slot: number; wind: number }
-  | { t: "chat"; slot: number; text: string }
-  | { t: "rematch-req"; slot: number };
+  | { t: "chat"; slot: number; text: string };
 
 export type InputAction =
   | { k: "angle"; v: number }
@@ -18,11 +17,7 @@ export type InputAction =
   | { k: "jump" }
   | { k: "fire" }
   | { k: "barrage" }
-  | { k: "shield" }
-  | { k: "tpAim"; x: number; y: number }
-  | { k: "tpConfirm" }
-  | { k: "tpCancel" };
-
+  | { k: "shield" };
 
 
 export interface MatchChannel {
