@@ -18,7 +18,11 @@ export type InputAction =
   | { k: "jump" }
   | { k: "fire" }
   | { k: "barrage" }
-  | { k: "shield" };
+  | { k: "shield" }
+  | { k: "tpAim"; x: number; y: number }
+  | { k: "tpConfirm" }
+  | { k: "tpCancel" };
+
 
 
 export interface MatchChannel {
