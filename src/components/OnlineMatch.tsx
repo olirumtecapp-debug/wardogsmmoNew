@@ -456,7 +456,9 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
       if (action.k === "angle" || action.k === "power" || action.k === "weapon") {
         applyAction(s, action);
         localEditUntilRef.current = performance.now() + 250;
-      } else if (!isHost && (action.k === "move" || action.k === "jump")) {
+      } else if (!isHost && (action.k === "move" || action.k === "jump" || action.k === "tpAim" || action.k === "tpCancel")) {
+        // Instant local echo on guest so the marker/mobility feels snappy;
+        // authoritative host snapshot converges shortly after.
         applyAction(s, action);
       } else if (isHost) {
         applyAction(s, action);
@@ -464,6 +466,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     }
     if (!isHost) netRef.current?.send({ t: "input", slot: mySlot, action });
   };
+
 
   // Keyboard bindings for desktop
   useEffect(() => {
