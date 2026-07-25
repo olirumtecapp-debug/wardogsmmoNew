@@ -1053,7 +1053,7 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
   return (
     <div className="relative shrink-0">
       {open && (
-        <div className="absolute left-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl w-[280px] sm:w-[420px]">
+        <div className="absolute left-0 bottom-full mb-2 panel p-2 sm:p-3 animate-fade-in z-20 shadow-2xl w-[280px] sm:w-[420px] max-w-[calc(100vw-16px)]">
           <div className="flex items-center justify-between mb-2">
             <div className="stencil text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Arsenal</div>
             <button className="btn-hud !px-2 !py-0.5 text-[10px]" onClick={onToggle} aria-label="Fechar arsenal">✕</button>
