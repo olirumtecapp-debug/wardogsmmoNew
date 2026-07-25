@@ -191,13 +191,31 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     };
     const onDown = (e: PointerEvent) => {
       if (!isMyTurn()) return;
+      const s = stateRef.current!;
       const { x, y } = toWorld(e);
+      // Teleport is tap-only: tap the mark to confirm, tap elsewhere to (re)position.
+      if (s.weapon === "teleport") {
+        const t = s.teleportAiming;
+        if (t && t.valid && Math.hypot(x - t.x, y - t.y) <= TELEPORT_CONFIRM_TOL) {
+          sendInput({ k: "tpConfirm" });
+        } else {
+          sendInput({ k: "tpAim", x, y });
+        }
+        return;
+      }
       dragRef.current = { startX: x, startY: y };
     };
     const onMove = (e: PointerEvent) => {
       const s = stateRef.current;
+      if (!s || !isMyTurn()) return;
+      // Re-aim teleport while dragging with pointer down.
+      if (s.weapon === "teleport" && s.teleportAiming && e.buttons > 0) {
+        const { x, y } = toWorld(e);
+        sendInput({ k: "tpAim", x, y });
+        return;
+      }
       const drag = dragRef.current;
-      if (!s || !drag || !isMyTurn()) return;
+      if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dog = s.dogs[s.currentPlayer];
       const dx = (px - drag.startX) * -dog.facing;
@@ -222,7 +240,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
     const onUp = (e: PointerEvent) => {
       const drag = dragRef.current;
       dragRef.current = null;
-      if (!drag || !isMyTurn()) return;
+      const s = stateRef.current;
+      if (!s || !isMyTurn()) return;
+      if (s.weapon === "teleport") return; // teleport is confirmed by tapping the mark or CONFIRMAR
+      if (!drag) return;
       const { x: px, y: py } = toWorld(e);
       const dist = Math.hypot(px - drag.startX, py - drag.startY);
       if (dist <= 20) {
@@ -233,6 +254,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
         sendInput({ k: "fire" });
       }
     };
+
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
