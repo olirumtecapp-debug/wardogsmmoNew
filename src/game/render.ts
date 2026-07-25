@@ -1792,7 +1792,16 @@ function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
   const cx = c.getContext("2d");
   if (!cx) return;
   cx.clearRect(0, 0, c.width, c.height);
-  drawBarricadePattern(cx, b.kind, b.w0, b.h0);
+  const sprite = barricadeImgs[b.kind];
+  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingQuality = "high";
+    cx.drawImage(sprite, 0, 0, b.w0, b.h0);
+  } else {
+    drawBarricadePattern(cx, b.kind, b.w0, b.h0);
+    // Sprite still loading — force redraw next frame so the PNG replaces the fallback.
+    if (sprite) b._dirty = true;
+  }
   // Punch holes where mask=0 by zeroing the alpha channel.
   const img = cx.getImageData(0, 0, c.width, c.height);
   const data = img.data;
@@ -1802,8 +1811,11 @@ function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
   }
   cx.putImageData(img, 0, 0);
   b._canvas = c;
-  b._dirty = false;
+  if (!(sprite && !(sprite.complete && sprite.naturalWidth > 0))) {
+    b._dirty = false;
+  }
 }
+
 
 function drawBarricades(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const b of state.barricades) {
