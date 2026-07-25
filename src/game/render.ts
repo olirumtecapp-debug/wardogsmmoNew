@@ -9,6 +9,11 @@ import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
 import ozzySideAsset from "@/assets/characters/ozzy-v7.png.asset.json";
 import negaoSideAsset from "@/assets/characters/corso-v7.png.asset.json";
 import miuSideAsset from "@/assets/characters/miu-v7.png.asset.json";
+import barConcrete from "@/assets/barricades/concrete.png.asset.json";
+import barSandbag from "@/assets/barricades/sandbag.png.asset.json";
+import barContainer from "@/assets/barricades/container.png.asset.json";
+import barMinitank from "@/assets/barricades/minitank.png.asset.json";
+import barBalloon from "@/assets/barricades/balloon.png.asset.json";
 
 // Image asset cache — loaded once
 function loadImg(src: string): HTMLImageElement {
@@ -24,6 +29,15 @@ const musaImg = typeof window !== "undefined" ? loadImg(musaSideAsset.url) : nul
 const ozzyImg = typeof window !== "undefined" ? loadImg(ozzySideAsset.url) : null;
 const negaoImg = typeof window !== "undefined" ? loadImg(negaoSideAsset.url) : null;
 const miuImg = typeof window !== "undefined" ? loadImg(miuSideAsset.url) : null;
+
+const barricadeImgs: Record<string, HTMLImageElement | null> = typeof window !== "undefined" ? {
+  concrete: loadImg(barConcrete.url),
+  sandbag: loadImg(barSandbag.url),
+  container: loadImg(barContainer.url),
+  minitank: loadImg(barMinitank.url),
+  balloon: loadImg(barBalloon.url),
+} : { concrete: null, sandbag: null, container: null, minitank: null, balloon: null };
+
 
 
 
