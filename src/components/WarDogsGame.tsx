@@ -832,7 +832,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                     disabled={isAiTurn || s.phase !== "aiming"}
                     onClick={() => fire(s)}
                     aria-label="Atirar"
-                    className="fire-btn fire-btn-compact sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
+                    className="fire-btn fire-btn-compact !w-12 sm:!w-[4.5rem] sm:!h-[4.5rem] sm:!rounded-full sm:!text-[0.85rem] shrink-0"
                   >
                     FOGO
                   </button>
