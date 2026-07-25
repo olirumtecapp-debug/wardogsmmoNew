@@ -468,8 +468,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
   const hudReserve = s?.hudReserve ?? 148;
   // Scale down the HUD row on narrow viewports so FIRE / teleport confirm
   // never spill outside the screen on smartphones. Same idea as OnlineMatch.
-  const hudScale = displaySize.w > 0 ? Math.max(0.55, Math.min(1, displaySize.w / 1280)) : 1;
-  const hudCssPx = displaySize.h && s ? ((displaySize.h * hudReserve) / s.height) * hudScale : 0;
+  const hudCssPx = displaySize.h && s ? (displaySize.h * hudReserve) / s.height : 0;
 
   const tryRage = () => {
     if (!s) return;
@@ -589,15 +588,9 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div
-                className="w-full"
-                style={{
-                  transform: `scale(${hudScale})`,
-                  transformOrigin: "bottom center",
-                  width: `${100 / hudScale}%`,
-                }}
-              >
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
+              <div className="w-full">
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full overflow-x-auto no-scrollbar">
+
                 <ArsenalPopup
                   open={arsenalOpen}
                   onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
@@ -670,7 +663,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                         ? "⚡ USAR"
                         : `⚡ ${Math.floor(pct)}%`;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[92px] relative">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[72px] sm:w-[92px] relative">
                       <div className="flex items-center gap-1 w-full">
                         <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 flex-1">Fúria</span>
                         <button
@@ -739,7 +732,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const pct = Math.max(0, Math.min(100, dog.specialCharge));
                   const ready = pct >= SPECIAL_READY_THRESHOLD;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[68px] sm:w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Bombardeio</span>
                       <button
                         disabled={isAiTurn || !ready || s.phase !== "aiming"}
@@ -777,7 +770,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   const ready = (fullOk || sosOk) && !dog.shieldActive;
                   const active = dog.shieldActive;
                   return (
-                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[86px]">
+                    <div className="panel px-2 py-1.5 flex flex-col items-center gap-1 shrink-0 w-[68px] sm:w-[86px]">
                       <span className="text-[8px] uppercase tracking-widest text-muted-foreground/80 w-full text-center">Escudo</span>
                       <button
                         disabled={isAiTurn || active || !ready || s.phase !== "aiming"}
