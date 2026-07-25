@@ -784,11 +784,15 @@ function serialize(s: GameState) {
     dogs: s.dogs.map(d => ({
       x: d.x, y: d.y, vy: d.vy, hp: d.hp, facing: d.facing, airborne: !!d.airborne,
       moveBudget: d.moveBudget, hasJumped: d.hasJumped, aliveTicks: d.aliveTicks,
+      specialCharge: d.specialCharge, shieldCharge: d.shieldCharge, rageCharge: d.rageCharge,
+      shieldActive: !!d.shieldActive, shieldAbsorbed: d.shieldAbsorbed,
+      rageActive: !!d.rageActive, rageQueued: !!d.rageQueued,
     })),
     projectiles: s.projectiles.map(p => ({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, weapon: p.weapon, age: p.age, ownerTeam: p.ownerTeam, isSub: !!p.isSub, trail: p.trail.slice(-12) })),
     currentPlayer: s.currentPlayer, wind: s.wind, angle: s.angle, power: s.power,
     weapon: s.weapon, phase: s.phase, message: s.message, winner: s.winner,
     ammo: s.ammo, turnTimer: s.turnTimer, matchTimer: s.matchTimer,
+    teleportAiming: s.teleportAiming ?? null,
   };
 }
 
@@ -800,6 +804,13 @@ function apply(s: GameState, snap: Snapshot, skipAim = false) {
     if (!sd) continue;
     d.x = sd.x; d.y = sd.y; d.vy = sd.vy; d.hp = sd.hp; d.facing = sd.facing;
     d.airborne = sd.airborne; d.moveBudget = sd.moveBudget; d.hasJumped = sd.hasJumped; d.aliveTicks = sd.aliveTicks;
+    if (typeof sd.specialCharge === "number") d.specialCharge = sd.specialCharge;
+    if (typeof sd.shieldCharge === "number") d.shieldCharge = sd.shieldCharge;
+    if (typeof sd.rageCharge === "number") d.rageCharge = sd.rageCharge;
+    if (typeof sd.shieldAbsorbed === "number") d.shieldAbsorbed = sd.shieldAbsorbed;
+    d.shieldActive = !!sd.shieldActive;
+    d.rageActive = !!sd.rageActive;
+    d.rageQueued = !!sd.rageQueued;
   }
   s.projectiles = snap.projectiles.map(p => ({
     x: p.x, y: p.y, vx: p.vx, vy: p.vy, weapon: p.weapon as WeaponId, age: p.age, ownerTeam: p.ownerTeam as 0 | 1, trail: p.trail as Array<[number, number]>, isSub: p.isSub,
@@ -817,7 +828,9 @@ function apply(s: GameState, snap: Snapshot, skipAim = false) {
   s.ammo = snap.ammo as GameState["ammo"];
   s.turnTimer = snap.turnTimer;
   s.matchTimer = snap.matchTimer;
+  s.teleportAiming = snap.teleportAiming ?? null;
 }
+
 
 function advanceCosmetic(s: GameState, dt: number) {
   for (let i = s.explosions.length - 1; i >= 0; i--) {
