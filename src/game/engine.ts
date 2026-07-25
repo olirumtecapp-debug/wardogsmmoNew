@@ -68,7 +68,13 @@ export function createGame(
     wind: (rng() - 0.5) * 2 * sc.windScale,
     angle: 45, power: 60,
     weapon: "bazooka",
-    ammo: initialAmmo(),
+    ammo: (() => {
+      const a = initialAmmo();
+      if (isAdminOverride()) {
+        for (const k of WEAPON_ORDER) a[k] = -1;
+      }
+      return a;
+    })(),
     phase: "aiming",
     winner: null,
     message: mode === "ai" ? `Sua vez — ${c0.name}` : `Vez de ${c0.name}`,
