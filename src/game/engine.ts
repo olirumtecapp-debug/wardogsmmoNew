@@ -4,6 +4,8 @@ import { markTerrainDirty } from "./render";
 import { getActiveScenario } from "./scenarios";
 import { CHARACTERS, type CharacterId } from "./characters";
 import { playSfx, playFireSfx } from "./audio";
+import { isAdminOverride } from "@/lib/unlocks";
+
 
 const GRAVITY = 500; // px/s^2
 const MAX_TURN_TIME = 30;
