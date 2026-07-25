@@ -589,7 +589,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               aria-hidden={!hudVisible}
             >
               <div className="w-full">
-              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full overflow-x-auto no-scrollbar">
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
 
                 <ArsenalPopup
                   open={arsenalOpen}
