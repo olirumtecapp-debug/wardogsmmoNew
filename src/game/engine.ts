@@ -625,6 +625,12 @@ function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
   for (let i = state.barricades.length - 1; i >= 0; i--) {
     const b = state.barricades[i];
     if (cx + rr < b.x0 || cx - rr > b.x0 + b.w0 || cy + rr < b.y0 || cy - rr > b.y0 + b.h0) continue;
+    // Balões estouram no primeiro contato com o raio de qualquer explosão.
+    if (b.kind === "balloon") {
+      state.barricades.splice(i, 1);
+      spawnExplosion(state, b.x0 + b.w0 / 2, b.y0 + 12, 18, "#ff9a3a");
+      continue;
+    }
     const lx0 = Math.max(0, Math.floor(cx - rr - b.x0));
     const lx1 = Math.min(b.w0 - 1, Math.ceil(cx + rr - b.x0));
     const ly0 = Math.max(0, Math.floor(cy - rr - b.y0));
