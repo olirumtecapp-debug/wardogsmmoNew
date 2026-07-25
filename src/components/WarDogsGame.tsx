@@ -847,6 +847,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
 
 
               </div>
+              </div>
             </div>
           )}
 
