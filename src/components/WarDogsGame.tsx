@@ -589,7 +589,15 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
               style={{ height: hudCssPx, opacity: hudVisible ? 1 : 0.85 }}
               aria-hidden={!hudVisible}
             >
-              <div className="flex flex-row items-stretch gap-1.5 sm:gap-2 flex-wrap w-full">
+              <div
+                className="w-full"
+                style={{
+                  transform: `scale(${hudScale})`,
+                  transformOrigin: "bottom center",
+                  width: `${100 / hudScale}%`,
+                }}
+              >
+              <div className="flex flex-row items-stretch gap-1 sm:gap-2 flex-nowrap w-full">
                 <ArsenalPopup
                   open={arsenalOpen}
                   onToggle={() => setArsenalOpen(v => { if (v) setHoveredWeapon(null); return !v; })}
