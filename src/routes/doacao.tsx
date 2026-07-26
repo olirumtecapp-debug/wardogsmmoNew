@@ -163,6 +163,27 @@ function DoacaoPage() {
                 </div>
               </div>
 
+              <div className="border-t border-dashed border-border/50 pt-3 space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Pix copia e cola
+                </div>
+                <button
+                  onClick={copyPix}
+                  className="btn-hud btn-primary inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 text-[11px] uppercase tracking-[0.25em]"
+                  aria-label="Copiar código Pix copia e cola"
+                >
+                  {pixCopied ? (
+                    <>
+                      <Check className="h-4 w-4" /> Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" /> Copiar código Pix
+                    </>
+                  )}
+                </button>
+              </div>
+
               <div className="border-t border-dashed border-border/50 pt-3">
                 <p className="text-sm">
                   💛 Obrigado por chegar até aqui, soldado! Seu apoio faz uma diferença enorme.
