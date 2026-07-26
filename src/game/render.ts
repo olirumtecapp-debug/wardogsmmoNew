@@ -9,7 +9,7 @@ import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
 import ozzySideAsset from "@/assets/characters/ozzy-v7.png.asset.json";
 import negaoSideAsset from "@/assets/characters/corso-v7.png.asset.json";
 import miuSideAsset from "@/assets/characters/miu-v7.png.asset.json";
-import bartoSideAsset from "@/assets/characters/barto-v7.png.asset.json";
+import bartoSideAsset from "@/assets/characters/barto-crouch.png.asset.json";
 import barConcrete from "@/assets/barricades/concrete.png.asset.json";
 import barSandbag from "@/assets/barricades/sandbag.png.asset.json";
 import barContainer from "@/assets/barricades/container.png.asset.json";
