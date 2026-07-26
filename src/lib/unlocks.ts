@@ -56,16 +56,17 @@ export function isAdminOverride(): boolean {
  * - ranger, brutus, musa, ozzy → sempre disponíveis
  * - negao (Corso, Elite) → concluir 6 missões da campanha (≥1 estrela cada)
  * - miu (Elite) → concluir 9 missões da campanha (≥1 estrela cada)
+ * - barto (Elite) → concluir 12 missões da campanha (≥1 estrela cada)
  * - Admin override desbloqueia todos.
  */
 export function isCharacterUnlocked(id: CharacterId): boolean {
   const s = loadUnlocks();
   if (s.adminOverride) return true;
   if (s.characters.includes(id)) return true;
-  if (id === "negao" || id === "miu") {
+  if (id === "negao" || id === "miu" || id === "barto") {
     const prog = loadProgress();
     const completed = MISSIONS.filter(m => !m.bonus && (prog.stars[m.id] ?? 0) >= 1).length;
-    const need = id === "negao" ? 6 : 9;
+    const need = id === "negao" ? 6 : id === "miu" ? 9 : 12;
     return completed >= need;
   }
   return true;
@@ -74,5 +75,6 @@ export function isCharacterUnlocked(id: CharacterId): boolean {
 export function characterUnlockHint(id: CharacterId): string {
   if (id === "negao") return "Conclua 6 missões da Campanha para desbloquear Corso.";
   if (id === "miu") return "Conclua 9 missões da Campanha para desbloquear Miu.";
+  if (id === "barto") return "Conclua 12 missões da Campanha para desbloquear Bartô.";
   return "";
 }
