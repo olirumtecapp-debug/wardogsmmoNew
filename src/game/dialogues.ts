@@ -74,6 +74,18 @@ const CHALLENGES: Record<CharacterId, string[]> = {
     "Cai o pano. Cai você junto.",
     "Ronron letal. Trailer curto, filme rápido.",
   ],
+  barto: [
+    "Baixinho? Sim. Fraco? Pergunta pro último.",
+    "Coração de leão em corpo de tanque.",
+    "Quanto mais apanho, mais mordo.",
+    "Cara de bobo, mordida de crocodilo.",
+    "Meu ronco derruba parede.",
+    "Chegou perto? Chegou tarde.",
+    "Focinho curto, memória longa pra vingança.",
+    "Vou te lamber no fim — depois de te apagar.",
+    "Não corro. Espero. E fecho a boca.",
+    "Bulldog francês, tática brasileira.",
+  ],
 };
 
 const REPLIES: Record<CharacterId, string[]> = {
@@ -148,6 +160,18 @@ const REPLIES: Record<CharacterId, string[]> = {
     "Miau seu. Trovão meu.",
     "Bigode teu, coleira minha.",
     "Termina o filme, felina — vou dar spoiler.",
+  ],
+  barto: [
+    "Rosna bonito. Vai chorar feio.",
+    "Fofo eu não sou. Nem tento.",
+    "Fecha o cerco que eu fecho a boca.",
+    "Chega pertinho. Adoro trabalho de perto.",
+    "Cansei do papo. Bora no dente.",
+    "Meu ronco é aviso. O próximo é fim.",
+    "Vem, filhote. Tio Bartô cuida.",
+    "Ri de mim? Ri sem dente depois.",
+    "Meu peito aguenta. O teu, veremos.",
+    "Baixinho tem o quê? Fôlego. E raiva.",
   ],
 };
 
