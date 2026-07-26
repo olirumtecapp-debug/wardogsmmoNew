@@ -33,8 +33,12 @@ export const Route = createFileRoute("/doacao")({
   component: DoacaoPage,
 });
 
+const PIX_PAYLOAD =
+  "00020101021126580014br.gov.bcb.pix0136ccc2fd5a-cc51-4626-ac9b-8010315042f55204000053039865802BR5924MURILO FERREIRA DA SILVA6009SAO PAULO622905251KYF6GJBG4K0TVYH7QKHP9TSD63042519";
+
 function DoacaoPage() {
   const [copied, setCopied] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
 
   const copyName = async () => {
     try {
@@ -44,6 +48,27 @@ function DoacaoPage() {
     } catch {
       // ignore
     }
+  };
+
+  const copyPix = async () => {
+    try {
+      await navigator.clipboard.writeText(PIX_PAYLOAD);
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = PIX_PAYLOAD;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        return;
+      }
+    }
+    setPixCopied(true);
+    setTimeout(() => setPixCopied(false), 2000);
   };
 
   return (
@@ -136,6 +161,27 @@ function DoacaoPage() {
                 <div className="mt-1 text-xs italic text-muted-foreground">
                   Motorista &amp; desenvolvedor 🚗💻
                 </div>
+              </div>
+
+              <div className="border-t border-dashed border-border/50 pt-3 space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+                  Pix copia e cola
+                </div>
+                <button
+                  onClick={copyPix}
+                  className="btn-hud btn-primary inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 text-[11px] uppercase tracking-[0.25em]"
+                  aria-label="Copiar código Pix copia e cola"
+                >
+                  {pixCopied ? (
+                    <>
+                      <Check className="h-4 w-4" /> Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" /> Copiar código Pix
+                    </>
+                  )}
+                </button>
               </div>
 
               <div className="border-t border-dashed border-border/50 pt-3">
