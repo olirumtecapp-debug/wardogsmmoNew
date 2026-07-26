@@ -38,17 +38,6 @@ const PIX_PAYLOAD =
 
 function DoacaoPage() {
   const [copied, setCopied] = useState(false);
-  const [pixCopied, setPixCopied] = useState(false);
-
-  const copyName = async () => {
-    try {
-      await navigator.clipboard.writeText("Murilo Ferreira da Silva");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // ignore
-    }
-  };
 
   const copyPix = async () => {
     try {
@@ -67,9 +56,10 @@ function DoacaoPage() {
         return;
       }
     }
-    setPixCopied(true);
-    setTimeout(() => setPixCopied(false), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 4000);
   };
+
 
   return (
     <OrientationGate soft>
@@ -146,10 +136,10 @@ function DoacaoPage() {
                     Murilo Ferreira da Silva
                   </div>
                   <button
-                    onClick={copyName}
+                    onClick={copyPix}
                     className="btn-hud p-1.5"
-                    title="Copiar nome"
-                    aria-label="Copiar nome"
+                    title="Copiar código Pix copia e cola"
+                    aria-label="Copiar código Pix copia e cola"
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-[color:var(--team-green)]" />
@@ -161,30 +151,20 @@ function DoacaoPage() {
                 <div className="mt-1 text-xs italic text-muted-foreground">
                   Motorista &amp; desenvolvedor 🚗💻
                 </div>
-              </div>
-
-              <div className="border-t border-dashed border-border/50 pt-3 space-y-2">
-                <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                  Pix copia e cola
-                </div>
-                <button
-                  onClick={copyPix}
-                  className="btn-hud btn-primary inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 text-[11px] uppercase tracking-[0.25em]"
-                  aria-label="Copiar código Pix copia e cola"
-                >
-                  {pixCopied ? (
-                    <>
-                      <Check className="h-4 w-4" /> Copiado!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" /> Copiar código Pix
-                    </>
-                  )}
-                </button>
+                {copied && (
+                  <div className="mt-3 rounded-sm border border-[color:var(--team-green)]/40 bg-[color:var(--team-green)]/10 p-2">
+                    <div className="text-[10px] uppercase tracking-[0.3em] text-[color:var(--team-green)] mb-1">
+                      Pix copiado ✓
+                    </div>
+                    <div className="font-mono text-[10px] leading-relaxed break-all text-foreground/90 select-all">
+                      {PIX_PAYLOAD}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-dashed border-border/50 pt-3">
+
                 <p className="text-sm">
                   💛 Obrigado por chegar até aqui, soldado! Seu apoio faz uma diferença enorme.
                 </p>
