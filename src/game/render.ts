@@ -9,6 +9,7 @@ import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
 import ozzySideAsset from "@/assets/characters/ozzy-v7.png.asset.json";
 import negaoSideAsset from "@/assets/characters/corso-v7.png.asset.json";
 import miuSideAsset from "@/assets/characters/miu-v7.png.asset.json";
+import bartoSideAsset from "@/assets/characters/barto-v7.png.asset.json";
 import barConcrete from "@/assets/barricades/concrete.png.asset.json";
 import barSandbag from "@/assets/barricades/sandbag.png.asset.json";
 import barContainer from "@/assets/barricades/container.png.asset.json";
@@ -29,6 +30,7 @@ const musaImg = typeof window !== "undefined" ? loadImg(musaSideAsset.url) : nul
 const ozzyImg = typeof window !== "undefined" ? loadImg(ozzySideAsset.url) : null;
 const negaoImg = typeof window !== "undefined" ? loadImg(negaoSideAsset.url) : null;
 const miuImg = typeof window !== "undefined" ? loadImg(miuSideAsset.url) : null;
+const bartoImg = typeof window !== "undefined" ? loadImg(bartoSideAsset.url) : null;
 
 const barricadeImgs: Record<string, HTMLImageElement | null> = typeof window !== "undefined" ? {
   concrete: loadImg(barConcrete.url),
@@ -836,8 +838,9 @@ function drawDog(
     name === "OZZY" ? ozzyImg :
     name === "CORSO" ? negaoImg :
     name === "MIU" ? miuImg :
+    name === "BARTÔ" ? bartoImg :
     null;
-  // Per-character sizing so all six render at a coherent visual scale,
+  // Per-character sizing so all render at a coherent visual scale,
   // regardless of the transparent padding baked into each source PNG.
   const sizing =
     name === "RANGER" ? { s: 1.05, pad: 0.139 } :
@@ -846,6 +849,7 @@ function drawDog(
     name === "OZZY"   ? { s: 0.87, pad: 0.128 } :
     name === "CORSO"  ? { s: 1.07, pad: 0.044 } :
     name === "MIU"    ? { s: 0.84, pad: 0.051 } :
+    name === "BARTÔ"  ? { s: 0.92, pad: 0.030 } :
                         { s: 1.00, pad: 0.000 };
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
     const injured = hp < 40;
