@@ -38,17 +38,6 @@ const PIX_PAYLOAD =
 
 function DoacaoPage() {
   const [copied, setCopied] = useState(false);
-  const [pixCopied, setPixCopied] = useState(false);
-
-  const copyName = async () => {
-    try {
-      await navigator.clipboard.writeText("Murilo Ferreira da Silva");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // ignore
-    }
-  };
 
   const copyPix = async () => {
     try {
@@ -67,9 +56,10 @@ function DoacaoPage() {
         return;
       }
     }
-    setPixCopied(true);
-    setTimeout(() => setPixCopied(false), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 4000);
   };
+
 
   return (
     <OrientationGate soft>
