@@ -8,8 +8,9 @@ import musaFront from "@/assets/wardogs-musa-front-v8.png.asset.json";
 import ozzyFront from "@/assets/wardogs-ozzy-front-v2.png.asset.json";
 import corsoFront from "@/assets/corso-front-v5.png.asset.json";
 import miuFront from "@/assets/miu-front-v6.png.asset.json";
+import bartoFront from "@/assets/wardogs-barto-front.png.asset.json";
 
-export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu";
+export type CharacterId = "ranger" | "brutus" | "musa" | "ozzy" | "negao" | "miu" | "barto";
 
 export type CharacterTier = "standard" | "elite";
 
@@ -106,6 +107,24 @@ const MIU_SKIN: TeamSkin = {
   badgeGlyph: "✦",
 };
 
+// Bartô (Bulldog Francês) — elite, tanque baixinho de peito grande.
+// Passiva "Coração de Buldogue": +25% dano e -20% dano recebido quando HP < 50%.
+const BARTO_SKIN: TeamSkin = {
+  ...BRUTUS,
+  name: "BARTÔ",
+  silhouette: "stocky",
+  teamColor: "#ff8a1a",
+  teamDark: "#7a3a0a",
+  bodyLight: "#f5efe5",
+  bodyBase: "#d8cfc0",
+  bodyDark: "#4a4238",
+  helmetBase: "#4a5028",
+  helmetTop: "#7a8244",
+  eyeIris: "#5a3a1a",
+  teamNum: "07",
+  badgeGlyph: "✚",
+};
+
 // Sizing — sprites are already normalized on a 1024 canvas with breed-accurate
 // height fractions, so runtime scale stays at 1.0 across the board.
 const SIZING: Record<CharacterId, CharacterSizing> = {
@@ -115,6 +134,7 @@ const SIZING: Record<CharacterId, CharacterSizing> = {
   ozzy:   { spriteScale: 1.28, portraitScale: 1.0, spriteBottomPad: 0.01 },
   negao:  { spriteScale: 1.20, portraitScale: 1.0, spriteBottomPad: 0.01 },
   miu:    { spriteScale: 1.32, portraitScale: 1.0, spriteBottomPad: 0.01 },
+  barto:  { spriteScale: 1.10, portraitScale: 1.0, spriteBottomPad: 0.01 },
 };
 
 export const CHARACTERS: Record<CharacterId, Character> = {
@@ -190,6 +210,18 @@ export const CHARACTERS: Record<CharacterId, Character> = {
     tier: "elite",
     sizing: SIZING.miu,
   },
+  barto: {
+    id: "barto",
+    name: "Bartô",
+    breed: "Bulldog Francês · Elite",
+    tagline: "Coração de Buldogue — fica mais forte quando está machucado.",
+    portraitUrl: bartoFront.url,
+    comicPortraitUrl: bartoFront.url,
+    stats: { hp: 125, mobility: 95, jump: 0.95, defense: 0.8 },
+    skin: BARTO_SKIN,
+    tier: "elite",
+    sizing: SIZING.barto,
+  },
 };
 
 export const CHARACTER_LIST: Character[] = [
@@ -199,6 +231,7 @@ export const CHARACTER_LIST: Character[] = [
   CHARACTERS.ozzy,
   CHARACTERS.negao,
   CHARACTERS.miu,
+  CHARACTERS.barto,
 ];
 
 export function characterSkin(id: CharacterId): TeamSkin {

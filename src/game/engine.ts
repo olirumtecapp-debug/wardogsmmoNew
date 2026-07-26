@@ -453,6 +453,8 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
   // Shooter (if any) for rage accumulation
   const shooter = ownerTeam !== undefined ? state.dogs.find(d => d.team === ownerTeam) : undefined;
   const dmgMult = shooter?.rageActive ? RAGE_DAMAGE_MULT : 1;
+  // Bartô — Coração de Buldogue: quando HP < 50%, causa +25% de dano.
+  const bartoShooterBoost = shooter && shooter.charId === "barto" && shooter.hp < shooter.maxHp * 0.5 ? 1.25 : 1;
   let totalDamage = 0;
   let hits = 0;
   let selfDamage = 0;
@@ -463,7 +465,9 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < radius + 14) {
       const falloff = Math.max(0, 1 - dist / (radius + 14));
-      let dmg = Math.round(damage * dmgMult * falloff * dog.defense);
+      // Bartô — Coração de Buldogue: quando HP < 50%, recebe -20% de dano.
+      const bartoDefBoost = dog.charId === "barto" && dog.hp < dog.maxHp * 0.5 ? 0.8 : 1;
+      let dmg = Math.round(damage * dmgMult * bartoShooterBoost * falloff * dog.defense * bartoDefBoost);
       const rawDmg = dmg;
       // Campo de Força: reduz 60% do dano até um limite de 80 HP absorvidos por ativação
       let absorbed = 0;

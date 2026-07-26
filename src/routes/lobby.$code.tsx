@@ -204,7 +204,7 @@ function Lobby() {
 
         <section className="panel p-3 space-y-2">
           <div className="stencil text-xs uppercase tracking-widest text-muted-foreground">Seu personagem</div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
             {CHAR_IDS.map(id => {
               const c = CHARACTERS[id];
               const active = me.char_id === id;
