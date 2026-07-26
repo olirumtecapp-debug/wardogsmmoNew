@@ -858,6 +858,8 @@ function drawDog(
     ctx.save();
     ctx.translate(0, bob);
     ctx.scale(facing, 1);
+    // Bartô's source PNG faces the opposite direction of the other sprites — mirror it so he faces the opponent like the rest of the roster.
+    if (name === "BARTÔ") ctx.scale(-1, 1);
     const BASE_H = 54;
     const targetH = BASE_H * sizing.s;
     const ratio = photoImg.naturalWidth / photoImg.naturalHeight;
