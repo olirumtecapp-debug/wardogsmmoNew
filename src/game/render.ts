@@ -849,7 +849,7 @@ function drawDog(
     name === "OZZY"   ? { s: 0.87, pad: 0.128 } :
     name === "CORSO"  ? { s: 1.07, pad: 0.044 } :
     name === "MIU"    ? { s: 0.84, pad: 0.051 } :
-    name === "BARTÔ"  ? { s: 0.92, pad: 0.030 } :
+    name === "BARTÔ"  ? { s: 1.05, pad: 0.005 } :
                         { s: 1.00, pad: 0.000 };
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
     const injured = hp < 40;
