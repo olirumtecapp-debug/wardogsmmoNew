@@ -33,8 +33,12 @@ export const Route = createFileRoute("/doacao")({
   component: DoacaoPage,
 });
 
+const PIX_PAYLOAD =
+  "00020101021126580014br.gov.bcb.pix0136ccc2fd5a-cc51-4626-ac9b-8010315042f55204000053039865802BR5924MURILO FERREIRA DA SILVA6009SAO PAULO622905251KYF6GJBG4K0TVYH7QKHP9TSD63042519";
+
 function DoacaoPage() {
   const [copied, setCopied] = useState(false);
+  const [pixCopied, setPixCopied] = useState(false);
 
   const copyName = async () => {
     try {
@@ -44,6 +48,27 @@ function DoacaoPage() {
     } catch {
       // ignore
     }
+  };
+
+  const copyPix = async () => {
+    try {
+      await navigator.clipboard.writeText(PIX_PAYLOAD);
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = PIX_PAYLOAD;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        return;
+      }
+    }
+    setPixCopied(true);
+    setTimeout(() => setPixCopied(false), 2000);
   };
 
   return (
