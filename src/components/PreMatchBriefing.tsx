@@ -336,7 +336,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
           <p className="text-[10px] text-muted-foreground mb-2">
             Personagens de elite (Corso, Miu) são desbloqueados concluindo missões da Campanha.
           </p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
             {CHARACTER_LIST.map(c => {
               const locked = !isCharacterUnlocked(c.id);
               return (
@@ -359,7 +359,7 @@ export function PreMatchBriefing({ mode, onStart, onBack }: Props) {
           <p className="text-[10px] text-muted-foreground mb-2">
             Personagens de elite (Corso, Miu) são desbloqueados concluindo missões da Campanha.
           </p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
             {CHARACTER_LIST.map(c => {
               const locked = !isCharacterUnlocked(c.id);
               return (

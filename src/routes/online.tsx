@@ -96,7 +96,7 @@ function OnlineHome() {
             </label>
             <div>
               <span className="block mb-1.5 text-muted-foreground uppercase tracking-widest text-[10px]">Personagem</span>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
                 {CHAR_IDS.map(id => {
                   const c = CHARACTERS[id];
                   const selected = charId === id;
