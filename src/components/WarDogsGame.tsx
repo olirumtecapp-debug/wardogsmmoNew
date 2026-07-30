@@ -342,7 +342,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
       if (s.weapon === "teleport") {
         const t = s.teleportAiming;
         if (t && t.valid && Math.hypot(x - t.x, y - t.y) <= TELEPORT_CONFIRM_TOL) {
-          confirmTeleport(s);
+          if (!confirmTeleport(s)) s.message = s.ammo.teleport === 0 ? "Sem carga de teletransporte" : "Destino inválido";
         } else {
           setTeleportTarget(s, x, y);
         }
