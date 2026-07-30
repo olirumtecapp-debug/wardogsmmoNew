@@ -564,16 +564,43 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 }
 
 
+// Dog hit box (used for swept projectile collision). Matches the drawn sprite
+// footprint: ~16px half-width, from head (y-26) to paws (y+18).
+function dogAt(state: GameState, x: number, y: number, p: Projectile): Dog | null {
+  for (const dog of state.dogs) {
+    if (dog.hp <= 0) continue;
+    // Grace period so the shot doesn't blow up on the shooter's own muzzle.
+    if (dog.team === p.ownerTeam && p.age < 0.18) continue;
+    if (dog.team !== p.ownerTeam && p.age < 0.04) continue;
+    if (Math.abs(x - dog.x) > 15) continue;
+    if (y < dog.y - 26 || y > dog.y + 18) continue;
+    return dog;
+  }
+  return null;
+}
+
 // Barricade helpers (mask-based: barricades erode pixel by pixel like terrain)
+// Requires a small solid neighbourhood so leftover single pixels from erosion
+// (invisible on screen) can't detonate projectiles in mid-air.
 export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
   const xi = Math.floor(x), yi = Math.floor(y);
   for (const b of state.barricades) {
     const lx = xi - b.x0, ly = yi - b.y0;
     if (lx < 0 || ly < 0 || lx >= b.w0 || ly >= b.h0) continue;
-    if (b.mask[ly * b.w0 + lx]) return b;
+    if (!b.mask[ly * b.w0 + lx]) continue;
+    // Neighbourhood density check (cross sample, radius 2).
+    let solid = 0;
+    const offs: Array<[number, number]> = [[-2, 0], [2, 0], [0, -2], [0, 2]];
+    for (const [ox, oy] of offs) {
+      const nx = lx + ox, ny = ly + oy;
+      if (nx < 0 || ny < 0 || nx >= b.w0 || ny >= b.h0) continue;
+      if (b.mask[ny * b.w0 + nx]) solid++;
+    }
+    if (solid >= 2) return b;
   }
   return null;
 }
+
 
 function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
   const xi = Math.floor(x);
