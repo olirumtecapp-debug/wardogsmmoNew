@@ -806,7 +806,7 @@ export function WarDogsGame({ mode, onExit, chars = ["ranger", "brutus"], missio
                   <div className="flex flex-col gap-1 shrink-0">
                     <button
                       disabled={isAiTurn || s.phase !== "aiming" || !s.teleportAiming?.valid}
-                      onClick={() => confirmTeleport(s)}
+                      onClick={() => { if (!confirmTeleport(s)) s.message = s.ammo.teleport === 0 ? "Sem carga de teletransporte" : "Destino inválido"; }}
                       aria-label="Confirmar teletransporte"
                       className="px-3 h-9 sm:h-11 rounded-md stencil text-[11px] sm:text-xs tracking-widest border-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
                       style={{
