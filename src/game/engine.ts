@@ -393,6 +393,13 @@ export function destroyTerrain(state: GameState, cx: number, cy: number, r: numb
   markTerrainDirty();
 }
 
+// Single source of truth for where a shot leaves the dog. Used by fire() and by
+// the aim line / trajectory preview so the drawn arc matches the real shot.
+export function muzzleOrigin(dog: { x: number; y: number; facing: 1 | -1 }): { x: number; y: number } {
+  return { x: dog.x + dog.facing * 18, y: dog.y - 10 };
+}
+
+
 export function fire(state: GameState) {
   if (state.phase !== "aiming") return;
   const weapon = WEAPONS[state.weapon];
