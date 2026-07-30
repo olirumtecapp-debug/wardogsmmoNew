@@ -693,7 +693,7 @@ function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
       }
     }
     const total = b.w0 * b.h0;
-    if (live < total * 0.08 || maxX - minX < 6 || maxY - minY < 6) {
+    if (live < total * 0.18 || maxX - minX < 10 || maxY - minY < 10) {
       state.barricades.splice(i, 1);
       continue;
     }
