@@ -1092,22 +1092,29 @@ export function ArsenalPopup({ open, onToggle, current, ammo, hovered, setHovere
               );
             })}
           </div>
-          <div className="mt-2 pt-2 border-t border-white/10 flex items-start gap-2 text-[10px]">
+          <div className="mt-2 pt-2 border-t border-white/10 flex items-start gap-2 text-[10px] h-[92px] sm:h-[84px] overflow-hidden">
             <div className="shrink-0" style={{ color: focusW.color }} aria-hidden>
               <WeaponIcon id={focus} className="w-7 h-7" />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="stencil text-xs" style={{ color: focusW.color }}>{focusW.name}</div>
-              <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-muted-foreground mt-0.5">
-                <span>Dano <b className="text-foreground">{focusW.damage}</b></span>
-                <span>Raio <b className="text-foreground">{focusW.radius}</b></span>
-                <span>Tipo <b className="text-foreground">{focusW.kind === "ballistic" ? "Balístico" : focusW.kind === "cluster" ? "Cluster" : "Aéreo"}</b></span>
-                <span>Vento <b className="text-foreground">{focusW.affectedByWind ? "sim" : "não"}</b></span>
-                <span>Munição <b className="text-foreground">{ammo[focus] === -1 ? "∞" : ammo[focus]}</b></span>
+            <div className="min-w-0 flex-1 flex flex-col h-full">
+              <div className="stencil text-xs truncate h-4 leading-4" style={{ color: focusW.color }}>{focusW.name}</div>
+              <div className="grid grid-cols-3 gap-x-2 text-muted-foreground mt-0.5 h-8 leading-4 content-start">
+                <span className="truncate">Dano <b className="text-foreground">{focusW.damage}</b></span>
+                <span className="truncate">Raio <b className="text-foreground">{focusW.radius}</b></span>
+                <span className="truncate">Tipo <b className="text-foreground">{focusW.kind === "ballistic" ? "Balístico" : focusW.kind === "cluster" ? "Cluster" : "Aéreo"}</b></span>
+                <span className="truncate">Vento <b className="text-foreground">{focusW.affectedByWind ? "sim" : "não"}</b></span>
+                <span className="truncate">Munição <b className="text-foreground">{ammo[focus] === -1 ? "∞" : ammo[focus]}</b></span>
               </div>
-              <div className="mt-1 text-foreground/80 leading-snug">{WEAPON_DESC[focus]}</div>
+              <div
+                className="mt-1 text-foreground/80 leading-snug overflow-hidden"
+                style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", height: "2.2em" }}
+                title={WEAPON_DESC[focus]}
+              >
+                {WEAPON_DESC[focus]}
+              </div>
             </div>
           </div>
+
         </div>
       )}
       <button
