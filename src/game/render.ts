@@ -874,9 +874,14 @@ function drawDog(
     }
     ctx.drawImage(photoImg, -targetW / 2, -targetH + 16 + feetOffset, targetW, targetH);
     ctx.restore();
+    // Legible name plate — the lettering baked into the sprite vests is
+    // decorative/illegible, so the real callsign is drawn by the engine.
+    drawNamePlate(ctx, name, teamColor, teamDark, -targetH + 14);
     ctx.restore(); // matches the outer ctx.save() at top of drawDog
     return;
   }
+
+
 
 
 
