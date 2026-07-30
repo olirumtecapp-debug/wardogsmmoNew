@@ -445,8 +445,10 @@ export function fire(state: GameState) {
   const v = state.power * weapon.speed * 0.6;
   const vx = Math.cos(rad) * v * dir;
   const vy = -Math.sin(rad) * v;
-  const muzzleX = dog.x + dir * 18;
-  const muzzleY = dog.y - 6;
+  const muzzle = muzzleOrigin(dog);
+  const muzzleX = muzzle.x;
+  const muzzleY = muzzle.y;
+
 
   const p: Projectile = {
     x: muzzleX, y: muzzleY, vx, vy,
