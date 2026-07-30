@@ -1343,8 +1343,9 @@ export function confirmTeleport(state: GameState): boolean {
   if (state.weapon !== "teleport" || state.phase !== "aiming") return false;
   const t = state.teleportAiming;
   if (!t || !t.valid) return false;
-  if ((state.ammo.teleport ?? 0) <= 0) return false;
-  state.ammo.teleport = Math.max(0, (state.ammo.teleport ?? 0) - 1);
+  // -1 means infinite (dev mode). Only exactly 0 blocks the teleport.
+  if ((state.ammo.teleport ?? 0) === 0) return false;
+  if ((state.ammo.teleport ?? 0) > 0) state.ammo.teleport--;
   executeTeleport(state, t.x, t.y);
   state.teleportAiming = null;
   return true;
