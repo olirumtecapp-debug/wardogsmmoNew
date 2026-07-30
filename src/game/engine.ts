@@ -867,6 +867,7 @@ export function step(state: GameState, dt: number) {
     }
 
     const prevAge = p.age - dt;
+    const prevX = p.x, prevY = p.y;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
@@ -900,9 +901,30 @@ export function step(state: GameState, dt: number) {
       state.projectiles.splice(i, 1); continue;
     }
 
+    // ---- Swept collision along the segment travelled this frame ----
+    // Prevents fast projectiles from tunnelling through dogs / thin barricades.
+    let hitBarricade: Barricade | null = null;
+    let hitTerrain = false;
+    let hitDog = false;
+    if (!exploded) {
+      const segX = p.x - prevX, segY = p.y - prevY;
+      const segLen = Math.hypot(segX, segY);
+      const steps = Math.max(1, Math.ceil(segLen / 4));
+      for (let s = 1; s <= steps; s++) {
+        const t = s / steps;
+        const sx = prevX + segX * t;
+        const sy = prevY + segY * t;
+        // Direct hit on a dog (works for every weapon, fuse or not)
+        const dogHit = dogAt(state, sx, sy, p);
+        if (dogHit) { p.x = sx; p.y = sy; hitDog = true; break; }
+        const b = barricadeAt(state, sx, sy);
+        if (b) { p.x = sx; p.y = sy; hitBarricade = b; break; }
+        if (terrainAt(state, sx, sy)) { p.x = sx; p.y = sy; hitTerrain = true; break; }
+      }
+    }
+
     // Barricade hit — behave exactly like terrain: bounce for grenade/frag, explode otherwise.
     // Erosion of the barricade happens through the explosion (see erodeBarricades).
-    const hitBarricade = !exploded ? barricadeAt(state, p.x, p.y) : null;
     if (hitBarricade) {
       if (w.id === "grenade" || w.id === "frag") {
         p.x -= p.vx * dt * 1.2; p.y -= p.vy * dt * 1.2;
@@ -912,8 +934,7 @@ export function step(state: GameState, dt: number) {
       }
     }
 
-
-    if (!exploded && terrainAt(state, p.x, p.y)) {
+    if (!exploded && hitTerrain) {
       if (w.id === "grenade" || w.id === "frag") {
         const nx = terrainAt(state, p.x - 3, p.y) ? 1 : terrainAt(state, p.x + 3, p.y) ? -1 : 0;
         const ny: number = terrainAt(state, p.x, p.y - 3) ? 1 : 0;
@@ -926,25 +947,10 @@ export function step(state: GameState, dt: number) {
       }
     }
 
-    if (!exploded) {
-      // Armas com fuse (granada/frag/cluster/sub) NÃO detonam por proximidade —
-      // só por tempo, terreno ou barricada. Evita "explode no ar" próximo ao alvo.
-      const proximityArm = !w.fuse;
-      if (proximityArm) {
-        for (const dog of state.dogs) {
-          if (dog.hp <= 0) continue;
-          if (dog.team === p.ownerTeam && p.age < 0.15) continue;
-          if (dog.team !== p.ownerTeam && p.age < 0.05) continue;
-          const dx = p.x - dog.x, dy = p.y - (dog.y - 8);
-          const d2 = dx * dx + dy * dy;
-          if (d2 > 170) continue; // ~13px — hit realmente próximo
-          // Precisa estar se aproximando (produto escalar velocidade·(dog-proj) > 0)
-          const toDogX = dog.x - p.x, toDogY = (dog.y - 8) - p.y;
-          if (p.vx * toDogX + p.vy * toDogY < 0) continue;
-          exploded = true; break;
-        }
-      }
-    }
+    // Direct body hit: every weapon detonates on contact with a dog
+    // (fuse weapons included — a grenade in the chest must not pass through).
+    if (!exploded && hitDog) exploded = true;
+
 
     if (exploded) {
       spawnExplosion(state, p.x, p.y, w.radius, w.color);
