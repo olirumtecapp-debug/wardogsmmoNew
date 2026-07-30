@@ -1439,8 +1439,10 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   const rad = (angle * Math.PI) / 180;
   const dir = dog.facing;
   const len = 34 + (power / 100) * 60;
-  const x0 = dog.x + dir * 18;
-  const y0 = dog.y - 10;
+  const origin = muzzleOrigin(dog);
+  const x0 = origin.x;
+  const y0 = origin.y;
+
   const x1 = x0 + Math.cos(rad) * dir * len;
   const y1 = y0 - Math.sin(rad) * len;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
