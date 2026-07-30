@@ -3,6 +3,8 @@ import { WEAPONS } from "./weapons";
 import { weaponColor, weaponAccent, type TeamSkin } from "./skins";
 import { characterSkin } from "./characters";
 import { getActiveScenario } from "./scenarios";
+import { muzzleOrigin } from "./engine";
+
 import rangerSideAsset from "@/assets/characters/ranger-v7.png.asset.json";
 import brutusSideAsset from "@/assets/characters/brutus-v7.png.asset.json";
 import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
