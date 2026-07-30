@@ -803,6 +803,7 @@ function drawDog(
   angle: number,
 ) {
   ctx.save();
+
   ctx.translate(x, y);
 
   // Silhouette + palette come from the active skin pack.
