@@ -847,12 +847,13 @@ function drawDog(
   const sizing =
     name === "RANGER" ? { s: 1.05, pad: 0.139 } :
     name === "BRUTUS" ? { s: 1.02, pad: 0.050 } :
-    name === "MUSA"   ? { s: 0.95, pad: 0.071 } :
-    name === "OZZY"   ? { s: 0.87, pad: 0.128 } :
+    name === "MUSA"   ? { s: 0.98, pad: 0.071 } :
+    name === "OZZY"   ? { s: 0.92, pad: 0.128 } :
     name === "CORSO"  ? { s: 1.07, pad: 0.044 } :
-    name === "MIU"    ? { s: 0.84, pad: 0.051 } :
-    name === "BARTÔ"  ? { s: 1.05, pad: 0.005 } :
+    name === "MIU"    ? { s: 1.00, pad: 0.051 } :
+    name === "BARTÔ"  ? { s: 0.88, pad: 0.005 } :
                         { s: 1.00, pad: 0.000 };
+
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
     const injured = hp < 40;
     const critical = hp < 20;
