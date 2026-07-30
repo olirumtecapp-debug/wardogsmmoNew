@@ -330,9 +330,39 @@ function placeDogs(
     return { x: fx, y: fy };
   }
 
-  const s0 = pickSpawn(0, null);
-  const s1 = pickSpawn(1, s0.x);
+  // True when any point of the dog's body overlaps a barricade mask.
+  function bodyBlocked(x: number, y: number): boolean {
+    for (const b of barricades) {
+      for (const [ox, oy] of [[0, 16], [0, 0], [0, -16], [-10, 0], [10, 0]] as const) {
+        const lx = Math.floor(x + ox) - b.x0;
+        const ly = Math.floor(y + oy) - b.y0;
+        if (lx < 0 || ly < 0 || lx >= b.w0 || ly >= b.h0) continue;
+        if (b.mask[ly * b.w0 + lx]) return true;
+      }
+    }
+    return false;
+  }
+
+  // Nudge horizontally until the body is clear of every barricade.
+  function resolveSpawn(team: 0 | 1, s: { x: number; y: number }): { x: number; y: number } {
+    if (!bodyBlocked(s.x, s.y)) return s;
+    const zoneMin = Math.floor(team === 0 ? w * 0.06 : w * 0.55);
+    const zoneMax = Math.floor(team === 0 ? w * 0.45 : w * 0.94);
+    for (let d = 12; d <= 400; d += 12) {
+      for (const dir of [1, -1] as const) {
+        const nx = s.x + dir * d;
+        if (nx < zoneMin || nx > zoneMax) continue;
+        const ny = Math.min(surfaceY(terrain, w, h, nx) - 18, terrainBottom - 20);
+        if (!bodyBlocked(nx, ny)) return { x: nx, y: ny };
+      }
+    }
+    return s;
+  }
+
+  const s0 = resolveSpawn(0, pickSpawn(0, null));
+  const s1 = resolveSpawn(1, pickSpawn(1, s0.x));
   return [mk(s0.x, s0.y, 0, 1, chars[0]), mk(s1.x, s1.y, 1, -1, chars[1])];
+
 }
 
 
