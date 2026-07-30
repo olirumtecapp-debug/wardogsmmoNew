@@ -330,9 +330,39 @@ function placeDogs(
     return { x: fx, y: fy };
   }
 
-  const s0 = pickSpawn(0, null);
-  const s1 = pickSpawn(1, s0.x);
+  // True when any point of the dog's body overlaps a barricade mask.
+  function bodyBlocked(x: number, y: number): boolean {
+    for (const b of barricades) {
+      for (const [ox, oy] of [[0, 16], [0, 0], [0, -16], [-10, 0], [10, 0]] as const) {
+        const lx = Math.floor(x + ox) - b.x0;
+        const ly = Math.floor(y + oy) - b.y0;
+        if (lx < 0 || ly < 0 || lx >= b.w0 || ly >= b.h0) continue;
+        if (b.mask[ly * b.w0 + lx]) return true;
+      }
+    }
+    return false;
+  }
+
+  // Nudge horizontally until the body is clear of every barricade.
+  function resolveSpawn(team: 0 | 1, s: { x: number; y: number }): { x: number; y: number } {
+    if (!bodyBlocked(s.x, s.y)) return s;
+    const zoneMin = Math.floor(team === 0 ? w * 0.06 : w * 0.55);
+    const zoneMax = Math.floor(team === 0 ? w * 0.45 : w * 0.94);
+    for (let d = 12; d <= 400; d += 12) {
+      for (const dir of [1, -1] as const) {
+        const nx = s.x + dir * d;
+        if (nx < zoneMin || nx > zoneMax) continue;
+        const ny = Math.min(surfaceY(terrain, w, h, nx) - 18, terrainBottom - 20);
+        if (!bodyBlocked(nx, ny)) return { x: nx, y: ny };
+      }
+    }
+    return s;
+  }
+
+  const s0 = resolveSpawn(0, pickSpawn(0, null));
+  const s1 = resolveSpawn(1, pickSpawn(1, s0.x));
   return [mk(s0.x, s0.y, 0, 1, chars[0]), mk(s1.x, s1.y, 1, -1, chars[1])];
+
 }
 
 
@@ -362,6 +392,13 @@ export function destroyTerrain(state: GameState, cx: number, cy: number, r: numb
   }
   markTerrainDirty();
 }
+
+// Single source of truth for where a shot leaves the dog. Used by fire() and by
+// the aim line / trajectory preview so the drawn arc matches the real shot.
+export function muzzleOrigin(dog: { x: number; y: number; facing: 1 | -1 }): { x: number; y: number } {
+  return { x: dog.x + dog.facing * 18, y: dog.y - 10 };
+}
+
 
 export function fire(state: GameState) {
   if (state.phase !== "aiming") return;
@@ -415,8 +452,10 @@ export function fire(state: GameState) {
   const v = state.power * weapon.speed * 0.6;
   const vx = Math.cos(rad) * v * dir;
   const vy = -Math.sin(rad) * v;
-  const muzzleX = dog.x + dir * 18;
-  const muzzleY = dog.y - 6;
+  const muzzle = muzzleOrigin(dog);
+  const muzzleX = muzzle.x;
+  const muzzleY = muzzle.y;
+
 
   const p: Projectile = {
     x: muzzleX, y: muzzleY, vx, vy,
@@ -564,16 +603,43 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
 }
 
 
+// Dog hit box (used for swept projectile collision). Matches the drawn sprite
+// footprint: ~16px half-width, from head (y-26) to paws (y+18).
+function dogAt(state: GameState, x: number, y: number, p: Projectile): Dog | null {
+  for (const dog of state.dogs) {
+    if (dog.hp <= 0) continue;
+    // Grace period so the shot doesn't blow up on the shooter's own muzzle.
+    if (dog.team === p.ownerTeam && p.age < 0.18) continue;
+    if (dog.team !== p.ownerTeam && p.age < 0.04) continue;
+    if (Math.abs(x - dog.x) > 15) continue;
+    if (y < dog.y - 26 || y > dog.y + 18) continue;
+    return dog;
+  }
+  return null;
+}
+
 // Barricade helpers (mask-based: barricades erode pixel by pixel like terrain)
+// Requires a small solid neighbourhood so leftover single pixels from erosion
+// (invisible on screen) can't detonate projectiles in mid-air.
 export function barricadeAt(state: GameState, x: number, y: number): Barricade | null {
   const xi = Math.floor(x), yi = Math.floor(y);
   for (const b of state.barricades) {
     const lx = xi - b.x0, ly = yi - b.y0;
     if (lx < 0 || ly < 0 || lx >= b.w0 || ly >= b.h0) continue;
-    if (b.mask[ly * b.w0 + lx]) return b;
+    if (!b.mask[ly * b.w0 + lx]) continue;
+    // Neighbourhood density check (cross sample, radius 2).
+    let solid = 0;
+    const offs: Array<[number, number]> = [[-2, 0], [2, 0], [0, -2], [0, 2]];
+    for (const [ox, oy] of offs) {
+      const nx = lx + ox, ny = ly + oy;
+      if (nx < 0 || ny < 0 || nx >= b.w0 || ny >= b.h0) continue;
+      if (b.mask[ny * b.w0 + nx]) solid++;
+    }
+    if (solid >= 2) return b;
   }
   return null;
 }
+
 
 function barricadeTopAt(state: GameState, x: number, y: number, tol = 2): Barricade | null {
   const xi = Math.floor(x);
@@ -666,7 +732,7 @@ function erodeBarricades(state: GameState, cx: number, cy: number, r: number) {
       }
     }
     const total = b.w0 * b.h0;
-    if (live < total * 0.08 || maxX - minX < 6 || maxY - minY < 6) {
+    if (live < total * 0.18 || maxX - minX < 10 || maxY - minY < 10) {
       state.barricades.splice(i, 1);
       continue;
     }
@@ -867,6 +933,7 @@ export function step(state: GameState, dt: number) {
     }
 
     const prevAge = p.age - dt;
+    const prevX = p.x, prevY = p.y;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
@@ -900,9 +967,30 @@ export function step(state: GameState, dt: number) {
       state.projectiles.splice(i, 1); continue;
     }
 
+    // ---- Swept collision along the segment travelled this frame ----
+    // Prevents fast projectiles from tunnelling through dogs / thin barricades.
+    let hitBarricade: Barricade | null = null;
+    let hitTerrain = false;
+    let hitDog = false;
+    if (!exploded) {
+      const segX = p.x - prevX, segY = p.y - prevY;
+      const segLen = Math.hypot(segX, segY);
+      const steps = Math.max(1, Math.ceil(segLen / 4));
+      for (let s = 1; s <= steps; s++) {
+        const t = s / steps;
+        const sx = prevX + segX * t;
+        const sy = prevY + segY * t;
+        // Direct hit on a dog (works for every weapon, fuse or not)
+        const dogHit = dogAt(state, sx, sy, p);
+        if (dogHit) { p.x = sx; p.y = sy; hitDog = true; break; }
+        const b = barricadeAt(state, sx, sy);
+        if (b) { p.x = sx; p.y = sy; hitBarricade = b; break; }
+        if (terrainAt(state, sx, sy)) { p.x = sx; p.y = sy; hitTerrain = true; break; }
+      }
+    }
+
     // Barricade hit — behave exactly like terrain: bounce for grenade/frag, explode otherwise.
     // Erosion of the barricade happens through the explosion (see erodeBarricades).
-    const hitBarricade = !exploded ? barricadeAt(state, p.x, p.y) : null;
     if (hitBarricade) {
       if (w.id === "grenade" || w.id === "frag") {
         p.x -= p.vx * dt * 1.2; p.y -= p.vy * dt * 1.2;
@@ -912,8 +1000,7 @@ export function step(state: GameState, dt: number) {
       }
     }
 
-
-    if (!exploded && terrainAt(state, p.x, p.y)) {
+    if (!exploded && hitTerrain) {
       if (w.id === "grenade" || w.id === "frag") {
         const nx = terrainAt(state, p.x - 3, p.y) ? 1 : terrainAt(state, p.x + 3, p.y) ? -1 : 0;
         const ny: number = terrainAt(state, p.x, p.y - 3) ? 1 : 0;
@@ -926,25 +1013,10 @@ export function step(state: GameState, dt: number) {
       }
     }
 
-    if (!exploded) {
-      // Armas com fuse (granada/frag/cluster/sub) NÃO detonam por proximidade —
-      // só por tempo, terreno ou barricada. Evita "explode no ar" próximo ao alvo.
-      const proximityArm = !w.fuse;
-      if (proximityArm) {
-        for (const dog of state.dogs) {
-          if (dog.hp <= 0) continue;
-          if (dog.team === p.ownerTeam && p.age < 0.15) continue;
-          if (dog.team !== p.ownerTeam && p.age < 0.05) continue;
-          const dx = p.x - dog.x, dy = p.y - (dog.y - 8);
-          const d2 = dx * dx + dy * dy;
-          if (d2 > 170) continue; // ~13px — hit realmente próximo
-          // Precisa estar se aproximando (produto escalar velocidade·(dog-proj) > 0)
-          const toDogX = dog.x - p.x, toDogY = (dog.y - 8) - p.y;
-          if (p.vx * toDogX + p.vy * toDogY < 0) continue;
-          exploded = true; break;
-        }
-      }
-    }
+    // Direct body hit: every weapon detonates on contact with a dog
+    // (fuse weapons included — a grenade in the chest must not pass through).
+    if (!exploded && hitDog) exploded = true;
+
 
     if (exploded) {
       spawnExplosion(state, p.x, p.y, w.radius, w.color);

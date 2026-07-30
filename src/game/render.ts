@@ -3,6 +3,8 @@ import { WEAPONS } from "./weapons";
 import { weaponColor, weaponAccent, type TeamSkin } from "./skins";
 import { characterSkin } from "./characters";
 import { getActiveScenario } from "./scenarios";
+import { muzzleOrigin } from "./engine";
+
 import rangerSideAsset from "@/assets/characters/ranger-v7.png.asset.json";
 import brutusSideAsset from "@/assets/characters/brutus-v7.png.asset.json";
 import musaSideAsset from "@/assets/characters/musa-v7.png.asset.json";
@@ -790,6 +792,39 @@ function drawExplosionParticles(ctx: CanvasRenderingContext2D, e: Explosion) {
 
 // ============ DOGS ============
 
+// Small callsign plate rendered above the dog with the game font, so the
+// (illegible) lettering painted on the sprite vests is never the source of truth.
+function drawNamePlate(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  teamColor: string,
+  teamDark: string,
+  topY: number,
+) {
+  ctx.save();
+  ctx.font = "bold 6px 'Chakra Petch', system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const label = name.toUpperCase();
+  const wpx = ctx.measureText(label).width;
+  const padX = 3.5, h = 9;
+  const bw = wpx + padX * 2;
+  const by = topY - h - 2;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  roundRect(ctx, -bw / 2, by, bw, h, 2.5); ctx.fill();
+  ctx.strokeStyle = teamColor;
+  ctx.lineWidth = 0.8;
+  roundRect(ctx, -bw / 2, by, bw, h, 2.5); ctx.stroke();
+  ctx.fillStyle = teamDark;
+  ctx.fillRect(-bw / 2 + 1, by + h - 2, bw - 2, 1);
+  ctx.fillStyle = "#fff";
+  ctx.fillText(label, 0, by + h / 2 + 0.2);
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
+  ctx.restore();
+}
+
+
 function drawDog(
   ctx: CanvasRenderingContext2D,
   x: number, y: number,
@@ -801,6 +836,7 @@ function drawDog(
   angle: number,
 ) {
   ctx.save();
+
   ctx.translate(x, y);
 
   // Silhouette + palette come from the active skin pack.
@@ -845,12 +881,13 @@ function drawDog(
   const sizing =
     name === "RANGER" ? { s: 1.05, pad: 0.139 } :
     name === "BRUTUS" ? { s: 1.02, pad: 0.050 } :
-    name === "MUSA"   ? { s: 0.95, pad: 0.071 } :
-    name === "OZZY"   ? { s: 0.87, pad: 0.128 } :
+    name === "MUSA"   ? { s: 0.98, pad: 0.071 } :
+    name === "OZZY"   ? { s: 0.92, pad: 0.128 } :
     name === "CORSO"  ? { s: 1.07, pad: 0.044 } :
-    name === "MIU"    ? { s: 0.84, pad: 0.051 } :
-    name === "BARTÔ"  ? { s: 1.05, pad: 0.005 } :
+    name === "MIU"    ? { s: 1.00, pad: 0.051 } :
+    name === "BARTÔ"  ? { s: 0.88, pad: 0.005 } :
                         { s: 1.00, pad: 0.000 };
+
   if (photoImg && photoImg.complete && photoImg.naturalWidth > 0 && hp > 0) {
     const injured = hp < 40;
     const critical = hp < 20;
@@ -871,9 +908,14 @@ function drawDog(
     }
     ctx.drawImage(photoImg, -targetW / 2, -targetH + 16 + feetOffset, targetW, targetH);
     ctx.restore();
+    // Legible name plate — the lettering baked into the sprite vests is
+    // decorative/illegible, so the real callsign is drawn by the engine.
+    drawNamePlate(ctx, name, teamColor, teamDark, -targetH + 14);
     ctx.restore(); // matches the outer ctx.save() at top of drawDog
     return;
   }
+
+
 
 
 
@@ -1437,8 +1479,10 @@ function drawAim(ctx: CanvasRenderingContext2D, dog: { x: number; y: number; fac
   const rad = (angle * Math.PI) / 180;
   const dir = dog.facing;
   const len = 34 + (power / 100) * 60;
-  const x0 = dog.x + dir * 18;
-  const y0 = dog.y - 10;
+  const origin = muzzleOrigin(dog);
+  const x0 = origin.x;
+  const y0 = origin.y;
+
   const x1 = x0 + Math.cos(rad) * dir * len;
   const y1 = y0 - Math.sin(rad) * len;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
@@ -1552,25 +1596,29 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
 
   const rad = (state.angle * Math.PI) / 180;
   const v = state.power * weapon.speed * 0.6;
-  // Origin at muzzle; lift up if inside solid (e.g. dog on slope/barricade).
-  let x = dog.x + dir * 18;
-  let y = dog.y - 10;
+  // Origin at muzzle (same helper the engine uses); lift up if inside solid.
+  const origin = muzzleOrigin(dog);
+  let x = origin.x;
+  let y = origin.y;
   for (let lift = 0; lift < 14 && isSolidAt(state, x, y); lift++) y -= 2;
   let vx = Math.cos(rad) * v * dir;
   let vy = -Math.sin(rad) * v;
 
-  const dt = 0.045;
-  const maxPoints = 60;
+  // Same integration step as the engine (60 Hz Euler) so the arc matches the shot.
+  const dt = 1 / 60;
+  const maxSteps = 420;
+  const drawEvery = 3;
   const windMul = dog.rageActive ? 0.5 : 1;
   const maxY = state.height - state.hudReserve - 2;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
+  const enemy = state.dogs[1 - state.currentPlayer];
 
   ctx.save();
   let impact = false;
   let lastX = x, lastY = y;
   // Grace period: while origin is still inside solid, skip collision checks.
   let escaped = !isSolidAt(state, x, y);
-  for (let i = 0; i < maxPoints; i++) {
+  for (let i = 0; i < maxSteps; i++) {
     if (weapon.id === "rpg" && i * dt < 1.4) {
       const sp = Math.hypot(vx, vy) || 1;
       vx += (vx / sp) * 260 * dt;
@@ -1587,9 +1635,13 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
       lastX = x; lastY = y;
       continue;
     }
-    if (i < 2) continue;
+    if (i < 4) continue;
 
-    if (isSolidAt(state, x, y)) {
+    const hitsEnemy = enemy && enemy.hp > 0 &&
+      Math.abs(x - enemy.x) <= 15 && y >= enemy.y - 26 && y <= enemy.y + 18;
+
+    if (isSolidAt(state, x, y) || hitsEnemy) {
+
       // Impact target: dark halo + neon ring + white cross
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
@@ -1616,10 +1668,12 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
       break;
     }
 
-    const t = i / maxPoints;
+    lastX = x; lastY = y;
+    if (i % drawEvery !== 0) continue;
+
+    const t = Math.min(1, i / (maxSteps * 0.5));
     const alpha = 1 - t * 0.55;
-    const r = 2.6 - t * 1.1;
-    const rr = Math.max(1, r);
+    const rr = Math.max(1, 2.6 - t * 1.1);
     ctx.globalAlpha = Math.min(1, alpha + 0.15);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(0,0,0,0.8)";
@@ -1629,7 +1683,7 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowColor = core;
     ctx.shadowBlur = 6;
     ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
-    lastX = x; lastY = y;
+
   }
   // No impact found — draw a small arrow at the last visible point.
   if (!impact && lastX > 0 && lastX < state.width && lastY < maxY) {
