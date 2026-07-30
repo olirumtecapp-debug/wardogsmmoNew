@@ -1552,25 +1552,29 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
 
   const rad = (state.angle * Math.PI) / 180;
   const v = state.power * weapon.speed * 0.6;
-  // Origin at muzzle; lift up if inside solid (e.g. dog on slope/barricade).
-  let x = dog.x + dir * 18;
-  let y = dog.y - 10;
+  // Origin at muzzle (same helper the engine uses); lift up if inside solid.
+  const origin = muzzleOrigin(dog);
+  let x = origin.x;
+  let y = origin.y;
   for (let lift = 0; lift < 14 && isSolidAt(state, x, y); lift++) y -= 2;
   let vx = Math.cos(rad) * v * dir;
   let vy = -Math.sin(rad) * v;
 
-  const dt = 0.045;
-  const maxPoints = 60;
+  // Same integration step as the engine (60 Hz Euler) so the arc matches the shot.
+  const dt = 1 / 60;
+  const maxSteps = 420;
+  const drawEvery = 3;
   const windMul = dog.rageActive ? 0.5 : 1;
   const maxY = state.height - state.hudReserve - 2;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
+  const enemy = state.dogs[1 - state.currentPlayer];
 
   ctx.save();
   let impact = false;
   let lastX = x, lastY = y;
   // Grace period: while origin is still inside solid, skip collision checks.
   let escaped = !isSolidAt(state, x, y);
-  for (let i = 0; i < maxPoints; i++) {
+  for (let i = 0; i < maxSteps; i++) {
     if (weapon.id === "rpg" && i * dt < 1.4) {
       const sp = Math.hypot(vx, vy) || 1;
       vx += (vx / sp) * 260 * dt;
@@ -1587,9 +1591,13 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
       lastX = x; lastY = y;
       continue;
     }
-    if (i < 2) continue;
+    if (i < 4) continue;
 
-    if (isSolidAt(state, x, y)) {
+    const hitsEnemy = enemy && enemy.hp > 0 &&
+      Math.abs(x - enemy.x) <= 15 && y >= enemy.y - 26 && y <= enemy.y + 18;
+
+    if (isSolidAt(state, x, y) || hitsEnemy) {
+
       // Impact target: dark halo + neon ring + white cross
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
