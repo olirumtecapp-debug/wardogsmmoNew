@@ -1624,10 +1624,12 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
       break;
     }
 
-    const t = i / maxPoints;
+    lastX = x; lastY = y;
+    if (i % drawEvery !== 0) continue;
+
+    const t = Math.min(1, i / (maxSteps * 0.5));
     const alpha = 1 - t * 0.55;
-    const r = 2.6 - t * 1.1;
-    const rr = Math.max(1, r);
+    const rr = Math.max(1, 2.6 - t * 1.1);
     ctx.globalAlpha = Math.min(1, alpha + 0.15);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(0,0,0,0.8)";
@@ -1637,7 +1639,7 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.shadowColor = core;
     ctx.shadowBlur = 6;
     ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
-    lastX = x; lastY = y;
+
   }
   // No impact found — draw a small arrow at the last visible point.
   if (!impact && lastX > 0 && lastX < state.width && lastY < maxY) {
