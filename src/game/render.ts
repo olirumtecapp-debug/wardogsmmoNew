@@ -792,6 +792,39 @@ function drawExplosionParticles(ctx: CanvasRenderingContext2D, e: Explosion) {
 
 // ============ DOGS ============
 
+// Small callsign plate rendered above the dog with the game font, so the
+// (illegible) lettering painted on the sprite vests is never the source of truth.
+function drawNamePlate(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  teamColor: string,
+  teamDark: string,
+  topY: number,
+) {
+  ctx.save();
+  ctx.font = "bold 6px 'Chakra Petch', system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const label = name.toUpperCase();
+  const wpx = ctx.measureText(label).width;
+  const padX = 3.5, h = 9;
+  const bw = wpx + padX * 2;
+  const by = topY - h - 2;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  roundRect(ctx, -bw / 2, by, bw, h, 2.5); ctx.fill();
+  ctx.strokeStyle = teamColor;
+  ctx.lineWidth = 0.8;
+  roundRect(ctx, -bw / 2, by, bw, h, 2.5); ctx.stroke();
+  ctx.fillStyle = teamDark;
+  ctx.fillRect(-bw / 2 + 1, by + h - 2, bw - 2, 1);
+  ctx.fillStyle = "#fff";
+  ctx.fillText(label, 0, by + h / 2 + 0.2);
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
+  ctx.restore();
+}
+
+
 function drawDog(
   ctx: CanvasRenderingContext2D,
   x: number, y: number,
