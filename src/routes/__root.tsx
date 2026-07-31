@@ -113,6 +113,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useDevShortcuts();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    trackPageView(pathname);
+  }, [pathname]);
   return (
     <QueryClientProvider client={queryClient}>
       <ScenarioProvider>
