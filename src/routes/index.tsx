@@ -246,6 +246,7 @@ function Home() {
 
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
       {showAudio && <AudioSettingsPanel onClose={() => setShowAudio(false)} />}
+      {showSupport && <SupportPixDialog onClose={() => setShowSupport(false)} />}
     </div>
     </OrientationGate>
   );
