@@ -211,25 +211,27 @@ function Home() {
             {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             Áudio
           </button>
-          {isMobile && fsSupported && !isFullscreen && (
+          {fsSupported && (
             <button
-              onClick={() => void requestFullscreenNow()}
+              onClick={() => { playSfx("click"); void (isFullscreen ? exitFullscreenNow() : requestFullscreenNow()); }}
               className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-              aria-label="Tela cheia"
+              aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
             >
-              <Maximize2 size={14} />
-              Tela cheia
+              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              {isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
             </button>
           )}
+          <InstallAppButton className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]" />
           <button
-            onClick={() => { playSfx("click"); navigate({ to: "/doacao" }); }}
+            onClick={() => { playSfx("click"); setShowSupport(true); }}
             className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
             style={{ borderColor: "var(--warn)", color: "var(--warn)" }}
-            aria-label="Doação"
+            aria-label="Apoiar o projeto"
           >
             <Heart size={14} className="fill-current" />
-            Doação
+            Apoiar
           </button>
+
         </div>
       </main>
 
