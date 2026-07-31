@@ -11,7 +11,7 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { PreMatchBriefing } from "@/components/PreMatchBriefing";
 import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import { getActiveScenario } from "@/game/scenarios";
-import { useFullscreen, requestFullscreenNow } from "@/hooks/useFullscreen";
+import { useFullscreen, requestFullscreenNow, exitFullscreenNow } from "@/hooks/useFullscreen";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import menuHeroAsset from "@/assets/wardogs-menu-hero-v2.png.asset.json";
 const logoImg = logoAsset.url;
@@ -46,6 +46,7 @@ function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showHowTo, setShowHowTo] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
   const [muted, setMuted] = useState(() => audio.getSettings().muted);
   const navigate = useNavigate();
   const { isFullscreen, isMobile, supported: fsSupported } = useFullscreen();
