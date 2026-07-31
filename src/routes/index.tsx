@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { HelpCircle, X, Maximize2, Volume2, VolumeX, Heart } from "lucide-react";
+import { HelpCircle, X, Maximize2, Minimize2, Volume2, VolumeX, Heart } from "lucide-react";
+import { SupportPixDialog } from "@/components/SupportPixDialog";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { audio, playSfx } from "@/game/audio";
 import { AudioSettingsPanel } from "@/components/AudioSettingsPanel";
 import { WarDogsGame } from "@/components/WarDogsGame";
@@ -9,7 +11,7 @@ import { MenuBackdrop } from "@/components/MenuBackdrop";
 import { PreMatchBriefing } from "@/components/PreMatchBriefing";
 import { ComicIntro, shouldSkipIntro } from "@/components/ComicIntro";
 import { getActiveScenario } from "@/game/scenarios";
-import { useFullscreen, requestFullscreenNow } from "@/hooks/useFullscreen";
+import { useFullscreen, requestFullscreenNow, exitFullscreenNow } from "@/hooks/useFullscreen";
 import logoAsset from "@/assets/wardogs-logo.png.asset.json";
 import menuHeroAsset from "@/assets/wardogs-menu-hero-v2.png.asset.json";
 const logoImg = logoAsset.url;
@@ -44,6 +46,7 @@ function Home() {
   const [stage, setStage] = useState<Stage>({ kind: "menu" });
   const [showHowTo, setShowHowTo] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
   const [muted, setMuted] = useState(() => audio.getSettings().muted);
   const navigate = useNavigate();
   const { isFullscreen, isMobile, supported: fsSupported } = useFullscreen();
@@ -211,25 +214,27 @@ function Home() {
             {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             Áudio
           </button>
-          {isMobile && fsSupported && !isFullscreen && (
+          {fsSupported && (
             <button
-              onClick={() => void requestFullscreenNow()}
+              onClick={() => { playSfx("click"); void (isFullscreen ? exitFullscreenNow() : requestFullscreenNow()); }}
               className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-              aria-label="Tela cheia"
+              aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
             >
-              <Maximize2 size={14} />
-              Tela cheia
+              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              {isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
             </button>
           )}
+          <InstallAppButton className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]" />
           <button
-            onClick={() => { playSfx("click"); navigate({ to: "/doacao" }); }}
+            onClick={() => { playSfx("click"); setShowSupport(true); }}
             className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
             style={{ borderColor: "var(--warn)", color: "var(--warn)" }}
-            aria-label="Doação"
+            aria-label="Apoiar o projeto"
           >
             <Heart size={14} className="fill-current" />
-            Doação
+            Apoiar
           </button>
+
         </div>
       </main>
 
@@ -241,6 +246,7 @@ function Home() {
 
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
       {showAudio && <AudioSettingsPanel onClose={() => setShowAudio(false)} />}
+      {showSupport && <SupportPixDialog onClose={() => setShowSupport(false)} />}
     </div>
     </OrientationGate>
   );
