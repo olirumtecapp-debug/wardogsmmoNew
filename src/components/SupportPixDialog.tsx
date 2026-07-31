@@ -42,7 +42,7 @@ export function SupportPixDialog({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="panel relative w-full max-w-md max-h-[90vh] overflow-y-auto p-5"
+        className="panel relative w-full max-w-lg overflow-hidden p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="stripe-warn absolute inset-x-0 top-0 h-1.5 opacity-70" aria-hidden />
@@ -54,47 +54,53 @@ export function SupportPixDialog({ onClose }: { onClose: () => void }) {
           <X size={14} />
         </button>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[color:var(--warn)] border border-[color:var(--warn)]/40 bg-[color:var(--warn)]/10 rounded-sm">
+        <div className="inline-flex items-center gap-2 px-2.5 py-1 text-[10px] uppercase tracking-[0.3em] text-[color:var(--warn)] border border-[color:var(--warn)]/40 bg-[color:var(--warn)]/10 rounded-sm">
           <Heart size={12} className="fill-current" />
           Apoiar o projeto
         </div>
 
-        <h2 className="stencil mt-3 text-2xl leading-none text-[color:var(--warn)]">
+        <h2 className="stencil mt-2 text-xl leading-none text-[color:var(--warn)]">
           APOIE O WARDOGS
         </h2>
-        <p className="mt-2 text-xs text-muted-foreground">
-          O jogo é gratuito. Se curtiu, apoie o desenvolvedor com um Pix de qualquer valor — ajuda a
-          trazer novas missões, personagens e cenários.
-        </p>
 
-        <div className="mt-4 mx-auto w-full max-w-[220px] rounded-sm bg-white p-3 border border-border/40">
-          <img
-            src={qrAsset.url}
-            alt="QR Code Pix C6 Bank — Murilo Ferreira da Silva"
-            className="block h-auto w-full"
-          />
-        </div>
-        <div className="mt-2 text-center stencil text-xs tracking-[0.3em] text-[color:var(--accent)]">
-          PIX · APONTE A CÂMERA
-        </div>
-
-        <div className="mt-4 border-t border-dashed border-border/50 pt-3">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Banco</div>
-          <div className="stencil text-lg">C6 Bank</div>
-          <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Favorecido
+        <div className="mt-3 flex items-start gap-4">
+          <div className="shrink-0">
+            <div className="w-[110px] sm:w-[130px] rounded-sm bg-white p-2 border border-border/40">
+              <img
+                src={qrAsset.url}
+                alt="QR Code Pix C6 Bank — Murilo Ferreira da Silva"
+                className="block h-auto w-full"
+              />
+            </div>
+            <div className="mt-1 text-center stencil text-[9px] tracking-[0.25em] text-[color:var(--accent)]">
+              PIX · CÂMERA
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <div className="stencil text-lg">Murilo Ferreira da Silva</div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] leading-snug text-muted-foreground">
+              O jogo é gratuito. Apoie com um Pix de qualquer valor.
+            </p>
+
+            <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              Banco
+            </div>
+            <div className="stencil text-base leading-none">C6 Bank</div>
+
+            <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              Favorecido
+            </div>
+            <div className="stencil text-base leading-tight">Murilo Ferreira da Silva</div>
+
             <button
               onClick={copyPix}
-              className="btn-hud inline-flex items-center gap-2 px-2 py-1 text-[10px] uppercase tracking-[0.2em]"
+              className="btn-hud mt-2 inline-flex items-center gap-2 px-2 py-1 text-[10px] uppercase tracking-[0.2em]"
               title="Copiar código Pix copia e cola"
               aria-label="Copiar código Pix copia e cola"
             >
               {copied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-[color:var(--team-green)]" /> Copiado
+                  <Check className="h-3.5 w-3.5 text-[color:var(--team-green)]" /> Código copiado ✓
                 </>
               ) : (
                 <>
@@ -103,22 +109,13 @@ export function SupportPixDialog({ onClose }: { onClose: () => void }) {
               )}
             </button>
           </div>
-          {copied && (
-            <div className="mt-3 rounded-sm border border-[color:var(--team-green)]/40 bg-[color:var(--team-green)]/10 p-2">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-[color:var(--team-green)] mb-1">
-                Código Pix copiado ✓
-              </div>
-              <div className="font-mono text-[10px] leading-relaxed break-all text-foreground/90 select-all">
-                {PIX_PAYLOAD}
-              </div>
-            </div>
-          )}
         </div>
 
-        <p className="mt-4 text-xs">
-          💛 Obrigado por chegar até aqui, soldado! Só diversão · Sem apostas reais.
+        <p className="mt-3 border-t border-dashed border-border/50 pt-2 text-[11px]">
+          💛 Obrigado, soldado! Só diversão · Sem apostas reais.
         </p>
       </div>
     </div>
   );
 }
+
