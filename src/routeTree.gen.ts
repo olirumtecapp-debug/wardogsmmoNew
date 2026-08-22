@@ -9,18 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as OnlineRouteImport } from './routes/online'
-import { Route as DoacaoRouteImport } from './routes/doacao'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OnlineRouteImport } from './routes/online'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as CampaignIndexRouteImport } from './routes/campaign.index'
-import { Route as MatchCodeRouteImport } from './routes/match.$code'
-import { Route as LobbyCodeRouteImport } from './routes/lobby.$code'
 import { Route as CampaignMissionIdRouteImport } from './routes/campaign.$missionId'
+import { Route as LobbyCodeRouteImport } from './routes/lobby.$code'
+import { Route as MatchCodeRouteImport } from './routes/match.$code'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnlineRoute = OnlineRouteImport.update({
@@ -28,14 +27,9 @@ const OnlineRoute = OnlineRouteImport.update({
   path: '/online',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DoacaoRoute = DoacaoRouteImport.update({
-  id: '/doacao',
-  path: '/doacao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CampaignIndexRoute = CampaignIndexRouteImport.update({
@@ -43,9 +37,9 @@ const CampaignIndexRoute = CampaignIndexRouteImport.update({
   path: '/campaign/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchCodeRoute = MatchCodeRouteImport.update({
-  id: '/match/$code',
-  path: '/match/$code',
+const CampaignMissionIdRoute = CampaignMissionIdRouteImport.update({
+  id: '/campaign/$missionId',
+  path: '/campaign/$missionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LobbyCodeRoute = LobbyCodeRouteImport.update({
@@ -53,15 +47,14 @@ const LobbyCodeRoute = LobbyCodeRouteImport.update({
   path: '/lobby/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CampaignMissionIdRoute = CampaignMissionIdRouteImport.update({
-  id: '/campaign/$missionId',
-  path: '/campaign/$missionId',
+const MatchCodeRoute = MatchCodeRouteImport.update({
+  id: '/match/$code',
+  path: '/match/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/doacao': typeof DoacaoRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/campaign/$missionId': typeof CampaignMissionIdRoute
@@ -71,7 +64,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/doacao': typeof DoacaoRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/campaign/$missionId': typeof CampaignMissionIdRoute
@@ -82,7 +74,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/doacao': typeof DoacaoRoute
   '/online': typeof OnlineRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/campaign/$missionId': typeof CampaignMissionIdRoute
@@ -94,7 +85,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/doacao'
     | '/online'
     | '/sitemap.xml'
     | '/campaign/$missionId'
@@ -104,7 +94,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/doacao'
     | '/online'
     | '/sitemap.xml'
     | '/campaign/$missionId'
@@ -114,7 +103,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/doacao'
     | '/online'
     | '/sitemap.xml'
     | '/campaign/$missionId'
@@ -125,7 +113,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DoacaoRoute: typeof DoacaoRoute
   OnlineRoute: typeof OnlineRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CampaignMissionIdRoute: typeof CampaignMissionIdRoute
@@ -136,11 +123,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/online': {
@@ -150,18 +137,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnlineRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/doacao': {
-      id: '/doacao'
-      path: '/doacao'
-      fullPath: '/doacao'
-      preLoaderRoute: typeof DoacaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/campaign/': {
@@ -171,11 +151,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/match/$code': {
-      id: '/match/$code'
-      path: '/match/$code'
-      fullPath: '/match/$code'
-      preLoaderRoute: typeof MatchCodeRouteImport
+    '/campaign/$missionId': {
+      id: '/campaign/$missionId'
+      path: '/campaign/$missionId'
+      fullPath: '/campaign/$missionId'
+      preLoaderRoute: typeof CampaignMissionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lobby/$code': {
@@ -185,11 +165,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LobbyCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/campaign/$missionId': {
-      id: '/campaign/$missionId'
-      path: '/campaign/$missionId'
-      fullPath: '/campaign/$missionId'
-      preLoaderRoute: typeof CampaignMissionIdRouteImport
+    '/match/$code': {
+      id: '/match/$code'
+      path: '/match/$code'
+      fullPath: '/match/$code'
+      preLoaderRoute: typeof MatchCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -197,7 +177,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DoacaoRoute: DoacaoRoute,
   OnlineRoute: OnlineRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CampaignMissionIdRoute: CampaignMissionIdRoute,

@@ -199,41 +199,7 @@ function Home() {
 
         {/* Botões discretos — Como Jogar + Áudio + Tela Cheia */}
         <div className="flex items-center gap-2 flex-wrap justify-center">
-          <button
-            onClick={() => { playSfx("click"); setShowHowTo(true); }}
-            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-          >
-            <HelpCircle size={14} />
-            Como jogar
-          </button>
-          <button
-            onClick={() => { audio.ensure(); playSfx("click"); setShowAudio(true); }}
-            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-            aria-label="Áudio"
-          >
-            {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            Áudio
-          </button>
-          {fsSupported && (
-            <button
-              onClick={() => { playSfx("click"); void (isFullscreen ? exitFullscreenNow() : requestFullscreenNow()); }}
-              className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-              aria-label={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
-            >
-              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-              {isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
-            </button>
-          )}
-          <InstallAppButton className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]" />
-          <button
-            onClick={() => { playSfx("click"); setShowSupport(true); }}
-            className="btn-hud inline-flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-[0.25em]"
-            style={{ borderColor: "var(--warn)", color: "var(--warn)" }}
-            aria-label="Apoiar o projeto"
-          >
-            <Heart size={14} className="fill-current" />
-            Apoiar
-          </button>
+          
 
         </div>
       </main>
