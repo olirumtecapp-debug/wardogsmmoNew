@@ -1,24 +1,19 @@
 import { MuriloMasterAdmin } from "@/components/MuriloMasterAdmin";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
   createRootRouteWithContext,
   useRouter,
   useRouterState,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 
-import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { trackPageView } from "../lib/tracking";
 import { ScenarioProvider } from "../game/scenarioContext";
 import { Toaster } from "@/components/ui/sonner";
 import { useDevShortcuts } from "@/hooks/useDevShortcuts";
-
-
 
 function NotFoundComponent() {
   return (
@@ -60,71 +55,23 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=resizes-content" },
-      { name: "theme-color", content: "#2a331f" },
-      { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "WarDogs" },
-      { title: "WarDogs — Artilharia Canina" },
-      { name: "description", content: "Jogo de artilharia por turnos estilo Worms. Ranger e Brutus duelam com bazuca, RPG, arco, cluster e air strike em cenários destrutíveis." },
-      { property: "og:title", content: "WarDogs — Artilharia Canina" },
-      { property: "og:description", content: "Jogo de artilharia por turnos estilo Worms. Ranger e Brutus duelam com bazuca, RPG, arco, cluster e air strike em cenários destrutíveis." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "WarDogs — Artilharia Canina" },
-      { name: "twitter:description", content: "Jogo de artilharia por turnos estilo Worms. Ranger e Brutus duelam com bazuca, RPG, arco, cluster e air strike em cenários destrutíveis." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/660f280a-2cb2-442d-819e-12ce19de5213/id-preview-37c46523--17ec0423-0d86-4815-bfd7-dd26c1f5ed41.lovable.app-1784562612054.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/660f280a-2cb2-442d-819e-12ce19de5213/id-preview-37c46523--17ec0423-0d86-4815-bfd7-dd26c1f5ed41.lovable.app-1784562612054.png" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Chakra+Petch:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Bangers&family=Comic+Neue:wght@700&display=swap" },
-    ],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
 
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="pt-BR">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
   useDevShortcuts();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
     trackPageView(pathname);
   }, [pathname]);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <ScenarioProvider>
-        <Outlet />
+    <ScenarioProvider>
+      <Outlet />
       <MuriloMasterAdmin />
-        <Toaster />
-      </ScenarioProvider>
-    </QueryClientProvider>
+      <Toaster />
+    </ScenarioProvider>
   );
 }
