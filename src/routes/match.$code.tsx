@@ -68,16 +68,17 @@ function MatchPage() {
   useEffect(() => {
     if (!match) return;
     const ch = supabase.channel(`match-meta:${match.id}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "matches", filter: `id=eq.${match.id}` }, (payload) => {
-        setMatch(payload.new as MatchRow);
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${match.id}` }, async () => {
+        const next = await fetchMatchByCode(code);
+        if (next) setMatch(next);
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "match_players", filter: `match_id=eq.${match.id}` }, async () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${match.id}` }, async () => {
         const ps = await fetchPlayers(match.id);
         setPlayers(ps);
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [match]);
+  }, [match, code]);
 
   if (error) {
     return (

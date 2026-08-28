@@ -49,8 +49,87 @@ const barricadeImgs: Record<string, HTMLImageElement | null> = typeof window !==
 const scenarioBgCache: Record<string, HTMLImageElement> = {};
 function getScenarioBg(url: string): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
-  if (!scenarioBgCache[url]) scenarioBgCache[url] = loadImg(url);
+  if (!scenarioBgCache[url]) {
+    scenarioBgCache[url] = loadImg(url);
+    if (scenarioBgCache[url]) {
+      scenarioBgCache[url]!.onload = () => { bgDirty = true; };
+    }
+  }
   return scenarioBgCache[url];
+}
+
+let bgCanvas: HTMLCanvasElement | null = null;
+let bgDirty = true;
+let lastBgScenarioId: string | null = null;
+let lastBgW = 0, lastBgH = 0;
+
+export function markBgDirty() { bgDirty = true; }
+
+function ensureBgCanvas(state: GameState): HTMLCanvasElement {
+  const { width: w, height: h } = state;
+  const sc = getActiveScenario();
+  const bgImg = getScenarioBg(sc.bgImage);
+  const keyArtActive = !!(bgImg && bgImg.complete && bgImg.naturalWidth > 0);
+
+  if (!bgCanvas || lastBgW !== w || lastBgH !== h) {
+    bgCanvas = document.createElement("canvas");
+    bgCanvas.width = w;
+    bgCanvas.height = h;
+    lastBgW = w;
+    lastBgH = h;
+    bgDirty = true;
+  }
+  if (lastBgScenarioId !== sc.id) {
+    lastBgScenarioId = sc.id;
+    bgDirty = true;
+  }
+
+  if (bgDirty) {
+    const bctx = bgCanvas.getContext("2d")!;
+    // Sky gradient
+    const sky = bctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, sc.sky[0]);
+    sky.addColorStop(0.45, sc.sky[1]);
+    sky.addColorStop(0.85, sc.sky[2]);
+    sky.addColorStop(1, sc.sky[3]);
+    bctx.fillStyle = sky;
+    bctx.fillRect(0, 0, w, h);
+
+    if (keyArtActive) {
+      const iw = bgImg!.naturalWidth;
+      const ih = bgImg!.naturalHeight;
+      const scale = Math.max(w / iw, h / ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      const fx = sc.bgFocus?.x ?? 0.5;
+      const fy = sc.bgFocus?.y ?? 0.5;
+      const dx = (w - dw) * fx;
+      const dy = (h - dh) * fy;
+      bctx.drawImage(bgImg!, dx, dy, dw, dh);
+
+      if (sc.tint) {
+        bctx.save();
+        bctx.globalCompositeOperation = sc.tintBlend;
+        bctx.fillStyle = sc.tint;
+        bctx.fillRect(0, 0, w, h);
+        bctx.restore();
+      }
+
+      const fade = bctx.createLinearGradient(0, h * 0.70, 0, h);
+      fade.addColorStop(0, "rgba(10,8,4,0)");
+      fade.addColorStop(1, "rgba(10,8,4,0.45)");
+      bctx.fillStyle = fade;
+      bctx.fillRect(0, 0, w, h);
+
+      const vg = bctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.85);
+      vg.addColorStop(0, "rgba(0,0,0,0)");
+      vg.addColorStop(1, "rgba(0,0,0,0.55)");
+      bctx.fillStyle = vg;
+      bctx.fillRect(0, 0, w, h);
+    }
+    bgDirty = false;
+  }
+  return bgCanvas;
 }
 
 let terrainCanvas: HTMLCanvasElement | null = null;
@@ -96,12 +175,13 @@ function ensureTerrainCanvas(state: GameState) {
     const [dR, dG, dB] = sc.terrainDeep;
     const tctx = terrainCanvas.getContext("2d")!;
     const img = tctx.createImageData(state.width, state.height);
+    const data32 = new Uint32Array(img.data.buffer);
     const t = state.terrain;
     const w = state.width, h = state.height;
     for (let y = 0; y < h; y++) {
+      const rowOff = y * w;
       for (let x = 0; x < w; x++) {
-        const i = y * w + x;
-        const j = i * 4;
+        const i = rowOff + x;
         if (t[i]) {
           const above = y > 0 && !t[i - w];
           const near1 = !above && y > 1 && !t[i - w * 2];
@@ -116,7 +196,7 @@ function ensureTerrainCanvas(state: GameState) {
           } else if (near1) {
             r = mR; g = mG; b = mB;
           } else if (near2) {
-            r = Math.round((mR + dR) / 2); g = Math.round((mG + dG) / 2); b = Math.round((mB + dB) / 2);
+            r = (mR + dR) >> 1; g = (mG + dG) >> 1; b = (mB + dB) >> 1;
           } else if (y > h * 0.72) {
             const nn = n >> 1;
             r = Math.max(0, dR - 20 + nn); g = Math.max(0, dG - 12 + nn); b = Math.max(0, dB - 4 + nn);
@@ -138,12 +218,12 @@ function ensureTerrainCanvas(state: GameState) {
             r = Math.max(0, r - 20); g = Math.max(0, g - 20); b = Math.max(0, b - 20);
           }
 
-          img.data[j] = Math.min(255, Math.max(0, r));
-          img.data[j + 1] = Math.min(255, Math.max(0, g));
-          img.data[j + 2] = Math.min(255, Math.max(0, b));
-          img.data[j + 3] = 0xff;
+          const clR = Math.min(255, Math.max(0, r));
+          const clG = Math.min(255, Math.max(0, g));
+          const clB = Math.min(255, Math.max(0, b));
+          data32[i] = (0xFF000000) | (clB << 16) | (clG << 8) | clR;
         } else {
-          img.data[j + 3] = 0;
+          data32[i] = 0;
         }
       }
     }
@@ -156,7 +236,6 @@ function ensureTerrainCanvas(state: GameState) {
     tctx.lineWidth = 1;
     tctx.globalAlpha = 0.9;
     for (let x = 0; x < w; x += 3) {
-      // find surface y
       let sy = -1;
       for (let y = 0; y < h; y++) {
         if (t[y * w + x]) { sy = y; break; }
@@ -194,20 +273,31 @@ function ensureStars(w: number, h: number, seed: number) {
   return stars;
 }
 
+let shakeTimer = 0;
+let shakeDuration = 0.25;
+let shakeIntensity = 0;
+
+export function triggerScreenShake(intensity = 6, duration = 0.25) {
+  shakeIntensity = Math.max(shakeIntensity, intensity);
+  shakeDuration = duration;
+  shakeTimer = duration;
+}
+
 function updateDust(w: number, h: number, wind: number, dt: number, now: number) {
-  // Spawn a few new particles per second based on wind strength
-  const spawnRate = 8 + Math.abs(wind) * 40;
+  // Spawn dynamic breeze particles & leaves based on wind strength and direction
+  const spawnRate = 10 + Math.abs(wind) * 45;
   if (now - lastDustSpawn > 1000 / spawnRate) {
     lastDustSpawn = now;
     const fromRight = wind < 0;
+    const windSpeed = wind * (50 + Math.random() * 60);
     dustParticles.push({
-      x: fromRight ? w + 5 : -5,
-      y: h * (0.15 + Math.random() * 0.7),
-      vx: wind * (30 + Math.random() * 40) + (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 12,
-      life: 4 + Math.random() * 3,
-      size: 0.6 + Math.random() * 1.4,
-      alpha: 0.15 + Math.random() * 0.25,
+      x: fromRight ? w + 10 : -10,
+      y: h * (0.10 + Math.random() * 0.75),
+      vx: windSpeed + (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 16 + Math.sin(now * 0.003) * 6,
+      life: 3.5 + Math.random() * 2.5,
+      size: 0.8 + Math.random() * 2.0,
+      alpha: 0.2 + Math.min(0.4, Math.abs(wind) * 0.35),
     });
   }
   for (const p of dustParticles) {
@@ -215,7 +305,7 @@ function updateDust(w: number, h: number, wind: number, dt: number, now: number)
     p.y += p.vy * dt;
     p.life -= dt;
   }
-  dustParticles = dustParticles.filter(p => p.life > 0 && p.x > -20 && p.x < w + 20);
+  dustParticles = dustParticles.filter(p => p.life > 0 && p.x > -30 && p.x < w + 30);
 }
 
 export function render(ctx: CanvasRenderingContext2D, state: GameState) {
@@ -223,56 +313,32 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
   const now = performance.now();
   const dt = 1 / 60;
 
-  // Sky gradient from scenario
+  // Apply Screen Shake if active
+  let shakeX = 0, shakeY = 0;
+  if (shakeTimer > 0) {
+    shakeTimer = Math.max(0, shakeTimer - dt);
+    const progress = shakeTimer / shakeDuration;
+    const mag = shakeIntensity * progress;
+    shakeX = (Math.random() - 0.5) * 2 * mag;
+    shakeY = (Math.random() - 0.5) * 2 * mag;
+    if (shakeTimer <= 0) shakeIntensity = 0;
+  }
+
+  ctx.save();
+  if (shakeX !== 0 || shakeY !== 0) {
+    ctx.translate(shakeX, shakeY);
+  }
+
   const sc = getActiveScenario();
-  const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, sc.sky[0]);
-  sky.addColorStop(0.45, sc.sky[1]);
-  sky.addColorStop(0.85, sc.sky[2]);
-  sky.addColorStop(1, sc.sky[3]);
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, h);
+
+  // Render cached offscreen background (sky + image + tint + vignette)
+  const bg = ensureBgCanvas(state);
+  ctx.drawImage(bg, 0, 0);
 
   const bgImg = getScenarioBg(sc.bgImage);
   const keyArtActive = !!(bgImg && bgImg.complete && bgImg.naturalWidth > 0);
 
-  if (keyArtActive) {
-    const iw = bgImg!.naturalWidth;
-    const ih = bgImg!.naturalHeight;
-    // cover fit with per-scenario focal anchor
-    const scale = Math.max(w / iw, h / ih);
-    const dw = iw * scale;
-    const dh = ih * scale;
-    const fx = sc.bgFocus?.x ?? 0.5;
-    const fy = sc.bgFocus?.y ?? 0.5;
-    const px = Math.sin(now * 0.00006) * 3;
-    const dx = (w - dw) * fx + px;
-    const dy = (h - dh) * fy;
-    ctx.drawImage(bgImg!, dx, dy, dw, dh);
-
-    // Scenario tint on top of background
-    if (sc.tint) {
-      ctx.save();
-      ctx.globalCompositeOperation = sc.tintBlend;
-      ctx.fillStyle = sc.tint;
-      ctx.fillRect(0, 0, w, h);
-      ctx.restore();
-    }
-
-    // Bottom fade for terrain blend (softer so horizon doesn't disappear)
-    const fade = ctx.createLinearGradient(0, h * 0.70, 0, h);
-    fade.addColorStop(0, "rgba(10,8,4,0)");
-    fade.addColorStop(1, "rgba(10,8,4,0.45)");
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, 0, w, h);
-
-    // Edge vignette
-    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.85);
-    vg.addColorStop(0, "rgba(0,0,0,0)");
-    vg.addColorStop(1, "rgba(0,0,0,0.55)");
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, w, h);
-  } else {
+  if (!keyArtActive) {
     // Aurora shimmer (fallback while image loads)
     const auroraY = h * 0.28;
     const auroraShift = Math.sin(now * 0.0004) * 40;
@@ -438,11 +504,16 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
       ctx.restore();
     }
     // Soft rim glow to lift the silhouette off the terrain
-    ctx.save();
-    ctx.shadowColor = dog.rageActive ? "#ff3838" : skin.teamColor;
-    ctx.shadowBlur = active ? (dog.rageActive ? 22 : 14) : 8;
+    if (active || dog.rageActive) {
+      ctx.save();
+      ctx.globalAlpha = dog.rageActive ? 0.32 : 0.20;
+      ctx.fillStyle = dog.rageActive ? "#ff3838" : skin.teamColor;
+      ctx.beginPath();
+      ctx.arc(dog.x, dog.y - 4, dog.rageActive ? 26 : 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     drawDog(ctx, dog.x, dog.y, skin, dog.facing, dog.hp, now, active, state.angle);
-    ctx.restore();
     drawHpBar(ctx, dog.x, dog.y - 60, dog.hp, dog.maxHp, skin.teamColor, skin.teamDark);
     if (active && dog.hp > 0) drawActiveMarker(ctx, dog.x, dog.y - 72, now, skin.teamColor);
 
@@ -555,12 +626,15 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     drawExplosionParticles(ctx, e);
   }
 
-  // Floating damage numbers
+  // Supply Crates with parachutes
+  drawSupplyCrates(ctx, state, now);
+
+  // Floating damage numbers & popups
   for (const f of state.floatingTexts) {
     const t = f.life / f.maxLife;
     const age = f.maxLife - f.life;
-    const pop = age < 0.12 ? (age / 0.12) : 1;
-    const alpha = Math.min(1, f.life / 0.3);
+    const pop = age < 0.14 ? 0.6 + (age / 0.14) * 0.55 : Math.max(0.9, 1 - (1 - t) * 0.15);
+    const alpha = Math.min(1, f.life / 0.22);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(f.x, f.y);
@@ -568,12 +642,12 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.font = `900 ${f.size}px "Chakra Petch", "Black Ops One", sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "rgba(0,0,0,0.9)";
+    ctx.lineWidth = 4.5;
+    ctx.strokeStyle = "rgba(0,0,0,0.95)";
     ctx.strokeText(f.value, 0, 0);
     ctx.fillStyle = f.color;
     ctx.shadowColor = f.color;
-    ctx.shadowBlur = 8 * t;
+    ctx.shadowBlur = 10 * t;
     ctx.fillText(f.value, 0, 0);
     ctx.restore();
   }
@@ -608,6 +682,110 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     ctx.globalCompositeOperation = sc.tintBlend;
     ctx.fillStyle = sc.tint;
     ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  // Screen shake context restore
+  ctx.restore();
+}
+
+function drawSupplyCrates(ctx: CanvasRenderingContext2D, state: GameState, now: number) {
+  if (!state.supplyCrates || state.supplyCrates.length === 0) return;
+
+  for (const crate of state.supplyCrates) {
+    ctx.save();
+    ctx.translate(crate.x, crate.y);
+
+    // Parachute (if not landed and visible)
+    if (!crate.landed && crate.parachuteAlpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = crate.parachuteAlpha;
+      const sway = Math.sin(now * 0.005 + crate.x) * 4;
+      ctx.translate(sway, -24);
+
+      // Cords
+      ctx.strokeStyle = "rgba(240, 230, 200, 0.85)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-14, 0); ctx.lineTo(-sway, 24);
+      ctx.moveTo(0, 0);   ctx.lineTo(-sway, 24);
+      ctx.moveTo(14, 0);  ctx.lineTo(-sway, 24);
+      ctx.stroke();
+
+      // Canopy
+      ctx.fillStyle = crate.type === "hp" ? "#e63946" : "#2a9d8f";
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, Math.PI, 0, false);
+      ctx.closePath();
+      ctx.fill();
+
+      // Canopy white stripes
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, Math.PI + 0.6, Math.PI + 1.1, false);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, Math.PI + 2.0, Math.PI + 2.5, false);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#1a1a1a";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, Math.PI, 0, false);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Wooden crate box (18x18px)
+    const boxW = 18, boxH = 18;
+    const bx = -boxW / 2, by = -boxH / 2;
+
+    // Wood body
+    ctx.fillStyle = "#8a5a2b";
+    ctx.fillRect(bx, by, boxW, boxH);
+
+    // Metal corners / frame
+    ctx.strokeStyle = "#3a200a";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx, by, boxW, boxH);
+
+    // Cross brace
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx, by); ctx.lineTo(bx + boxW, by + boxH);
+    ctx.moveTo(bx + boxW, by); ctx.lineTo(bx, by + boxH);
+    ctx.stroke();
+
+    // Type Badge / Icon
+    if (crate.type === "hp") {
+      ctx.fillStyle = "#48ff72";
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("✚", 0, 0);
+    } else {
+      ctx.fillStyle = "#ffd53d";
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("⚡", 0, 0);
+    }
+
+    // Ground glow / pulse if landed
+    if (crate.landed) {
+      const pulse = 0.4 + 0.3 * Math.sin(now * 0.006 + crate.x);
+      ctx.strokeStyle = crate.type === "hp" ? `rgba(72,255,114,${pulse})` : `rgba(255,213,61,${pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(bx - 2, by - 2, boxW + 4, boxH + 4);
+    }
+
     ctx.restore();
   }
 }
@@ -1606,15 +1784,18 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
 
   // Same integration step as the engine (60 Hz Euler) so the arc matches the shot.
   const dt = 1 / 60;
-  const maxSteps = 420;
+  // Guia inicial de lançamento (~35% da tela, sem alcançar o adversário)
+  const maxSteps = 80;
+  const maxDistanceX = Math.min(260, state.width * 0.35);
   const drawEvery = 3;
   const windMul = dog.rageActive ? 0.5 : 1;
   const maxY = state.height - state.hudReserve - 2;
   const core = getActiveScenario().aimColor ?? "#ffdd33";
-  const enemy = state.dogs[1 - state.currentPlayer];
+
+  // Desenha o rastro fantasma sutil do tiro anterior se houver
+  drawLastShotTrail(ctx, state);
 
   ctx.save();
-  let impact = false;
   let lastX = x, lastY = y;
   // Grace period: while origin is still inside solid, skip collision checks.
   let escaped = !isSolidAt(state, x, y);
@@ -1629,7 +1810,8 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     x += vx * dt;
     y += vy * dt;
 
-    if (x < 0 || x > state.width || y > maxY) break;
+    // Limite de tela e limite de distância horizontal para nunca alcançar o oponente
+    if (x < 0 || x > state.width || y > maxY || Math.abs(x - dog.x) > maxDistanceX) break;
     if (!escaped) {
       if (!isSolidAt(state, x, y)) escaped = true;
       lastX = x; lastY = y;
@@ -1637,64 +1819,49 @@ function drawAimPreview(ctx: CanvasRenderingContext2D, state: GameState) {
     }
     if (i < 4) continue;
 
-    const hitsEnemy = enemy && enemy.hp > 0 &&
-      Math.abs(x - enemy.x) <= 15 && y >= enemy.y - 26 && y <= enemy.y + 18;
-
-    if (isSolidAt(state, x, y) || hitsEnemy) {
-
-      // Impact target: dark halo + neon ring + white cross
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(0,0,0,0.85)";
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x - 9, y); ctx.lineTo(x + 9, y);
-      ctx.moveTo(x, y - 9); ctx.lineTo(x, y + 9);
-      ctx.stroke();
+    // Obstáculo atingido bem próximo
+    if (isSolidAt(state, x, y)) {
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = core;
-      ctx.shadowColor = core;
-      ctx.shadowBlur = 8;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = "#fff";
-      ctx.shadowBlur = 0;
       ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(x - 9, y); ctx.lineTo(x + 9, y);
-      ctx.moveTo(x, y - 9); ctx.lineTo(x, y + 9);
-      ctx.stroke();
-      impact = true;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.stroke();
       break;
     }
 
     lastX = x; lastY = y;
     if (i % drawEvery !== 0) continue;
 
-    const t = Math.min(1, i / (maxSteps * 0.5));
-    const alpha = 1 - t * 0.55;
-    const rr = Math.max(1, 2.6 - t * 1.1);
-    ctx.globalAlpha = Math.min(1, alpha + 0.15);
+    // Cor mais suave e fraquinha, com fade-out gradual
+    const progress = i / maxSteps;
+    const alpha = Math.max(0.06, (1 - progress) * 0.55);
+    const rr = Math.max(1.0, 2.2 * (1 - progress * 0.45));
+
+    ctx.globalAlpha = alpha * 0.6;
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
-    ctx.beginPath(); ctx.arc(x, y, rr + 1.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.beginPath(); ctx.arc(x, y, rr + 0.8, 0, Math.PI * 2); ctx.fill();
+
     ctx.globalAlpha = alpha;
     ctx.fillStyle = core;
-    ctx.shadowColor = core;
-    ctx.shadowBlur = 6;
-    ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
-
-  }
-  // No impact found — draw a small arrow at the last visible point.
-  if (!impact && lastX > 0 && lastX < state.width && lastY < maxY) {
-    ctx.globalAlpha = 0.85;
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = "rgba(0,0,0,0.7)";
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = core;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawLastShotTrail(ctx: CanvasRenderingContext2D, state: GameState) {
+  if (!state.lastShotTrail || state.lastShotTrail.length < 2) return;
+  ctx.save();
+  for (let i = 0; i < state.lastShotTrail.length; i++) {
+    const [px, py] = state.lastShotTrail[i];
+    ctx.globalAlpha = 0.20;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(px, py, 1.4, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.restore();
 }
@@ -1859,8 +2026,6 @@ function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
     cx.drawImage(sprite, 0, 0, b.w0, b.h0);
   } else {
     drawBarricadePattern(cx, b.kind, b.w0, b.h0);
-    // Sprite still loading — force redraw next frame so the PNG replaces the fallback.
-    if (sprite) b._dirty = true;
   }
   // Punch holes where mask=0 by zeroing the alpha channel.
   const img = cx.getImageData(0, 0, c.width, c.height);
@@ -1871,9 +2036,7 @@ function ensureBarricadeCanvas(b: GameState["barricades"][number]) {
   }
   cx.putImageData(img, 0, 0);
   b._canvas = c;
-  if (!(sprite && !(sprite.complete && sprite.naturalWidth > 0))) {
-    b._dirty = false;
-  }
+  b._dirty = false;
 }
 
 

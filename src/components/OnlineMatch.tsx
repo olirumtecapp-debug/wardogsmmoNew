@@ -49,6 +49,7 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
 
   const [, setTick] = useState(0);
+  const lastUiTickRef = useRef(0);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
   const [showIntro, setShowIntro] = useState(true);
   const [arsenalOpen, setArsenalOpen] = useState(false);
@@ -334,7 +335,10 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
 
         const ctx = canvasRef.current?.getContext("2d");
         if (ctx) render(ctx, s);
-        setTick(t => (t + 1) % 1000);
+        if (now - lastUiTickRef.current > 45 || s.phase === "gameover") {
+          lastUiTickRef.current = now;
+          setTick(t => (t + 1) % 1000);
+        }
       }
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -673,10 +677,61 @@ export function OnlineMatch({ match, players, myUserId, onExit }: Props) {
           )}
 
           {s?.phase === "gameover" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 pointer-events-auto">
-              <div className="panel p-5 text-center space-y-3">
-                <div className="stencil text-lg uppercase">{s.message}</div>
-                <button onClick={onExit} className="btn-hud btn-primary">Voltar à base</button>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 pointer-events-auto z-50">
+              <div className="panel p-5 sm:p-7 text-center max-w-md w-full border border-border/80 shadow-2xl space-y-3">
+                <div className="stencil text-xs text-muted-foreground uppercase tracking-[0.25em]">Combate encerrado</div>
+                <div className="stencil text-2xl uppercase text-[color:var(--accent)]">{s.message}</div>
+
+                {/* Match Stats Summary */}
+                {s.stats && (
+                  <div className="p-3 rounded-lg bg-black/40 border border-border/50 text-left text-xs space-y-2">
+                    <div className="stencil text-[10px] uppercase text-[color:var(--accent)] tracking-widest flex items-center gap-1.5 border-b border-border/40 pb-1 font-semibold">
+                      📊 Relatório Tático da Batalha
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="p-2 rounded bg-secondary/30">
+                        <div className="text-muted-foreground text-[10px] uppercase font-mono">🎯 Precisão ({CHARACTERS[chars[0]]?.name || "P1"})</div>
+                        <div className="font-bold text-sm font-mono text-foreground mt-0.5">
+                          {s.stats.shotsFired[0] > 0 ? Math.round((s.stats.shotsHit[0] / s.stats.shotsFired[0]) * 100) : 0}%
+                        </div>
+                        <div className="text-[9px] text-muted-foreground font-mono">
+                          {s.stats.shotsHit[0]}/{s.stats.shotsFired[0]} disparos
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-secondary/30">
+                        <div className="text-muted-foreground text-[10px] uppercase font-mono">🎯 Precisão ({CHARACTERS[chars[1]]?.name || "P2"})</div>
+                        <div className="font-bold text-sm font-mono text-foreground mt-0.5">
+                          {s.stats.shotsFired[1] > 0 ? Math.round((s.stats.shotsHit[1] / s.stats.shotsFired[1]) * 100) : 0}%
+                        </div>
+                        <div className="text-[9px] text-muted-foreground font-mono">
+                          {s.stats.shotsHit[1]}/{s.stats.shotsFired[1]} disparos
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-secondary/30">
+                        <div className="text-muted-foreground text-[10px] uppercase font-mono">💥 Dano ({CHARACTERS[chars[0]]?.name || "P1"})</div>
+                        <div className="font-bold text-sm font-mono text-[color:var(--team-green)] mt-0.5">
+                          {s.stats.damageDealt[0]} HP
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-secondary/30">
+                        <div className="text-muted-foreground text-[10px] uppercase font-mono">💥 Dano ({CHARACTERS[chars[1]]?.name || "P2"})</div>
+                        <div className="font-bold text-sm font-mono text-[color:var(--team-green)] mt-0.5">
+                          {s.stats.damageDealt[1]} HP
+                        </div>
+                      </div>
+                    </div>
+                    {((s.stats.cratesCollected?.[0] || 0) + (s.stats.cratesCollected?.[1] || 0)) > 0 && (
+                      <div className="text-[10px] text-muted-foreground pt-1.5 border-t border-border/30 flex justify-between font-mono">
+                        <span>🪂 Suprimentos Coletados:</span>
+                        <span>P1: {s.stats.cratesCollected[0] || 0} | P2: {s.stats.cratesCollected[1] || 0}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <button onClick={onExit} className="btn-hud btn-primary px-6 py-2 uppercase tracking-wider text-xs">Voltar à base</button>
+                </div>
               </div>
             </div>
           )}
@@ -705,7 +760,7 @@ function fp(x: number, y: number, r: number) { return `${Math.round(x)},${Math.r
 function serialize(s: GameState) {
   return {
     dogs: s.dogs.map(d => ({
-      x: d.x, y: d.y, vy: d.vy, hp: d.hp, facing: d.facing, airborne: !!d.airborne,
+      x: d.x, y: d.y, vx: d.vx ?? 0, vy: d.vy, hp: d.hp, facing: d.facing, airborne: !!d.airborne,
       moveBudget: d.moveBudget, hasJumped: d.hasJumped, aliveTicks: d.aliveTicks,
     })),
     projectiles: s.projectiles.map(p => ({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, weapon: p.weapon, age: p.age, ownerTeam: p.ownerTeam, isSub: !!p.isSub, trail: p.trail.slice(-12) })),
@@ -721,7 +776,7 @@ function apply(s: GameState, snap: Snapshot, skipAim = false) {
   for (let i = 0; i < s.dogs.length; i++) {
     const d = s.dogs[i]; const sd = snap.dogs[i];
     if (!sd) continue;
-    d.x = sd.x; d.y = sd.y; d.vy = sd.vy; d.hp = sd.hp; d.facing = sd.facing;
+    d.x = sd.x; d.y = sd.y; d.vx = sd.vx; d.vy = sd.vy; d.hp = sd.hp; d.facing = sd.facing;
     d.airborne = sd.airborne; d.moveBudget = sd.moveBudget; d.hasJumped = sd.hasJumped; d.aliveTicks = sd.aliveTicks;
   }
   s.projectiles = snap.projectiles.map(p => ({

@@ -45,12 +45,9 @@ function CampaignMap() {
     <OrientationGate soft>
       <div className="relative min-h-dvh overflow-auto flex flex-col">
         <div
-          className="fixed inset-0 -z-20"
+          className="fixed inset-0 -z-20 hero-bg-responsive"
           style={{
             backgroundImage: `url(${keyArtAsset.url})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center 30%",
-            backgroundColor: "#0b0f16",
           }}
           aria-hidden
         />

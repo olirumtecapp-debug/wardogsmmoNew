@@ -1,9 +1,9 @@
-import type { Barricade, BarricadeKind, Dog, Explosion, GameMode, GameState, Projectile, WeaponId } from "./types";
+import type { Barricade, BarricadeKind, Dog, Explosion, GameMode, GameState, Projectile, SupplyCrate, WeaponId } from "./types";
 import { WEAPONS, WEAPON_ORDER, initialAmmo } from "./weapons";
-import { markTerrainDirty } from "./render";
+import { markTerrainDirty, triggerScreenShake } from "./render";
 import { getActiveScenario } from "./scenarios";
 import { CHARACTERS, type CharacterId } from "./characters";
-import { playSfx, playFireSfx } from "./audio";
+import { playSfx, playFireSfx, playExplosion, playBark } from "./audio";
 import { isAdminOverride } from "@/lib/unlocks";
 
 
@@ -20,8 +20,8 @@ const SHIELD_DAMAGE_REDUCTION = 0.6;
 const SHIELD_ABSORB_CAP = 80;
 export const MATCH_DURATION_DEFAULT = 300; // 5 minutos
 export const MOVE_BUDGET = 120; // px per turn (padrão para HUD)
-const MOVE_SPEED = 95; // px/s
-const STEP_UP = 14; // max ledge height (px) to walk over
+const MOVE_SPEED = 125; // px/s
+const STEP_UP = 26; // max ledge height (px) to walk over
 const JUMP_VY = -280;
 
 
@@ -64,6 +64,15 @@ export function createGame(
     width, height, terrain, dogs,
     projectiles: [], explosions: [],
     floatingTexts: [], scorchMarks: [],
+    supplyCrates: [],
+    stats: {
+      shotsFired: [0, 0],
+      shotsHit: [0, 0],
+      damageDealt: [0, 0],
+      cratesCollected: [0, 0],
+      usedWeapons: [{}, {}],
+    },
+    turnCount: 0,
     currentPlayer: 0,
     wind: (rng() - 0.5) * 2 * sc.windScale,
     angle: 45, power: 60,
@@ -220,25 +229,105 @@ function spawnFloatingObstacles(
 
 
 
-function generateTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
+// ============ THEMED TERRAIN RELIEFS (WORMS STYLE) ============
+
+export function generateClassicTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
   const terrain = new Uint8Array(w * h);
   const heights = new Float32Array(w);
   const baseline = usableH * 0.60;
   const amp = usableH * 0.20;
   const octaves = [
-    { freq: 0.0012, amp: amp * 0.55, phase: rng() * Math.PI * 2 }, // grandes elevações
-    { freq: 0.003,  amp: amp * 0.30, phase: rng() * Math.PI * 2 }, // colinas médias
-    { freq: 0.008,  amp: amp * 0.18, phase: rng() * Math.PI * 2 }, // ondulações
-    { freq: 0.020,  amp: amp * 0.08, phase: rng() * Math.PI * 2 }, // rochas
-    { freq: 0.055,  amp: amp * 0.03, phase: rng() * Math.PI * 2 }, // detalhe fino
+    { freq: 0.0012, amp: amp * 0.55, phase: rng() * Math.PI * 2 },
+    { freq: 0.003,  amp: amp * 0.30, phase: rng() * Math.PI * 2 },
+    { freq: 0.008,  amp: amp * 0.18, phase: rng() * Math.PI * 2 },
+    { freq: 0.020,  amp: amp * 0.08, phase: rng() * Math.PI * 2 },
+    { freq: 0.055,  amp: amp * 0.03, phase: rng() * Math.PI * 2 },
   ];
   for (let x = 0; x < w; x++) {
     let y = baseline;
     for (const o of octaves) y += Math.sin(x * o.freq + o.phase) * o.amp;
     heights[x] = Math.max(usableH * 0.35, Math.min(usableH - 8, y));
   }
+  applySpawnFlattening(heights, w, usableH);
+  return finalizeTerrainHeights(heights, terrain, w, h, usableH, topReserve);
+}
 
-  // Suavização nas zonas de spawn (achata plataformas iniciais dos cães)
+function generateTerrain(w: number, h: number, usableH: number, topReserve: number, rng: () => number): Uint8Array {
+  const sc = getActiveScenario();
+  const profile = sc.reliefProfile || "classic";
+  if (profile === "classic") {
+    return generateClassicTerrain(w, h, usableH, topReserve, rng);
+  }
+
+  const terrain = new Uint8Array(w * h);
+  const heights = new Float32Array(w);
+  const baseline = usableH * 0.58;
+
+  if (profile === "dunes") {
+    // 🏜️ DESERTO: Ondas longas de dunas com cristas suaves e vales amplos
+    const amp = usableH * 0.24;
+    const p1 = rng() * Math.PI * 2, p2 = rng() * Math.PI * 2, p3 = rng() * Math.PI * 2;
+    for (let x = 0; x < w; x++) {
+      const u = x / w;
+      // Dunas harmônicas assimétricas
+      const wave1 = Math.sin(u * Math.PI * 3.2 + p1) * (amp * 0.65);
+      const wave2 = Math.sin(u * Math.PI * 6.5 + p2) * (amp * 0.25);
+      const wave3 = Math.cos(u * Math.PI * 12 + p3) * (amp * 0.10);
+      const canyon = Math.sin(u * Math.PI * 1.5 + p1) * (usableH * 0.08);
+      heights[x] = Math.max(usableH * 0.32, Math.min(usableH - 8, baseline + wave1 + wave2 + wave3 + canyon));
+    }
+  } else if (profile === "glacier_peaks") {
+    // ❄️ ÁRTICO: Picos afiados de gelo, desfiladeiros verticais e fendas escarpadas
+    const amp = usableH * 0.28;
+    const p1 = rng() * Math.PI * 2, p2 = rng() * Math.PI * 2;
+    for (let x = 0; x < w; x++) {
+      const u = x / w;
+      // Picos angulares afiados gerados por inversão de valor absoluto
+      const saw1 = Math.abs(Math.sin(u * Math.PI * 4 + p1)) * -amp * 0.8;
+      const saw2 = Math.sin(u * Math.PI * 8.5 + p2) * (amp * 0.25);
+      const jagged = Math.sin(x * 0.04) * (usableH * 0.04) + Math.cos(x * 0.09) * (usableH * 0.02);
+      const glacierDrop = Math.sin(u * Math.PI * 2.2) * (usableH * 0.12);
+      heights[x] = Math.max(usableH * 0.28, Math.min(usableH - 8, baseline + 20 + saw1 + saw2 + jagged + glacierDrop));
+    }
+  } else if (profile === "plateaus") {
+    // 🌴 SELVA: Platôs escalonados em degraus e colinas tropicais
+    const amp = usableH * 0.22;
+    const p1 = rng() * Math.PI * 2, p2 = rng() * Math.PI * 2;
+    for (let x = 0; x < w; x++) {
+      const u = x / w;
+      // Platôs em degraus suaves usando tanh
+      const step1 = Math.tanh(Math.sin(u * Math.PI * 3.5 + p1) * 3) * (amp * 0.55);
+      const step2 = Math.tanh(Math.sin(u * Math.PI * 7.0 + p2) * 2) * (amp * 0.28);
+      const organic = Math.sin(x * 0.015) * (amp * 0.15) + Math.sin(x * 0.04) * (usableH * 0.02);
+      heights[x] = Math.max(usableH * 0.32, Math.min(usableH - 8, baseline + step1 + step2 + organic));
+    }
+  } else {
+    // 💣 ZONA DE GUERRA: Montes defensivos e crateras pré-existentes de artilharia
+    const amp = usableH * 0.20;
+    const p1 = rng() * Math.PI * 2, p2 = rng() * Math.PI * 2;
+    // Posições de 2 a 3 crateras no campo
+    const crater1X = w * (0.35 + rng() * 0.1);
+    const crater2X = w * (0.55 + rng() * 0.1);
+    for (let x = 0; x < w; x++) {
+      const u = x / w;
+      let y = baseline + Math.sin(u * Math.PI * 4 + p1) * (amp * 0.5) + Math.sin(u * Math.PI * 9 + p2) * (amp * 0.25);
+      // Depressões das crateras
+      const d1 = (x - crater1X) / 36;
+      const d2 = (x - crater2X) / 42;
+      const craterDip1 = Math.exp(-d1 * d1) * (usableH * 0.14);
+      const craterDip2 = Math.exp(-d2 * d2) * (usableH * 0.16);
+      y += craterDip1 + craterDip2;
+      // Pequenas pedras e escombros
+      y += Math.sin(x * 0.03) * (usableH * 0.025);
+      heights[x] = Math.max(usableH * 0.34, Math.min(usableH - 8, y));
+    }
+  }
+
+  applySpawnFlattening(heights, w, usableH);
+  return finalizeTerrainHeights(heights, terrain, w, h, usableH, topReserve);
+}
+
+function applySpawnFlattening(heights: Float32Array, w: number, usableH: number) {
   const flattenBand = (start: number, end: number) => {
     const s = Math.floor(w * start);
     const e = Math.floor(w * end);
@@ -247,23 +336,30 @@ function generateTerrain(w: number, h: number, usableH: number, topReserve: numb
     for (let x = s; x < e; x++) sum += heights[x];
     const avg = sum / (e - s);
     for (let x = s; x < e; x++) {
-      // mistura 70% média + 30% valor original — plataforma estável mas não totalmente reta
-      heights[x] = heights[x] * 0.3 + avg * 0.7;
+      heights[x] = heights[x] * 0.25 + avg * 0.75;
     }
   };
   flattenBand(0.08, 0.22);
   flattenBand(0.78, 0.92);
 
-  // Garante cobertura mínima: pelo menos 60% das colunas têm terreno alto o bastante
+  // Garante cobertura mínima
   const minTop = usableH - 20;
   let goodCols = 0;
   for (let x = 0; x < w; x++) if (heights[x] < minTop) goodCols++;
   if (goodCols / w < 0.6) {
     const lift = usableH * 0.08;
-    for (let x = 0; x < w; x++) heights[x] = Math.max(usableH * 0.35, heights[x] - lift);
+    for (let x = 0; x < w; x++) heights[x] = Math.max(usableH * 0.32, heights[x] - lift);
   }
+}
 
-  // Aplica topReserve e desenha o terreno sólido
+function finalizeTerrainHeights(
+  heights: Float32Array,
+  terrain: Uint8Array,
+  w: number,
+  h: number,
+  usableH: number,
+  topReserve: number,
+): Uint8Array {
   for (let x = 0; x < w; x++) heights[x] += topReserve;
   const bottom = Math.min(h, usableH + topReserve);
   for (let x = 0; x < w; x++) {
@@ -423,6 +519,14 @@ export function fire(state: GameState) {
   state.phase = "firing";
   state.message = "Fogo!";
 
+  // Track match stats
+  if (state.stats) {
+    state.stats.shotsFired[state.currentPlayer]++;
+    const currWeapon = state.weapon;
+    state.stats.usedWeapons[state.currentPlayer][currWeapon] =
+      (state.stats.usedWeapons[state.currentPlayer][currWeapon] || 0) + 1;
+  }
+
   const dog = state.dogs[state.currentPlayer];
   const dir = dog.facing;
 
@@ -462,11 +566,11 @@ export function fire(state: GameState) {
     weapon: state.weapon, age: 0, ownerTeam: state.currentPlayer, trail: [],
   };
   state.projectiles.push(p);
-  playFireSfx(state.weapon);
+  playFireSfx(state.weapon, 1, dog.charId);
 }
 
 
-function spawnExplosion(state: GameState, x: number, y: number, radius: number, color: string) {
+function spawnExplosion(state: GameState, x: number, y: number, radius: number, color: string, weaponId?: WeaponId) {
   const particles: Explosion["particles"] = [];
   const count = Math.min(60, Math.floor(radius * 1.2));
   for (let i = 0; i < count; i++) {
@@ -480,7 +584,7 @@ function spawnExplosion(state: GameState, x: number, y: number, radius: number, 
     });
   }
   state.explosions.push({ x, y, radius, age: 0, maxAge: 0.45, particles });
-  if (radius >= 10) playSfx("explosion", Math.min(1.2, radius / 60));
+  if (radius >= 10) playExplosion(weaponId || state.weapon, radius);
 }
 
 export function applyExplosionDamage(state: GameState, x: number, y: number, radius: number, damage: number, ownerTeam?: 0 | 1) {
@@ -488,6 +592,11 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
   erodeBarricades(state, x, y, radius);
   state.scorchMarks.push({ x, y, radius: radius * 1.05, life: 6, maxLife: 6 });
   state.onExplosion?.(x, y, radius);
+
+  // Trigger screen shake on heavier explosions
+  if (radius >= 32) {
+    triggerScreenShake(Math.min(9, radius * 0.14), 0.22);
+  }
 
   // Shooter (if any) for rage accumulation
   const shooter = ownerTeam !== undefined ? state.dogs.find(d => d.team === ownerTeam) : undefined;
@@ -535,17 +644,26 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       const key = Math.round(dog.x / 24);
       const stackIdx = stackOffsets.get(key) ?? 0;
       stackOffsets.set(key, stackIdx + 1);
-      const color = dmg >= 40 ? "#ff3838" : dmg >= 20 ? "#ff9138" : dmg > 0 ? "#ffd93a" : "#b8b8b8";
-      const size = dmg >= 40 ? 30 : dmg >= 20 ? 26 : 22;
+
+      // Dynamic floating damage number with critical pop
+      const isCrit = dmg >= 45 || falloff > 0.88;
+      const color = isCrit ? "#ff2a4a" : dmg >= 25 ? "#ff9524" : dmg > 0 ? "#ffd23f" : "#b8b8b8";
+      const size = isCrit ? 34 : dmg >= 25 ? 28 : 24;
+      const valText = isCrit ? `CRÍTICO! -${dmg}` : dmg > 0 ? `-${dmg}` : "0";
+
       state.floatingTexts.push({
         id: Math.random(),
         x: dog.x,
-        y: dog.y - 32 - stackIdx * 18,
-        vx: (Math.random() - 0.5) * 30, vy: -70,
-        life: 1.2, maxLife: 1.2,
-        value: dmg > 0 ? `-${dmg}` : "0",
-        color, size,
+        y: dog.y - 32 - stackIdx * 20,
+        vx: (Math.random() - 0.5) * 20,
+        vy: isCrit ? -100 : -75,
+        life: isCrit ? 1.5 : 1.25,
+        maxLife: isCrit ? 1.5 : 1.25,
+        value: valText,
+        color,
+        size,
       });
+
       // Escudo: quem toma dano bruto carrega o Campo de Força (mesmo se absorvido)
       if (rawDmg > 0 && !dog.shieldActive) {
         dog.shieldCharge = Math.min(100, dog.shieldCharge + Math.min(45, 10 + rawDmg * 0.6));
@@ -553,9 +671,14 @@ export function applyExplosionDamage(state: GameState, x: number, y: number, rad
       if (dmg > 0) {
         totalDamage += dmg;
         hits++;
-        if (dmg >= 20) playSfx("bark_hurt", 0.9);
-        if (ownerTeam !== undefined && dog.team === ownerTeam) {
-          selfDamage += dmg;
+        playSfx("bark_hurt", 1.0);
+        if (ownerTeam !== undefined) {
+          if (dog.team === ownerTeam) {
+            selfDamage += dmg;
+          } else if (state.stats) {
+            state.stats.damageDealt[ownerTeam] += dmg;
+            state.stats.shotsHit[ownerTeam]++;
+          }
         }
         // Rage: acumula no atirador quando acerta inimigo (só na Campanha)
         if (state.rageEnabled && shooter && dog.team !== ownerTeam && !shooter.rageActive) {
@@ -782,6 +905,7 @@ function findRescueColumn(state: GameState, dog: Dog): number {
 }
 
 export function step(state: GameState, dt: number) {
+  if (!state) return;
   const scGravity = getActiveScenario().gravityScale;
   if (state.matchStartGrace && state.matchStartGrace > 0) {
     state.matchStartGrace = Math.max(0, state.matchStartGrace - dt);
@@ -842,21 +966,26 @@ export function step(state: GameState, dt: number) {
         }
         dog.vy += GRAVITY * scGravity * dt;
         dog.y += dog.vy * dt;
+        if (dog.vx) {
+          dog.x += dog.vx * dt;
+          dog.x = Math.max(16, Math.min(state.width - 16, dog.x));
+        }
 
         // land check — only pouso real se coluna tem base sólida
         if (isSupported(state, dog) && dog.vy >= 0) {
           const beneath = columnDepth(state, dog.x, dog.y + 19, 12);
-          if (beneath >= 4) {
+          if (beneath >= 3 || barricadeTopAt(state, dog.x, dog.y + 19)) {
             const startY = dog.fallStartY ?? dog.y;
             const fallDist = dog.y - startY;
-            const sy = surfaceY(state.terrain, state.width, state.height, dog.x);
+            const sy = surfaceOrBarricadeY(state, dog.x);
             dog.y = sy - 18;
             dog.vy = 0;
+            dog.vx = 0;
             dog.airborne = false;
             dog.fallStartY = undefined;
             dog.unsupportedTicks = 0;
-            if (fallDist > 45) {
-              const dmg = Math.min(60, Math.round((fallDist - 45) * 0.4 * dog.defense));
+            if (fallDist > 55) {
+              const dmg = Math.min(60, Math.round((fallDist - 55) * 0.4 * dog.defense));
               if (dmg > 0) {
                 dog.hp = Math.max(0, dog.hp - dmg);
                 state.floatingTexts.push({
@@ -864,8 +993,9 @@ export function step(state: GameState, dt: number) {
                   vx: 0, vy: -70, life: 1.2, maxLife: 1.2,
                   value: `-${dmg} QUEDA`,
                   color: dmg >= 30 ? "#ff5238" : "#ffd93a",
-                  size: dmg >= 30 ? 24 : 20,
+                  size: 22,
                 });
+                playSfx("bark_hurt");
               }
             }
           }
@@ -938,6 +1068,8 @@ export function step(state: GameState, dt: number) {
     p.y += p.vy * dt;
     p.trail.push([p.x, p.y]);
     if (p.trail.length > 24) p.trail.shift();
+    if (!p.fullTrail) p.fullTrail = [];
+    if (p.fullTrail.length < 250) p.fullTrail.push([p.x, p.y]);
 
     // Whistle for rocket/mortar in flight (once, after 0.5s airborne)
     if (prevAge < 0.5 && p.age >= 0.5 && (w.id === "bazooka" || w.id === "rpg" || w.id === "artillery" || w.id === "airstrike")) {
@@ -1019,6 +1151,9 @@ export function step(state: GameState, dt: number) {
 
 
     if (exploded) {
+      if (!p.isSub && p.fullTrail && p.fullTrail.length > 4) {
+        state.lastShotTrail = p.fullTrail.filter((_, idx) => idx % 2 === 0);
+      }
       spawnExplosion(state, p.x, p.y, w.radius, w.color);
       applyExplosionDamage(state, p.x, p.y, w.radius, w.damage, p.ownerTeam);
 
@@ -1076,6 +1211,76 @@ export function step(state: GameState, dt: number) {
     if (s.life <= 0) state.scorchMarks.splice(i, 1);
   }
 
+  // Supply crates physics and dog pickup
+  if (state.supplyCrates) {
+    for (let i = state.supplyCrates.length - 1; i >= 0; i--) {
+      const crate = state.supplyCrates[i];
+      if (!crate.landed) {
+        // Falling with parachute
+        crate.y += crate.vy * dt;
+        crate.x += state.wind * 12 * dt;
+        crate.x = Math.max(24, Math.min(state.width - 24, crate.x));
+
+        // Ground / Barricade collision
+        const sy = surfaceOrBarricadeY(state, crate.x);
+        if (crate.y >= sy - 10) {
+          crate.y = sy - 10;
+          crate.landed = true;
+          crate.parachuteAlpha = 0;
+          spawnExplosion(state, crate.x, crate.y, 6, "#c49a45");
+        }
+      }
+
+      // Proximity check with dogs for collection
+      for (const dog of state.dogs) {
+        if (dog.hp <= 0) continue;
+        const dist = Math.hypot(dog.x - crate.x, (dog.y - 6) - crate.y);
+        if (dist < 28) {
+          // Collected!
+          if (crate.type === "hp") {
+            const heal = crate.value;
+            dog.hp = Math.min(dog.maxHp, dog.hp + heal);
+            state.floatingTexts.push({
+              id: Math.random(),
+              x: dog.x,
+              y: dog.y - 42,
+              vx: 0,
+              vy: -75,
+              life: 1.6,
+              maxLife: 1.6,
+              value: `+${heal} HP (KIT MÉDICO)`,
+              color: "#48ff72",
+              size: 22,
+            });
+            playSfx("shield_activate", 0.8);
+          } else if (crate.weaponId) {
+            const wid = crate.weaponId;
+            const wName = WEAPONS[wid].name.toUpperCase();
+            state.ammo[wid] = (state.ammo[wid] ?? 0) + crate.value;
+            state.floatingTexts.push({
+              id: Math.random(),
+              x: dog.x,
+              y: dog.y - 42,
+              vx: 0,
+              vy: -75,
+              life: 1.6,
+              maxLife: 1.6,
+              value: `+${crate.value} ${wName}`,
+              color: "#ffd53d",
+              size: 22,
+            });
+            playSfx("click", 1.0);
+          }
+          if (state.stats) {
+            state.stats.cratesCollected[dog.team]++;
+          }
+          state.supplyCrates.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
+
   // Match timer — decrement whenever the fight is ongoing (skip se sem limite)
   if (state.phase !== "gameover" && state.matchDuration > 0) {
     state.matchTimer = Math.max(0, state.matchTimer - dt);
@@ -1122,6 +1327,39 @@ export function step(state: GameState, dt: number) {
   }
 }
 
+export function spawnSupplyCrate(state: GameState) {
+  const scW = state.width;
+  const cx = scW * 0.2 + Math.random() * (scW * 0.6);
+  const isHp = Math.random() < 0.5;
+  const rareWeapons: WeaponId[] = ["airstrike", "artillery", "rpg", "cluster", "frag"];
+  const pickedWeapon = rareWeapons[Math.floor(Math.random() * rareWeapons.length)];
+  const crate: SupplyCrate = {
+    id: `crate_${Date.now()}_${Math.random()}`,
+    x: cx,
+    y: -25,
+    vy: 35,
+    landed: false,
+    type: isHp ? "hp" : "ammo",
+    weaponId: isHp ? undefined : pickedWeapon,
+    value: isHp ? 25 : (pickedWeapon === "airstrike" ? 1 : 2),
+    parachuteAlpha: 1,
+  };
+  if (!state.supplyCrates) state.supplyCrates = [];
+  state.supplyCrates.push(crate);
+  state.floatingTexts.push({
+    id: Math.random(),
+    x: cx,
+    y: 35,
+    vx: 0,
+    vy: -15,
+    life: 1.8,
+    maxLife: 1.8,
+    value: "🪂 SUPRIMENTOS CHEGANDO!",
+    color: "#ffdd44",
+    size: 16,
+  });
+}
+
 export function endTurn(state: GameState) {
   if (state.phase === "gameover") return;
   // Encerra Fúria de quem estava jogando
@@ -1156,6 +1394,13 @@ export function endTurn(state: GameState) {
   }
   state.message = `Vez de ${CHARACTERS[dog.charId].name.toUpperCase()}`;
   playSfx("bark");
+
+  // Supply crate airdrop every 3 turns
+  state.turnCount = (state.turnCount || 0) + 1;
+  if (state.turnCount >= 2 && state.turnCount % 3 === 0 && (!state.supplyCrates || state.supplyCrates.length < 2)) {
+    spawnSupplyCrate(state);
+  }
+
   // Consome Fúria enfileirada (pedida no turno anterior enquanto o tiro resolvia)
   if (dog.rageQueued && dog.hp > 0 && dog.rageCharge >= RAGE_READY_THRESHOLD) {
     dog.rageQueued = false;
@@ -1214,33 +1459,46 @@ export function activateShield(state: GameState): "activated" | "already" | "low
 
 
 export function moveDog(state: GameState, dir: 1 | -1, dt: number) {
-  if (state.phase !== "aiming" || state.winner !== null) return;
+  if (!state || state.phase !== "aiming" || state.winner !== null) return;
   const dog = state.dogs[state.currentPlayer];
-  if (dog.hp <= 0 || dog.airborne || dog.moveBudget <= 0) return;
-  let dx = dir * MOVE_SPEED * dt;
+  if (!dog || dog.hp <= 0 || dog.moveBudget <= 0) return;
+
+  const curSurface = surfaceOrBarricadeY(state, dog.x);
+  // Se estiver ligeiramente no ar mas perto do chão, aterra imediatamente para permitir andar
+  if (dog.airborne && Math.abs(dog.y - (curSurface - 18)) > 8) return;
+
+  const actualDt = Math.max(0.01, Math.min(0.06, dt));
+  let dx = dir * MOVE_SPEED * actualDt;
   if (Math.abs(dx) > dog.moveBudget) dx = dir * dog.moveBudget;
-  const newX = Math.max(10, Math.min(state.width - 10, dog.x + dx));
-  const currentSurface = surfaceOrBarricadeY(state, dog.x);
+  const newX = Math.max(16, Math.min(state.width - 16, dog.x + dx));
   const targetSurface = surfaceOrBarricadeY(state, newX);
-  // Block if we'd enter the side of a tall barricade (step-up too big)
-  if (currentSurface - targetSurface > STEP_UP) return;
-  // Block if the new position would clip through a barricade body
-  if (barricadeAt(state, newX, targetSurface - 10) || barricadeAt(state, newX, targetSurface + 10)) return;
+  if (targetSurface >= state.terrainBottom - 10) return;
+
+  // Permite subir elevações e relevos naturais (degrau de até 28px)
+  if (curSurface - targetSurface > STEP_UP) return;
+
+  // Atualiza posição do cão
   dog.x = newX;
   dog.y = targetSurface - 18;
-  dog.moveBudget -= Math.abs(dx);
+  dog.vy = 0;
+  dog.vx = 0;
+  dog.airborne = false;
+  dog.unsupportedTicks = 0;
+  dog.moveBudget = Math.max(0, dog.moveBudget - Math.abs(dx));
   dog.facing = dir;
 }
 
 export function jumpDog(state: GameState) {
-  if (state.phase !== "aiming" || state.winner !== null) return;
+  if (!state || state.phase !== "aiming" || state.winner !== null) return;
   const dog = state.dogs[state.currentPlayer];
-  if (dog.hp <= 0 || dog.airborne || dog.hasJumped) return;
-  dog.vy = JUMP_VY * dog.jumpScale;
+  if (!dog || dog.hp <= 0 || dog.airborne || dog.hasJumped) return;
+  dog.vy = -260 * dog.jumpScale;
+  dog.vx = dog.facing * 85; // Salto em parábola para frente na direção em que está olhando
   dog.airborne = true;
   dog.fallStartY = dog.y;
   dog.hasJumped = true;
-  playSfx("jump");
+  dog.moveBudget = Math.max(0, dog.moveBudget - 15);
+  playSfx("jump", 1.0, dog.charId);
 }
 
 export function cycleWeapon(state: GameState, dir: 1 | -1) {

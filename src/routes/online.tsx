@@ -22,7 +22,7 @@ export const Route = createFileRoute("/online")({
   }),
 });
 
-const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy", "negao", "miu"];
+const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy", "negao", "miu", "barto"];
 
 function OnlineHome() {
   const navigate = useNavigate();
@@ -42,10 +42,15 @@ function OnlineHome() {
   useEffect(() => {
     ensureAnonSession()
       .then(s => {
-        if (s) setSessionReady(true);
-        else setError("Não foi possível criar sessão. Recarregue a página.");
+        if (s?.userId) {
+          setSessionReady(true);
+          setError(null);
+        }
       })
-      .catch(e => setError(e instanceof Error ? e.message : "Falha de sessão"));
+      .catch(e => {
+        console.warn("[online] session warning:", e);
+        setSessionReady(true);
+      });
   }, []);
 
   const onCreate = async () => {

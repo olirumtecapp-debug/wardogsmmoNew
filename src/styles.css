@@ -406,3 +406,41 @@
   text-shadow: 0 2px 0 rgba(0,0,0,0.5), 0 6px 24px rgba(255,90,20,0.35);
   filter: drop-shadow(0 4px 18px rgba(255,120,20,0.25));
 }
+
+/* Background image responsive fitting — ensures both dogs are always fully visible */
+.hero-bg-responsive {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center 36%;
+  background-color: #06090e;
+  transition: background-position 0.25s ease, background-size 0.25s ease;
+}
+
+@media (min-aspect-ratio: 16/10) {
+  .hero-bg-responsive {
+    background-size: cover;
+    background-position: center 28%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-bg-responsive {
+    background-size: 100% auto;
+    background-position: center 34%;
+  }
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .hero-bg-responsive {
+    background-size: 100% auto;
+    background-position: center 30%;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero-bg-responsive {
+    background-size: contain;
+    background-position: center 40%;
+  }
+}
+

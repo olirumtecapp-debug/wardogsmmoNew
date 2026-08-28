@@ -141,13 +141,9 @@ function Home() {
     <div className="relative min-h-dvh overflow-hidden flex flex-col safe-pad">
       {/* Background layer — key art */}
       <div
-        className="fixed inset-0 -z-30"
+        className="fixed inset-0 -z-30 hero-bg-responsive"
         style={{
           backgroundImage: `url(${bgImg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center 30%",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "#0b0f16",
         }}
         aria-hidden
       />

@@ -5,6 +5,8 @@ import bgJungle from "@/assets/bg-jungle.jpg.asset.json";
 
 export type ScenarioId = "battlefield" | "arctic" | "desert" | "jungle";
 
+export type ReliefProfile = "trenches" | "glacier_peaks" | "dunes" | "plateaus" | "classic";
+
 export interface Scenario {
   id: ScenarioId;
   label: string;
@@ -18,6 +20,7 @@ export interface Scenario {
   particleShape: "dust" | "snow" | "leaf" | "ember";
   windScale: number;
   gravityScale: number;
+  reliefProfile: ReliefProfile;
   terrainTop: [number, number, number];
   terrainMid: [number, number, number];
   terrainDeep: [number, number, number];
@@ -38,6 +41,7 @@ export const SCENARIOS: Scenario[] = [
     particleShape: "ember",
     windScale: 1,
     gravityScale: 1,
+    reliefProfile: "trenches",
     terrainTop: [0x8a, 0x7a, 0x62],
     terrainMid: [0x5a, 0x4a, 0x38],
     terrainDeep: [0x2a, 0x20, 0x14],
@@ -55,6 +59,7 @@ export const SCENARIOS: Scenario[] = [
     particleShape: "snow",
     windScale: 1.6,
     gravityScale: 1,
+    reliefProfile: "glacier_peaks",
     terrainTop: [0xea, 0xf2, 0xf8],
     terrainMid: [0xa8, 0xbf, 0xd0],
     terrainDeep: [0x2a, 0x3a, 0x4a],
@@ -72,6 +77,7 @@ export const SCENARIOS: Scenario[] = [
     particleShape: "dust",
     windScale: 1.4,
     gravityScale: 1,
+    reliefProfile: "dunes",
     terrainTop: [0xf0, 0xc0, 0x66],
     terrainMid: [0xc4, 0x8a, 0x3a],
     terrainDeep: [0x5a, 0x2e, 0x14],
@@ -90,6 +96,7 @@ export const SCENARIOS: Scenario[] = [
     particleShape: "leaf",
     windScale: 1.1,
     gravityScale: 1,
+    reliefProfile: "plateaus",
     terrainTop: [0x66, 0xc8, 0x4a],
     terrainMid: [0x3a, 0x7a, 0x2e],
     terrainDeep: [0x22, 0x3a, 0x18],

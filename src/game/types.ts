@@ -51,6 +51,7 @@ export interface Barricade {
 export interface Dog {
   x: number;
   y: number;
+  vx?: number;
   vy: number;
   hp: number;
   maxHp: number;
@@ -86,6 +87,7 @@ export interface Projectile {
   age: number;
   ownerTeam: 0 | 1;
   trail: Array<[number, number]>;
+  fullTrail?: Array<[number, number]>;
   isSub?: boolean;
 }
 
@@ -103,6 +105,26 @@ export interface FloatingText {
   life: number; maxLife: number; value: string; color: string; size: number;
 }
 
+export interface SupplyCrate {
+  id: string;
+  x: number;
+  y: number;
+  vy: number;
+  landed: boolean;
+  type: "hp" | "ammo";
+  weaponId?: WeaponId;
+  value: number;
+  parachuteAlpha: number;
+}
+
+export interface MatchStats {
+  shotsFired: [number, number];
+  shotsHit: [number, number];
+  damageDealt: [number, number];
+  cratesCollected: [number, number];
+  usedWeapons: [Record<string, number>, Record<string, number>];
+}
+
 export interface ScorchMark {
   x: number; y: number; radius: number; life: number; maxLife: number;
 }
@@ -118,6 +140,9 @@ export interface GameState {
   explosions: Explosion[];
   floatingTexts: FloatingText[];
   scorchMarks: ScorchMark[];
+  supplyCrates: SupplyCrate[];
+  stats: MatchStats;
+  turnCount: number;
   currentPlayer: 0 | 1;
   wind: number;
   angle: number;
@@ -133,6 +158,7 @@ export interface GameState {
   mode: GameMode;
   seed: number;
   airstrikeMarker?: { x: number; life: number };
+  lastShotTrail?: Array<[number, number]>;
   hudReserve: number;
   topReserve: number;
   terrainBottom: number;     // pixel Y absoluto do fundo do terreno sólido

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/lobby/$code")({
   }),
 });
 
-const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy", "negao", "miu"];
+const CHAR_IDS: CharacterId[] = ["ranger", "brutus", "musa", "ozzy", "negao", "miu", "barto"];
 
 function Lobby() {
   const { code } = Route.useParams();
@@ -62,25 +62,47 @@ function Lobby() {
     return () => { cancelled = true; };
   }, [code]);
 
-  // Realtime subscriptions
+  // Realtime subscriptions & polling fallback
   useEffect(() => {
     if (!match) return;
     const ch = supabase.channel(`lobby:${match.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "match_players", filter: `match_id=eq.${match.id}` }, async () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${match.id}` }, async () => {
         const ps = await fetchPlayers(match.id);
         setPlayers(ps);
       })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "matches", filter: `id=eq.${match.id}` }, (payload) => {
-        const next = payload.new as MatchRow;
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${match.id}` }, async () => {
+        const next = await fetchMatchByCode(code);
+        if (next) {
+          setMatch(next);
+          const ps = await fetchPlayers(next.id);
+          setPlayers(ps);
+          if (next.status === "playing" && !navigatedRef.current) {
+            navigatedRef.current = true;
+            navigate({ to: "/match/$code", params: { code: next.code } });
+          }
+        }
+      })
+      .subscribe();
+
+    // Polling fallback every 1.5s
+    const timer = setInterval(async () => {
+      const next = await fetchMatchByCode(code);
+      if (next) {
         setMatch(next);
+        const ps = await fetchPlayers(next.id);
+        setPlayers(ps);
         if (next.status === "playing" && !navigatedRef.current) {
           navigatedRef.current = true;
           navigate({ to: "/match/$code", params: { code: next.code } });
         }
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [match, navigate]);
+      }
+    }, 1500);
+
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(timer);
+    };
+  }, [match, navigate, code]);
 
   // Mark me as connected on mount, disconnected on unmount
   useEffect(() => {
@@ -92,7 +114,7 @@ function Lobby() {
   }, [match]);
 
   const me = useMemo(() => players.find(p => p.user_id === userId) ?? null, [players, userId]);
-  const isHost = !!(match && userId && match.host_id === userId);
+  const isHost = Boolean(me && me.slot === 0 && match && (match.host_id === userId || match.host_id === me.user_id));
   const readyCount = players.filter(p => p.ready).length;
   const canStart = isHost && players.length >= 2 && readyCount === players.length;
 

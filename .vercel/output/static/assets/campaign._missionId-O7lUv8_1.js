@@ -1,1 +1,0 @@
-import{r as e}from"./useRouter-Dpb7RwMI.js";import{t}from"./link-Cxkn23lH.js";var n=e(),r=()=>(0,n.jsxs)(`div`,{className:`min-h-dvh flex items-center justify-center text-muted-foreground`,children:[`Missão não encontrada. `,(0,n.jsx)(t,{to:`/campaign`,className:`btn-hud ml-2 text-xs px-2 py-1`,children:`Voltar`})]});export{r as notFoundComponent};
