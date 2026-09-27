@@ -1,4 +1,4 @@
-﻿package com.creativeam.wardogsmmo;
+package com.creativeam.wardogsmmo;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
